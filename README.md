@@ -1,1 +1,2 @@
-# ok_bot
+python main.py
+python order_canceller.py
