@@ -49,7 +49,27 @@ def rchop(s, ending):
     return s
 
 
-def place_arbitrage_order(pair):
+def trigger_arbitrage(pair):
+    left, right = tuple(pair.split('-'))
+    ask_type = rchop(left, '_ask_price')
+    bid_type = rchop(right, '_bid_price')
+    ask_price = last_record[f'{ask_type}_ask3_price']
+    ask_vol = last_record[f'{ask_type}_ask3_vol']
+    bid_price = last_record[f'{bid_type}_bid3_vol']
+    bid_vol = last_record[f'{bid_type}_bid3_vol']
+    amount = max_order_amount
+    amount = min(amount, ask_vol)
+    amount = min(amount, bid_vol)
+
+    gap = (ask_price - last_record[left]) + (last_record[right] - bid_price)
+    if gap > gap_threshold:
+        if log2_cooldown.check():
+            send_unblock(
+                f'Drop: price gap too large: {gap} = '
+                f'{ask_price} - {last_record[left]}, '
+                f'{last_record[right]} - {bid_price}')
+        return
+
     if not arbitrage_cooldown.check():
         return
 
@@ -67,30 +87,6 @@ def place_arbitrage_order(pair):
         order_executors[ask_type], long_order)
     asyncio.get_event_loop().run_in_executor(
         order_executors[bid_type], short_order)
-
-
-def trigger_arbitrage(pair):
-    left, right = tuple(pair.split('-'))
-    ask_type = rchop(left, '_ask_price')
-    bid_type = rchop(right, '_bid_price')
-    ask_price = last_record[f'{ask_type}_ask3_price']
-    ask_vol = last_record[f'{ask_type}_ask3_vol']
-    bid_price = last_record[f'{bid_type}_bid3_vol']
-    bid_vol = last_record[f'{bid_type}_bid3_vol']
-    amount = max_order_amount
-    amount = min(amount, ask_vol)
-    amount = min(amount, bid_vol)
-
-    gap = (ask_price - last_record[left]) + (last_record[right] - bid_price)
-    if gap > gap_threshold:
-        if log2_cooldown.check():
-            send_unblock(
-                f'Drop: price gap too large: '
-                'f{ask_price} - f{last_record[left]}, '
-                'f{last_record[right]} - f{bid_price}')
-        return
-
-    place_arbitrage_order()
 
 
 def calculate():
