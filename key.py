@@ -1,2 +1,2 @@
-api = open('/home/ningr/Documents/okex/key.txt').read().strip()
-secret = open('/home/ningr/Documents/okex/secret.txt').read().strip()
+api = open('key.txt').read().strip()
+secret = open('secret.txt').read().strip()
