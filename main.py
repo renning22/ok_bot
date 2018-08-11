@@ -49,6 +49,26 @@ def rchop(s, ending):
     return s
 
 
+def place_arbitrage_order(pair):
+    if not arbitrage_cooldown.check():
+        return
+
+    send_unblock(
+        f'LONG on {ask_type} at {ask_price} for {amount} (available vol {ask_vol})')
+    send_unblock(
+        f'SHORT on {bid_type} at {bid_price} for {amount} (available vol {bid_vol})')
+
+    long_order = functools.partial(
+        order.place_long_order, ask_type, amount, ask_price)
+    short_order = functools.partial(
+        order.place_short_order, bid_type, amount, bid_price)
+
+    asyncio.get_event_loop().run_in_executor(
+        order_executors[ask_type], long_order)
+    asyncio.get_event_loop().run_in_executor(
+        order_executors[bid_type], short_order)
+
+
 def trigger_arbitrage(pair):
     left, right = tuple(pair.split('-'))
     ask_type = rchop(left, '_ask_price')
@@ -70,23 +90,7 @@ def trigger_arbitrage(pair):
                 'f{last_record[right]} - f{bid_price}')
         return
 
-    if not arbitrage_cooldown.check():
-        return
-
-    send_unblock(
-        f'LONG on {ask_type} at {ask_price} for {amount} (available vol {ask_vol})')
-    send_unblock(
-        f'SHORT on {bid_type} at {bid_price} for {amount} (available vol {bid_vol})')
-
-    long_order = functools.partial(
-        order.place_long_order, ask_type, amount, ask_price)
-    short_order = functools.partial(
-        order.place_short_order, bid_type, amount, bid_price)
-
-    asyncio.get_event_loop().run_in_executor(
-        order_executors[ask_type], long_order)
-    asyncio.get_event_loop().run_in_executor(
-        order_executors[bid_type], short_order)
+    place_arbitrage_order()
 
 
 def calculate():
