@@ -15,7 +15,7 @@ def current_time():
     return np.datetime64(datetime.utcnow())
 
 
-class CheckPoint:
+class Cooldown:
     def __init__(self, interval_sec=5):
         self._interval = delta(interval_sec)
         self._check_point = current_time()

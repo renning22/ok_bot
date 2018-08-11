@@ -12,7 +12,7 @@ from scipy import stats
 
 import order
 from slack import send_unblock
-from util import CheckPoint, current_time, delta
+from util import Cooldown, current_time, delta
 
 order_executors = {
     'this_week': ProcessPoolExecutor(max_workers=1),
@@ -53,8 +53,8 @@ last_record = {}
 table = pd.DataFrame()
 
 
-log_check_point = CheckPoint(interval_sec=10)
-arbitrage_check_point = CheckPoint(interval_sec=60)
+log_cooldown = Cooldown(interval_sec=10)
+arbitrage_cooldown = Cooldown(interval_sec=60)
 
 
 def rchop(s, ending):
@@ -64,7 +64,7 @@ def rchop(s, ending):
 
 
 def trigger_arbitrage(pair):
-    if not arbitrage_check_point.check():
+    if not arbitrage_cooldown.check():
         return
 
     left, right = tuple(pair.split('-'))
@@ -93,9 +93,9 @@ def trigger_arbitrage(pair):
 
 
 def calculate():
-    log_check = log_check_point.check()
+    log_not_cooldown = log_cooldown.check()
     time_window = table.index[-1] - table.index[0]
-    if log_check:
+    if log_not_cooldown:
         print(f'{time_window}')
     if time_window < delta(window_length_min):
         return
@@ -107,7 +107,7 @@ def calculate():
             spread_minus_avg = spread - history.mean()
             # zscores = stats.zscore(history)
 
-            if log_check:
+            if log_not_cooldown:
                 print('{:<50} {:>10.4} {:>10.4}'.format(
                     pair, spread, spread_minus_avg))
 
