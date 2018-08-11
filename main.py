@@ -1,6 +1,5 @@
 import asyncio
 import functools
-import itertools
 import json
 from concurrent.futures import ProcessPoolExecutor
 from decimal import *
@@ -11,6 +10,7 @@ import websockets
 from scipy import stats
 
 import order
+from schema import columns, columns_best_asks, columns_best_bids, columns_cross
 from slack import send_unblock
 from util import Cooldown, current_time, delta
 
@@ -22,26 +22,11 @@ order_executors = {
 
 currency = 'btc'
 window_length_max = 60 * 10
-window_length_min = 60 * 5
+window_length_min = 60 * 1
 # zscore_threshold = -3.0
-spread_minus_avg_threshold = -28
-
-columns = ['timestamp',
-           'this_week_bid_price',
-           'this_week_bid_vol',
-           'this_week_ask_price',
-           'this_week_ask_vol',
-           'next_week_bid_price',
-           'next_week_bid_vol',
-           'next_week_ask_price',
-           'next_week_ask_vol',
-           'quarter_bid_price',
-           'quarter_bid_vol',
-           'quarter_ask_price',
-           'quarter_ask_vol',
-           'source']
-columns_asks = [i for i in columns if 'ask_price' in i]
-columns_bids = [i for i in columns if 'bid_price' in i]
+spread_minus_avg_threshold = -30
+gap_threshold = 6
+max_order_amount = Decimal('5')
 
 channels = {
     f'ok_sub_futureusd_{currency}_depth_this_week_5': 'this_week',
@@ -53,7 +38,8 @@ last_record = {}
 table = pd.DataFrame()
 
 
-log_cooldown = Cooldown(interval_sec=10)
+log_cooldown = Cooldown(interval_sec=5)
+log2_cooldown = Cooldown(interval_sec=1)
 arbitrage_cooldown = Cooldown(interval_sec=60)
 
 
@@ -64,22 +50,33 @@ def rchop(s, ending):
 
 
 def trigger_arbitrage(pair):
-    if not arbitrage_cooldown.check():
-        return
-
     left, right = tuple(pair.split('-'))
     ask_type = rchop(left, '_ask_price')
-    ask_price = last_record[left] + Decimal('1')
-    ask_vol = last_record[f'{ask_type}_ask_vol']
     bid_type = rchop(right, '_bid_price')
-    bid_price = last_record[right] - Decimal('1')
-    bid_vol = last_record[f'{bid_type}_bid_vol']
-    amount = Decimal('20')
+    ask_price = last_record[f'{ask_type}_ask3_price']
+    ask_vol = last_record[f'{ask_type}_ask3_vol']
+    bid_price = last_record[f'{bid_type}_bid3_vol']
+    bid_vol = last_record[f'{bid_type}_bid3_vol']
+    amount = max_order_amount
     amount = min(amount, ask_vol)
     amount = min(amount, bid_vol)
 
-    send_unblock(f'LONG on {ask_type} at {ask_price} for {amount}')
-    send_unblock(f'SHORT on {bid_type} at {bid_price} for {amount}')
+    gap = (ask_price - last_record[left]) + (last_record[right] - bid_price)
+    if gap > gap_threshold:
+        if log2_cooldown.check():
+            send_unblock(
+                f'Drop: price gap too large: '
+                'f{ask_price} - f{last_record[left]}, '
+                'f{last_record[right]} - f{bid_price}')
+        return
+
+    if not arbitrage_cooldown.check():
+        return
+
+    send_unblock(
+        f'LONG on {ask_type} at {ask_price} for {amount} (available vol {ask_vol})')
+    send_unblock(
+        f'SHORT on {bid_type} at {bid_price} for {amount} (available vol {bid_vol})')
 
     long_order = functools.partial(
         order.place_long_order, ask_type, amount, ask_price)
@@ -93,9 +90,9 @@ def trigger_arbitrage(pair):
 
 
 def calculate():
-    log_not_cooldown = log_cooldown.check()
+    log_cooldown_ready = log_cooldown.check()
     time_window = table.index[-1] - table.index[0]
-    if log_not_cooldown:
+    if log_cooldown_ready:
         print(f'{time_window}')
     if time_window < delta(window_length_min):
         return
@@ -105,11 +102,11 @@ def calculate():
             history = table[pair].astype('float64')
             spread = history[-1]
             spread_minus_avg = spread - history.mean()
-            # zscores = stats.zscore(history)
+            zscores = stats.zscore(history)
 
-            if log_not_cooldown:
-                print('{:<50} {:>10.4} {:>10.4}'.format(
-                    pair, spread, spread_minus_avg))
+            if log_cooldown_ready:
+                print('{:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
+                    pair, spread, spread_minus_avg, zscores[-1]))
 
             # if zscores[-1] < zscore_threshold and diff < spread_minus_avg_threshold:
             if spread_minus_avg < spread_minus_avg_threshold:
@@ -121,9 +118,8 @@ def last_record_to_row():
     for c in columns:
         if c != 'timestamp':
             data[c] = [last_record[c]]
-    for i, j in itertools.product(columns_asks, columns_bids):
-        if i[:4] == j[:4]:
-            continue
+    for pair in columns_cross:
+        i, j = tuple(pair.split('-'))
         data[f'{i}-{j}'] = [last_record[i] - last_record[j]]
     return pd.DataFrame(data, index=[last_record['timestamp']])
 
@@ -136,27 +132,21 @@ def update_table():
     table = table.loc[table.index >= start]
 
 
-def update_last_record(contract_type, **kwargs):
+def update_last_record(contract, asks_bids):
     last_record['timestamp'] = current_time()
-    last_record['source'] = contract_type
-    for key, value in kwargs.items():
-        k = f'{contract_type}_{key}'
-        assert(k in columns)
-        last_record[k] = value
+    last_record['source'] = contract
+    for key, value in asks_bids.items():
+        assert(key in columns)
+        last_record[key] = value
 
     if len(last_record) == len(columns):
         update_table()
         calculate()
 
 
-async def update(contract_type, ask_price, ask_vol, bid_price, bid_vol):
-    # print(f'{contract_type}, {ask_price}, {ask_vol}, {bid_price}, {bid_vol}')
-    kwargs = {'bid_price': bid_price,
-              'bid_vol': bid_vol,
-              'ask_price': ask_price,
-              'ask_vol': ask_vol}
-
-    update_last_record(contract_type, **kwargs)
+async def update(contract, asks_bids):
+    # print(f'{asks_bids}')
+    update_last_record(contract, asks_bids)
 
 
 async def ws_loop():
@@ -173,15 +163,26 @@ async def ws_loop():
             channel = d['channel']
             if channel not in channels:
                 continue
+            contract = channels[channel]
 
-            contract_type = channels[channel]
-            ask_price = Decimal(str(d['data']['asks'][-1][0]))
-            ask_vol = Decimal(str(d['data']['asks'][-1][1]))
-            bid_price = Decimal(str(d['data']['bids'][0][0]))
-            bid_vol = Decimal(str(d['data']['bids'][0][1]))
+            asks = sorted(d['data']['asks'])
+            bids = sorted(d['data']['bids'], reverse=True)
+            asks_bids = {
+                f'{contract}_ask_price': Decimal(str(asks[0][0])),
+                f'{contract}_ask_vol': Decimal(str(asks[0][4])),
+                f'{contract}_bid_price': Decimal(str(bids[0][0])),
+                f'{contract}_bid_vol': Decimal(str(bids[0][4])),
+                f'{contract}_ask2_price': Decimal(str(asks[1][0])),
+                f'{contract}_ask2_vol': Decimal(str(asks[1][4])),
+                f'{contract}_bid2_price': Decimal(str(bids[1][0])),
+                f'{contract}_bid2_vol': Decimal(str(bids[1][4])),
+                f'{contract}_ask3_price': Decimal(str(asks[2][0])),
+                f'{contract}_ask3_vol': Decimal(str(asks[2][4])),
+                f'{contract}_bid3_price': Decimal(str(bids[2][0])),
+                f'{contract}_bid3_vol': Decimal(str(bids[2][4])),
+            }
 
-            asyncio.ensure_future(
-                update(contract_type, ask_price, ask_vol, bid_price, bid_vol))
+            asyncio.ensure_future(update(contract, asks_bids))
 
 
 async def hello():
