@@ -55,7 +55,7 @@ def trigger_arbitrage(pair):
     bid_type = rchop(right, '_bid_price')
     ask_price = last_record[f'{ask_type}_ask3_price']
     ask_vol = last_record[f'{ask_type}_ask3_vol']
-    bid_price = last_record[f'{bid_type}_bid3_vol']
+    bid_price = last_record[f'{bid_type}_bid3_price']
     bid_vol = last_record[f'{bid_type}_bid3_vol']
     amount = max_order_amount
     amount = min(amount, ask_vol)
