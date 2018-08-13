@@ -70,7 +70,11 @@ def _create_order(contract_type, type, side, amount, price=None, params={}):
 
 def notify_slack(result):
     if result:
-        side = 'LONG' if result['side'] == 1 else 'SHORT'
+        side_map = {1: 'OPEN LONG',
+                    2: 'OPEN SHORT',
+                    3: 'CLOSE LONG',
+                    4: 'CLOSE SHORT'}
+        side = side_map[result['side']]
         contract_type = result['contract_type']
         price = result['price']
         amount = result['amount']
