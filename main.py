@@ -96,6 +96,7 @@ def trigger_arbitrage(ask_type, bid_type):
 
 
 def check_close_position(ask_type, bid_type):
+    global last_position
     if 'long' in last_position[bid_type] and 'short' in last_position[ask_type]:
         long_amount, long_price = last_position[bid_type]['long']
         short_amount, short_price = last_position[ask_type]['short']
@@ -115,7 +116,6 @@ def check_close_position(ask_type, bid_type):
             order.close_short_order(ask_type, amount, best_ask_price)
 
             # hot update
-            global last_position
             if long_amount - 1 == 0:
                 del last_position[bid_type]['long']
             else:
