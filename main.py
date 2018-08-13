@@ -30,7 +30,7 @@ window_length_min = 60 * 3
 spread_minus_avg_threshold = -30
 gap_threshold = 8
 close_position_zscore_threshold = 0.2
-close_position_take_profit_threshold = 100  # price_diff
+close_position_take_profit_threshold = 5  # price_diff
 max_order_amount = Decimal('5')
 
 channels = {
@@ -95,22 +95,22 @@ def trigger_arbitrage(ask_type, bid_type):
         order_executors[bid_type], short_order)
 
 
-def trigger_close_position(ask_type, bid_type):
+def check_close_position(ask_type, bid_type):
     if 'long' in last_position[bid_type] and 'short' in last_position[ask_type]:
         long_amount, long_price = last_position[bid_type]['long']
         short_amount, short_price = last_position[ask_type]['short']
         best_ask_price = last_record[f'{ask_type}_ask_price']
         best_bid_price = last_record[f'{bid_type}_bid_price']
         amount = Decimal('1')
-        estimate_price_diff = (best_ask_price - long_price) + \
-            (short_price - best_bid_price)
+        estimate_price_diff = (best_bid_price - long_price) + \
+            (short_price - best_ask_price)
         if estimate_price_diff > close_position_take_profit_threshold:
             if not close_position_cooldown.check():
                 return
             send_unblock(
                 f'Close Position: {ask_type}-{ask_type}, '
-                f'({best_ask_price} - {long_price}) + '
-                f'({short_price} - {best_bid_price}) = {estimate_price_diff}')
+                f'({best_bid_price} - {long_price}) + '
+                f'({short_price} - {best_ask_price}) = {estimate_price_diff}')
             order.close_long_order(bid_type, amount, best_bid_price)
             order.close_short_order(ask_type, amount, best_ask_price)
 
@@ -138,8 +138,8 @@ def calculate():
             ask_type = rchop(left, '_ask_price')
             bid_type = rchop(right, '_bid_price')
 
-            if abs(zscores[-1]) < close_position_zscore_threshold:
-                trigger_close_position(ask_type, bid_type)
+            # if abs(zscores[-1]) < close_position_zscore_threshold:
+            check_close_position(ask_type, bid_type)
 
             # if zscores[-1] < zscore_threshold and diff < spread_minus_avg_threshold:
             if spread_minus_avg < spread_minus_avg_threshold:
