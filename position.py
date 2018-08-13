@@ -34,24 +34,57 @@ def get_position(contract_type='this_week'):
     if not response['result']:
         raise ValueError('Unexpected response')
 
-    # force_liqu_price = Decimal(response['force_liqu_price'])
     positions = []
     for item in response['holding']:
         if item['symbol'] == native_symbol and item['contract_type'] == contract_type:
-            if item['buy_amount'] == 0 and item['sell_amount'] == 0:
-                continue
-
-            side = item['buy_amount'] > 0
-            amount = Decimal(str(item['buy_amount'] if side else -
-                                 item['sell_amount']))
-            entry_price = Decimal(str(item['buy_price_avg'] if side else
-                                      item['sell_price_avg']))
-            positions.append({
-                'symbol': symbol,
-                'amount': amount,
-                'entry_price': entry_price,
-                # 'liquid_price': force_liqu_price,
-            })
+            # {'buy_amount': 0,
+            #  'buy_available': 0,
+            #  'buy_price_avg': 6410,
+            #  'buy_price_cost': 6410,
+            #  'buy_profit_real': -0.00010779,
+            #  'contract_id': 201808170000013,
+            #  'contract_type': 'this_week',
+            #  'create_date': 1533595502000,
+            #  'lever_rate': 20,
+            #  'sell_amount': 5,
+            #  'sell_available': 5,
+            #  'sell_price_avg': 6223,
+            #  'sell_price_cost': 6223,
+            #  'sell_profit_real': -0.00010779,
+            #  'symbol': 'btc_usd'}
+            #
+            # {'buy_amount': 5,
+            #  'buy_available': 5,
+            #  'buy_price_avg': 6161.23,
+            #  'buy_price_cost': 6161.23,
+            #  'buy_profit_real': -0.00294234,
+            #  'contract_id': 201809280000012,
+            #  'contract_type': 'quarter',
+            #  'create_date': 1529296637000,
+            #  'lever_rate': 20,
+            #  'sell_amount': 0,
+            #  'sell_available': 0,
+            #  'sell_price_avg': 6389.87,
+            #  'sell_price_cost': 6389.87,
+            #  'sell_profit_real': -0.00294234,
+            #  'symbol': 'btc_usd'}
+            contract_type = item['contract_type']
+            if item['buy_available'] > 0:
+                positions.append({
+                    'side': 'long',
+                    'symbol': symbol,
+                    'amount': Decimal(str(item['buy_available'])),
+                    'open_price': Decimal(str(item['buy_price_avg'])),
+                    'contract_type': contract_type,
+                })
+            if item['sell_available'] > 0:
+                positions.append({
+                    'side': 'short',
+                    'symbol': symbol,
+                    'amount': Decimal(str(item['sell_available'])),
+                    'open_price': Decimal(str(item['sell_price_avg'])),
+                    'contract_type': contract_type,
+                })
     return positions
 
 
@@ -109,7 +142,8 @@ def cancel_all_open_orders(ttl=1, contract_type='this_week'):
 
 if __name__ == '__main__':
     init('btc')
-    # print(get_position('this_week'))
+    print(get_position('this_week'))
+    print(get_position('quarter'))
     # r = fetch_open_orders()
     # print(r)
     # cancel_all_open_orders()
