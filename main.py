@@ -114,6 +114,18 @@ def check_close_position(ask_type, bid_type):
             order.close_long_order(bid_type, amount, best_bid_price)
             order.close_short_order(ask_type, amount, best_ask_price)
 
+            # hot update
+            global last_position
+            if long_amount - 1 == 0:
+                del last_position[bid_type]['long']
+            else:
+                last_position[bid_type]['long'] = (long_amount - 1, long_price)
+            if short_amount - 1 == 0:
+                del last_position[ask_type]['short']
+            else:
+                last_position[ask_type]['short'] = (
+                    short_amount - 1, short_price)
+
 
 def calculate():
     log_cooldown_ready = log_cooldown.check()
