@@ -59,10 +59,10 @@ def rchop(s, ending):
 def trigger_arbitrage(ask_type, bid_type):
     best_ask_price = last_record[f'{ask_type}_ask_price']
     best_bid_price = last_record[f'{bid_type}_bid_price']
-    ask_price = last_record[f'{ask_type}_ask2_price']
-    ask_vol = last_record[f'{ask_type}_ask2_vol']
-    bid_price = last_record[f'{bid_type}_bid2_price']
-    bid_vol = last_record[f'{bid_type}_bid2_vol']
+    ask_price = last_record[f'{ask_type}_ask_price']
+    ask_vol = last_record[f'{ask_type}_ask_vol']
+    bid_price = last_record[f'{bid_type}_bid_price']
+    bid_vol = last_record[f'{bid_type}_bid_vol']
     amount = max_order_amount
     amount = min(amount, ask_vol)
     amount = min(amount, bid_vol)
