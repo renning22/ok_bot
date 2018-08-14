@@ -69,7 +69,7 @@ def _create_order(contract_type, type, side, amount, price=None, params={}):
 
 
 def notify_slack(result):
-    if result:
+    if result is not None:
         side_map = {1: 'OPEN LONG',
                     2: 'OPEN SHORT',
                     3: 'CLOSE LONG',
@@ -80,7 +80,7 @@ def notify_slack(result):
         amount = result['amount']
         symbol = result['symbol']
         timestamp = result['datetime']
-        s = f'{timestamp}  {side}  {contract_type}  {price}  {amount}  {symbol}'
+        s = f'{side}  {contract_type}  {price}  {amount}  {symbol}'
         slack.send_unblock(s)
 
 
@@ -134,7 +134,6 @@ def f(x):
 
 if __name__ == '__main__':
     init('btc')
-
-    from multiprocessing import Pool
-    p = Pool(6)
-    p.map(f, range(6))
+    f(1)
+    f(2)
+    f(3)

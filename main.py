@@ -27,11 +27,11 @@ currency = 'btc'
 window_length_max = 60 * 10
 window_length_min = 60 * 3
 # zscore_threshold = -3.0
-spread_minus_avg_threshold = -30
-gap_threshold = 8
+spread_minus_avg_threshold = -33
+gap_threshold = 6
 close_position_zscore_threshold = 0.2
-close_position_take_profit_threshold = 5  # price_diff
-max_order_amount = Decimal('5')
+close_position_take_profit_threshold = 8  # price_diff
+max_order_amount = Decimal('2')
 
 channels = {
     f'ok_sub_futureusd_{currency}_depth_this_week_5': 'this_week',
@@ -59,10 +59,10 @@ def rchop(s, ending):
 def trigger_arbitrage(ask_type, bid_type):
     best_ask_price = last_record[f'{ask_type}_ask_price']
     best_bid_price = last_record[f'{bid_type}_bid_price']
-    ask_price = last_record[f'{ask_type}_ask3_price']
-    ask_vol = last_record[f'{ask_type}_ask3_vol']
-    bid_price = last_record[f'{bid_type}_bid3_price']
-    bid_vol = last_record[f'{bid_type}_bid3_vol']
+    ask_price = last_record[f'{ask_type}_ask2_price']
+    ask_vol = last_record[f'{ask_type}_ask2_vol']
+    bid_price = last_record[f'{bid_type}_bid2_price']
+    bid_vol = last_record[f'{bid_type}_bid2_vol']
     amount = max_order_amount
     amount = min(amount, ask_vol)
     amount = min(amount, bid_vol)
@@ -71,18 +71,20 @@ def trigger_arbitrage(ask_type, bid_type):
     if gap > gap_threshold:
         if log2_cooldown.check():
             send_unblock(
-                f'Drop {ask_type}-{bid_type}: price gap too large: {gap} = '
-                f'{ask_price} - {best_ask_price}, '
-                f'{best_bid_price} - {bid_price}')
+                f'Ignore: price gap too large: {gap} = '
+                f'{ask_price} - {best_ask_price} ({ask_type}), '
+                f'{best_bid_price} - {bid_price} ({bid_type})')
         return
 
     if not arbitrage_cooldown.check():
         return
 
     send_unblock(
-        f'LONG on {ask_type} at {ask_price} for {amount} (available vol {ask_vol})')
+        f'REQUEST: LONG on {ask_type} at {ask_price} for {amount} '
+        f'(available vol {ask_vol})')
     send_unblock(
-        f'SHORT on {bid_type} at {bid_price} for {amount} (available vol {bid_vol})')
+        f'REQUEST: SHORT on {bid_type} at {bid_price} for {amount} '
+        f'(available vol {bid_vol})')
 
     long_order = functools.partial(
         order.open_long_order, ask_type, amount, ask_price)
