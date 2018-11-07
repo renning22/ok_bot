@@ -1,12 +1,14 @@
 import asyncio
 import functools
 import json
+import traceback
 from concurrent.futures import ProcessPoolExecutor
 from decimal import *
 
 import ccxt
 import pandas as pd
 import websockets
+from absl import app, logging
 from scipy import stats
 
 import order
@@ -14,7 +16,7 @@ import position
 from schema import (columns, columns_best_asks, columns_best_bids,
                     columns_cross, contract_types)
 from slack import send_unblock
-from util import Cooldown, current_time, delta
+from util import Cooldown, current_time, delta, inflate
 
 order_executors = {
     'this_week': ProcessPoolExecutor(max_workers=1),
@@ -27,7 +29,7 @@ currency = 'btc'
 window_length_max = 60 * 10
 window_length_min = 60 * 3
 # zscore_threshold = -3.0
-spread_minus_avg_threshold = -33
+spread_minus_avg_threshold = -26
 gap_threshold = 6
 close_position_zscore_threshold = 0.2
 close_position_take_profit_threshold = 8  # price_diff
@@ -44,7 +46,7 @@ last_record = {}
 table = pd.DataFrame()
 
 
-log_cooldown = Cooldown(interval_sec=5)
+log_cooldown = Cooldown(interval_sec=2)
 log2_cooldown = Cooldown(interval_sec=1)
 arbitrage_cooldown = Cooldown(interval_sec=1)
 close_position_cooldown = Cooldown(interval_sec=1)
@@ -133,7 +135,7 @@ def calculate():
     log_cooldown_ready = log_cooldown.check()
     time_window = table.index[-1] - table.index[0]
     if log_cooldown_ready:
-        print(f'{time_window}')
+        logging.info(f'{time_window}')
     if time_window < delta(window_length_min):
         return
 
@@ -145,7 +147,7 @@ def calculate():
             zscores = stats.zscore(history)
 
             if log_cooldown_ready:
-                print('{:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
+                logging.info('{:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
                     pair, spread, spread_minus_avg, zscores[-1]))
 
             left, right = tuple(pair.split('-'))
@@ -192,19 +194,19 @@ def update_last_record(contract, asks_bids):
 
 
 async def update(contract, asks_bids):
-    # print(f'{asks_bids}')
+    # logging.info(f'{asks_bids}')
     update_last_record(contract, asks_bids)
 
 
 async def order_book_loop():
     async with websockets.connect(
-            'wss://real.okex.com:10440/websocket/okexapi') as websocket:
+            'wss://real.okex.com:10440/ws/v1') as websocket:
         for channel, _ in channels.items():
             await websocket.send(json.dumps({'event': 'addChannel',
                                              'channel': channel}))
 
         while True:
-            response_json = await websocket.recv()
+            response_json = inflate(await websocket.recv())
             response = json.loads(response_json)
             d = response[0]
             channel = d['channel']
@@ -252,7 +254,7 @@ async def order_book_source():
         try:
             await order_book_loop()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
 
 async def get_position_source():
@@ -260,10 +262,10 @@ async def get_position_source():
         try:
             await get_position_loop()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
 
-def main():
+def main(_):
     order.init(currency)
     position.init(currency)
     asyncio.ensure_future(order_book_source())
@@ -272,4 +274,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    app.run(main)

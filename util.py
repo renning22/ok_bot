@@ -1,6 +1,16 @@
+import zlib
 from datetime import datetime
 
 import numpy as np
+
+
+def inflate(data):
+    decompress = zlib.decompressobj(
+        -zlib.MAX_WBITS  # see above
+    )
+    inflated = decompress.decompress(data)
+    inflated += decompress.flush()
+    return inflated
 
 
 def delta(sec):
