@@ -2,13 +2,12 @@ import asyncio
 import functools
 import json
 import traceback
+from absl import flags
 from concurrent.futures import ProcessPoolExecutor
 from decimal import *
-
-import ccxt
-import pandas as pd
 import websockets
 from absl import app, logging
+import pandas as pd
 from scipy import stats
 
 import order
@@ -264,7 +263,9 @@ async def get_position_source():
             traceback.print_exc()
 
 
-def main(_):
+def main(argv):
+    global currency
+    currency = flags.FLAGS.symbol
     order.init(currency)
     position.init(currency)
     asyncio.ensure_future(order_book_source())
@@ -273,4 +274,5 @@ def main(_):
 
 
 if __name__ == '__main__':
+    flags.DEFINE_string('symbol', 'btc', 'symbol for crypto-currency in under case')
     app.run(main)
