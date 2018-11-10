@@ -66,8 +66,7 @@ def trigger_arbitrage(ask_type, bid_type):
     bid_price = last_record[f'{bid_type}_bid_price']
     bid_vol = last_record[f'{bid_type}_bid_vol']
     amount = max_order_amount
-    amount = min(amount, ask_vol)
-    amount = min(amount, bid_vol)
+    amount = min(amount, bid_vol, ask_vol)
 
     gap = (ask_price - best_ask_price) + (best_bid_price - bid_price)
     if gap > gap_threshold:
