@@ -1,6 +1,9 @@
 key.txt
 secret.txt
 
+# IDE project file
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
