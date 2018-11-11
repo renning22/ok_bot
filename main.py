@@ -134,7 +134,7 @@ def calculate():
     log_cooldown_ready = log_cooldown.check()
     time_window = table.index[-1] - table.index[0]
     if log_cooldown_ready:
-        logging.info(f'{time_window}')
+        logging.info(f'{currency} {time_window}')
     if time_window < delta(window_length_min):
         return
 
@@ -146,8 +146,8 @@ def calculate():
             zscores = stats.zscore(history)
 
             if log_cooldown_ready:
-                logging.info('{:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
-                    pair, spread, spread_minus_avg, zscores[-1]))
+                logging.info('{:<5} {:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
+                    currency, pair, spread, spread_minus_avg, zscores[-1]))
 
             left, right = tuple(pair.split('-'))
             ask_type = rchop(left, '_ask_price')
