@@ -1,13 +1,17 @@
 import asyncio
 import functools
+from concurrent.futures import ThreadPoolExecutor
 from decimal import *
 
+import cooldown
 import order
-from slack import send_unblock
-from util import Cooldown
+import slack
 
-arbitrage_cooldown = Cooldown(interval_sec=1)
-
+order_executors = {
+    'this_week': ThreadPoolExecutor(max_workers=1),
+    'next_week': ThreadPoolExecutor(max_workers=1),
+    'quarter': ThreadPoolExecutor(max_workers=1)
+}
 
 max_order_amount = Decimal('2')
 
@@ -22,13 +26,13 @@ def trigger_arbitrage(ask_type, bid_type, last_record):
     amount = max_order_amount
     amount = min(amount, bid_vol, ask_vol)
 
-    if not arbitrage_cooldown.check():
+    if not cooldown.trigger_arbitrage_cooldown():
         return
 
-    send_unblock(
+    slack.send_unblock(
         f'REQUEST: LONG on {ask_type} at {ask_price} for {amount} '
         f'(available vol {ask_vol})')
-    send_unblock(
+    slack.send_unblock(
         f'REQUEST: SHORT on {bid_type} at {bid_price} for {amount} '
         f'(available vol {bid_vol})')
 

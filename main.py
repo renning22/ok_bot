@@ -18,11 +18,6 @@ from schema import (columns, columns_best_asks, columns_best_bids,
 from slack import send_unblock
 from util import Cooldown, current_time, delta, inflate
 
-order_executors = {
-    'this_week': ProcessPoolExecutor(max_workers=1),
-    'next_week': ProcessPoolExecutor(max_workers=1),
-    'quarter': ProcessPoolExecutor(max_workers=1)
-}
 get_position_executor = ProcessPoolExecutor(max_workers=1)
 
 currency = 'btc'
