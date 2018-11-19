@@ -2,14 +2,15 @@ import asyncio
 import functools
 import json
 import traceback
-from absl import flags
 from concurrent.futures import ProcessPoolExecutor
 from decimal import *
-import websockets
-from absl import app, logging
+
 import pandas as pd
+import websockets
+from absl import app, flags, logging
 from scipy import stats
 
+import arbitrage
 import order
 import position
 from schema import (columns, columns_best_asks, columns_best_bids,
@@ -27,12 +28,8 @@ get_position_executor = ProcessPoolExecutor(max_workers=1)
 currency = 'btc'
 window_length_max = 60 * 10
 window_length_min = 60 * 3
-# zscore_threshold = -3.0
 spread_minus_avg_threshold = -26
-gap_threshold = 6
-close_position_zscore_threshold = 0.2
 close_position_take_profit_threshold = 8  # price_diff
-max_order_amount = Decimal('2')
 
 channels = {
     f'ok_sub_futureusd_{currency}_depth_this_week_5': 'this_week',
@@ -47,7 +44,6 @@ table = pd.DataFrame()
 
 log_cooldown = Cooldown(interval_sec=2)
 log2_cooldown = Cooldown(interval_sec=1)
-arbitrage_cooldown = Cooldown(interval_sec=1)
 close_position_cooldown = Cooldown(interval_sec=1)
 
 
@@ -55,46 +51,6 @@ def rchop(s, ending):
     if s.endswith(ending):
         return s[:-len(ending)]
     return s
-
-
-def trigger_arbitrage(ask_type, bid_type):
-    best_ask_price = last_record[f'{ask_type}_ask_price']
-    best_bid_price = last_record[f'{bid_type}_bid_price']
-    ask_price = last_record[f'{ask_type}_ask_price']
-    ask_vol = last_record[f'{ask_type}_ask_vol']
-    bid_price = last_record[f'{bid_type}_bid_price']
-    bid_vol = last_record[f'{bid_type}_bid_vol']
-    amount = max_order_amount
-    amount = min(amount, bid_vol, ask_vol)
-
-    gap = (ask_price - best_ask_price) + (best_bid_price - bid_price)
-    if gap > gap_threshold:
-        if log2_cooldown.check():
-            send_unblock(
-                f'Ignore: price gap too large: {gap} = '
-                f'{ask_price} - {best_ask_price} ({ask_type}), '
-                f'{best_bid_price} - {bid_price} ({bid_type})')
-        return
-
-    if not arbitrage_cooldown.check():
-        return
-
-    send_unblock(
-        f'REQUEST: LONG on {ask_type} at {ask_price} for {amount} '
-        f'(available vol {ask_vol})')
-    send_unblock(
-        f'REQUEST: SHORT on {bid_type} at {bid_price} for {amount} '
-        f'(available vol {bid_vol})')
-
-    long_order = functools.partial(
-        order.open_long_order, ask_type, amount, ask_price)
-    short_order = functools.partial(
-        order.open_short_order, bid_type, amount, bid_price)
-
-    asyncio.get_event_loop().run_in_executor(
-        order_executors[ask_type], long_order)
-    asyncio.get_event_loop().run_in_executor(
-        order_executors[bid_type], short_order)
 
 
 def check_close_position(ask_type, bid_type):
@@ -157,7 +113,7 @@ def calculate():
 
             # if zscores[-1] < zscore_threshold and diff < spread_minus_avg_threshold:
             if spread_minus_avg < spread_minus_avg_threshold:
-                trigger_arbitrage(ask_type, bid_type)
+                arbitrage.trigger_arbitrage(ask_type, bid_type, last_record)
 
 
 def last_record_to_row():
@@ -274,5 +230,6 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    flags.DEFINE_string('symbol', 'btc', 'symbol for crypto-currency in under case')
+    flags.DEFINE_string(
+        'symbol', 'btc', 'symbol for crypto-currency in under case')
     app.run(main)
