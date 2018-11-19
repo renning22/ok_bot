@@ -17,7 +17,12 @@ from schema import (columns, columns_best_asks, columns_best_bids,
 from slack import send_unblock
 from util import Cooldown, current_time, delta, inflate
 
-order_executors = {
+open_order_executors = {
+    'this_week': ProcessPoolExecutor(max_workers=1),
+    'next_week': ProcessPoolExecutor(max_workers=1),
+    'quarter': ProcessPoolExecutor(max_workers=1)
+}
+close_order_executors = {
     'this_week': ProcessPoolExecutor(max_workers=1),
     'next_week': ProcessPoolExecutor(max_workers=1),
     'quarter': ProcessPoolExecutor(max_workers=1)
@@ -92,9 +97,9 @@ def trigger_arbitrage(ask_type, bid_type):
         order.open_short_order, bid_type, amount, bid_price)
 
     asyncio.get_event_loop().run_in_executor(
-        order_executors[ask_type], long_order)
+        open_order_executors[ask_type], long_order)
     asyncio.get_event_loop().run_in_executor(
-        order_executors[bid_type], short_order)
+        open_order_executors[bid_type], short_order)
 
 
 def check_close_position(ask_type, bid_type):
@@ -114,8 +119,16 @@ def check_close_position(ask_type, bid_type):
                 f'Close Position: {ask_type}-{ask_type}, '
                 f'({best_bid_price} - {long_price}) + '
                 f'({short_price} - {best_ask_price}) = {estimate_price_diff}')
-            order.close_long_order(bid_type, amount, best_bid_price)
-            order.close_short_order(ask_type, amount, best_ask_price)
+
+            long_order = functools.partial(
+                order.close_long_order, bid_type, amount, best_bid_price)
+            short_order = functools.partial(
+                order.close_short_order, ask_type, amount, best_ask_price)
+
+            asyncio.get_event_loop().run_in_executor(
+                close_order_executors[bid_type], long_order)
+            asyncio.get_event_loop().run_in_executor(
+                close_order_executors[ask_type], short_order)
 
             # hot update
             if long_amount - 1 == 0:
