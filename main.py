@@ -2,20 +2,19 @@ import asyncio
 import functools
 import json
 import traceback
-from absl import flags
 from concurrent.futures import ProcessPoolExecutor
 from decimal import *
-import websockets
-from absl import app, logging
+
 import pandas as pd
+import websockets
+from absl import flags, logging
 from scipy import stats
 
-import order
-import position
-from schema import (columns, columns_best_asks, columns_best_bids,
-                    columns_cross, contract_types)
-from slack import send_unblock
-from util import Cooldown, current_time, delta, inflate
+from . import order, position
+from .schema import (columns, columns_best_asks, columns_best_bids,
+                     columns_cross, contract_types)
+from .slack import send_unblock
+from .util import Cooldown, current_time, delta, inflate
 
 open_order_executors = {
     'this_week': ProcessPoolExecutor(max_workers=1),
@@ -284,8 +283,3 @@ def main(argv):
     asyncio.ensure_future(order_book_source())
     asyncio.ensure_future(get_position_source())
     asyncio.get_event_loop().run_forever()
-
-
-if __name__ == '__main__':
-    flags.DEFINE_string('symbol', 'btc', 'symbol for crypto-currency in under case')
-    app.run(main)

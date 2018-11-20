@@ -1,6 +1,6 @@
 import asyncio
 
-import position
+from . import position
 
 
 async def ws_loop():

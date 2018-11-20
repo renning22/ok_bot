@@ -4,9 +4,8 @@ from decimal import *
 import ccxt
 import numpy as np
 
-import key
-import slack
-from util import current_time, delta, every_five, to_time
+from . import key, slack
+from .util import current_time, delta, every_five, to_time
 
 _api = ccxt.okex({
     'apiKey': key.api,
