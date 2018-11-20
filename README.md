@@ -1,9 +1,7 @@
 Install Anaconda3
 https://www.anaconda.com/download/
 
-pip install absl-py
-pip install ccxt
-pip install slackclient
+pip install absl-py ccxt slackclient python-socketio
 
 
 git clone https://github.com/renning22/ok_bot.git
