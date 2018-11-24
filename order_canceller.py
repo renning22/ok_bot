@@ -1,6 +1,6 @@
 import asyncio
 
-import position
+from . import position
 
 
 async def ws_loop():
@@ -18,6 +18,6 @@ async def hello():
             print(e)
 
 
-if __name__ == '__main__':
+def main(argv):
     position.init('btc')
     asyncio.get_event_loop().run_until_complete(hello())

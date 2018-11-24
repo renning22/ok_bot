@@ -2,8 +2,7 @@ from decimal import *
 
 import ccxt
 
-import key
-import slack
+from . import key, slack
 
 _api = ccxt.okex({
     'apiKey': key.api,
