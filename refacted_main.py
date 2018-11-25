@@ -22,7 +22,7 @@ def main(_):
     position_syncer = PositionSyncer(symbol, ok_rest_api, order_book)
     order_executor = OrderExecutor(ok_rest_api)
     trader = Trader(order_executor,
-                    constants.SPREAD_DEVIATION_THREASHOLD)
+                    constants.SPREAD_DEVIATION_THRESHOLD)
     reader = BookReader(order_book,
                         trader,
                         symbol)

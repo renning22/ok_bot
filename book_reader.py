@@ -31,7 +31,7 @@ class BookReader(object):
             try:
                 await self.read_loop_impl()
             except Exception as ex:
-                logging.error("read_loop encountred error: %s\n%s" %
+                logging.error("read_loop encountered error: %s\n%s" %
                               (str(ex), traceback.format_exc()))
 
     async def read_loop_impl(self):

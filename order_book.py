@@ -73,6 +73,27 @@ class OrderBook(object):
     def bid_volume(self, period):
         return self.last_record[f"{period}_bid_vol"]
 
+    def long_position_volume(self, period):
+        if period not in self.positions or 'long' not in self.positions[period]:
+            return 0
+        self.positions[period]['long']['volume']
+
+    def long_position_price(self, period):
+        if period not in self.positions or 'long' not in self.positions[period]:
+            return 0
+        self.positions[period]['long']['price']
+
+    def short_position_volume(self, period):
+        if period not in self.positions or 'short' not in self.positions[period]:
+            return 0
+        self.positions[period]['short']['volume']
+
+    def short_position_price(self, period):
+        if period not in self.positions or 'short' not in self.positions[period]:
+            return 0
+        self.positions[period]['short']['price']
+
+
     @property
     def row_num(self):
         return len(self.table)
@@ -109,8 +130,9 @@ class OrderBook(object):
             self.table = self.table.loc[self.table.index >= self.table.index[-1] - self.TIME_WINDOW]
 
     def update_position(self, period, data):
+        self.positions.setdefault(period, {})
         if period in self.positions:
-            del self.positions[period]
+            self.positions[period].clear()
 
         for p in data:
             self.positions[period][p['side']] = {

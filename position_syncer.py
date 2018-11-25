@@ -1,7 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from absl import logging
 import asyncio
-import time
+import traceback
 
 import constants
 
@@ -22,13 +22,21 @@ class PositionSyncer(object):
                         (period, p['side'], p['amount'], p['open_price']))
         self.order_book.update_position(period, latest_position)
 
-    async def read_loop(self):
+    async def read_loop_impl(self):
         while True:
             futures = []
             for period in constants.PERIOD_TYPES:
                 futures.append(self.fetch_position(period))
             await asyncio.gather(*futures)
             await asyncio.sleep(constants.POSITION_SYNC_SLEEP_IN_SECOND)
+
+    async def read_loop(self):
+        while True:
+            try:
+                await self.read_loop_impl()
+            except Exception as ex:
+                logging.error("get position read_loop encountered error:%s\n%s" %
+                              (str(ex), traceback.format_exc()))
 
 
 if __name__ == "__main__":
