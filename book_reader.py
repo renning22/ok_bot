@@ -29,12 +29,12 @@ class BookReader(object):
     async def read_loop(self):
         while True:
             try:
-                await self.read_loop_impl()
+                await self._read_loop_impl()
             except Exception as ex:
                 logging.error("read_loop encountered error: %s\n%s" %
                               (str(ex), traceback.format_exc()))
 
-    async def read_loop_impl(self):
+    async def _read_loop_impl(self):
         async with websockets.connect(OK_WEB_SOCKET_ADDRESS) as ws:
             for channel in self.SUBSCRIBED_CHANNELS.keys():
                 msg = json.dumps({
@@ -44,7 +44,7 @@ class BookReader(object):
                 await ws.send(msg)
                 logging.info(f"subscribed with {msg}")
             while True:
-                response = self.parse_response(await ws.recv())
+                response = BookReader._parse_response(await ws.recv())
                 channel = response['channel']
                 if channel not in self.SUBSCRIBED_CHANNELS.keys():
                     continue
@@ -69,10 +69,9 @@ class BookReader(object):
 
                 self.order_book.update_book(period, asks_bids)
                 self.trader.new_tick_received(self.order_book)
-                #asyncio.ensure_future(update(period, asks_bids))
-                #print(asks_bids)
 
-    def parse_response(self, response_bin):
+    @staticmethod
+    def _parse_response(response_bin):
         decompressor = zlib.decompressobj(-zlib.MAX_WBITS)
         inflated = decompressor.decompress(response_bin) + decompressor.flush()
         try:
@@ -84,12 +83,13 @@ class BookReader(object):
             return {}
 
 
-def testing(_):
+def _testing(_):
     logging.info("Testing BookReader")
     order_book = OrderBook()
     reader = BookReader(order_book, 'btc')
     asyncio.ensure_future(reader.read_loop())
     asyncio.get_event_loop().run_forever()
 
+
 if __name__ == "__main__":
-    app.run(testing)
+    app.run(_testing)

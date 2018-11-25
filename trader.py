@@ -1,3 +1,4 @@
+import constants
 from order_book import OrderBook
 from order_executor import OrderExecutor
 from absl import logging
@@ -28,16 +29,16 @@ class Trader(object):
             return
 
         self.order_book = order_book
-        for pair_column in order_book.ask_minus_bid_columns:
-            if pair_column not in order_book.table.columns:
+        for period_pair in constants.PERIOD_PAIRS:
+            ask_period, bid_period = period_pair
+            if not order_book.contains_gap_hisotry(ask_period, bid_period):
                 continue
-            ask_period, bid_period = OrderBook.extract_ask_bid_period(pair_column)
-            history = order_book.historical_mean_spread(pair_column)
-            current_spread = order_book.current_spread(pair_column)
+            history = order_book.historical_mean_spread(ask_period, bid_period)
+            current_spread = order_book.current_spread(ask_period, bid_period)
             deviation = current_spread - history
             logging.debug(f"{ask_period}[%.2f] "
-                         f"{bid_period}[%.2f] spread: {current_spread}, "
-                         f"history: {history}, devidation: {deviation}"
+                          f"{bid_period}[%.2f] spread: {current_spread}, "
+                          f"history: {history}, devidation: {deviation}"
                          % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
             # First check if we should open new position
             if deviation < self.arbitrage_threshold:
@@ -72,8 +73,6 @@ class Trader(object):
         ask_price = self.order_book.ask_price(short_period)
         estimated_profit = (bid_price - long_price) + (short_price - ask_price)
         return estimated_profit >= self.close_position_take_profit_threshold
-
-
 
     def arbitrage_trading(self, long_period, short_period):
         # TODO: add logic about lock position

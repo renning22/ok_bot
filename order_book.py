@@ -12,23 +12,8 @@ class OrderBook(object):
         self.columns = ['timestamp', 'source']
         self.last_record = {}
         self.TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
-        for period in constants.PERIOD_TYPES:
-            for side in ['bid', 'ask']:
-                for depth in ['', '2', '3']:
-                    self.columns.append(f'{period}_{side}{depth}_price')
-                    self.columns.append(f'{period}_{side}{depth}_vol')
-        self.columns_best_asks = [f'{period}_ask_price' for period in constants.PERIOD_TYPES]
-        self.columns_best_bids = [f'{period}_bid_price' for period in constants.PERIOD_TYPES]
-        self.ask_minus_bid_columns = []
-        for ask in self.columns_best_asks:
-            for bid in self.columns_best_bids:
-                ask_period = OrderBook.extract_period(ask)
-                bid_period = OrderBook.extract_period(bid)
-                assert ask_period in constants.PERIOD_TYPES
-                assert bid_period in constants.PERIOD_TYPES
-                if ask_period != bid_period:  # if not same contract_type
-                    self.ask_minus_bid_columns.append(f'{ask}-{bid}')
-        self.columns = set(self.columns)
+        self.columns = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
+        self.ask_minus_bid_columns = OrderBook._generate_pair_columns()
         # position data
         self.positions = {}
 
@@ -36,7 +21,7 @@ class OrderBook(object):
     # for example:
     # next_week_ask_price-this_week_bid_price => (next_week, this_week)
     @staticmethod
-    def extract_ask_bid_period(column_name):
+    def _extract_ask_bid_period(column_name):
         assert '-' in column_name
         ask, bid = column_name.split('-')
         return OrderBook.extract_period(ask), OrderBook.extract_period(bid)
@@ -55,10 +40,19 @@ class OrderBook(object):
             return "quarter"
         raise Exception("trying to extract period from [%s], should never happen" % column_name)
 
-    def historical_mean_spread(self, column):
+    def contains_gap_hisotry(self, ask_period, bid_period):
+        return OrderBook._pair_column(ask_period, bid_period) in self.table.columns
+
+    @staticmethod
+    def _pair_column(self, ask_period, bid_period):
+        return f"{ask_period}_ask_price-{bid_period}_bid_price"
+
+    def historical_mean_spread(self, ask_period, bid_period):
+        column = OrderBook._pair_column(ask_period, bid_period)
         return self.table[column].astype('float64').values[:-1].mean()
 
-    def current_spread(self, column):
+    def current_spread(self, ask_period, bid_period):
+        column = OrderBook._pair_column(ask_period, bid_period)
         return self.table[column].astype('float64').values[-1]
 
     def ask_price(self, period):
@@ -104,7 +98,7 @@ class OrderBook(object):
             return 0
         return self.table.index[-1] - self.table.index[0]
 
-    def build_table_row(self, record):
+    def _build_table_row(self, record):
         data = {}
         for c in self.columns:
             if c != 'timestamp':
@@ -125,7 +119,7 @@ class OrderBook(object):
             assert(key in self.columns)
             self.last_record[key] = value
         if len(self.last_record) == len(self.columns):
-            self.table = self.table.append(self.build_table_row(self.last_record))
+            self.table = self.table.append(self._build_table_row(self.last_record))
             # remove old rows
             self.table = self.table.loc[self.table.index >= self.table.index[-1] - self.TIME_WINDOW]
 
@@ -142,9 +136,32 @@ class OrderBook(object):
 
     def print_debug_string(self):
         pprint.pprint(self.columns)
-        pprint.pprint(self.columns_best_asks)
-        pprint.pprint(self.columns_best_bids)
         pprint.pprint(self.ask_minus_bid_columns)
+
+    @staticmethod
+    def _generate_table_columns():
+        columns = []
+        for period in constants.PERIOD_TYPES:
+            for side in ['bid', 'ask']:
+                for depth in ['', '2', '3']:
+                    columns.append(f'{period}_{side}{depth}_price')
+                    columns.append(f'{period}_{side}{depth}_vol')
+        return columns
+
+    @staticmethod
+    def _generate_pair_columns():
+        asks = [f'{period}_ask_price' for period in constants.PERIOD_TYPES]
+        bids = [f'{period}_bid_price' for period in constants.PERIOD_TYPES]
+        columns = []
+        for ask in asks:
+            for bid in bids:
+                ask_period = OrderBook.extract_period(ask)
+                bid_period = OrderBook.extract_period(bid)
+                assert ask_period in constants.PERIOD_TYPES
+                assert bid_period in constants.PERIOD_TYPES
+                if ask_period != bid_period:  # if not same contract_type
+                    columns.append(f'{ask}-{bid}')
+        return columns
 
 
 if __name__ == '__main__':

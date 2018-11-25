@@ -1,4 +1,3 @@
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from absl import logging
 import asyncio
 import traceback
@@ -11,7 +10,6 @@ class PositionSyncer(object):
         self.api = api
         self.symbol = "%s/USD" % symbol.upper()
         self.order_book = order_book
-        self.executor = ProcessPoolExecutor(max_workers=len(constants.PERIOD_TYPES))
 
     async def fetch_position(self, period):
         latest_position = self.api.get_position(period)
@@ -24,10 +22,8 @@ class PositionSyncer(object):
 
     async def read_loop_impl(self):
         while True:
-            futures = []
-            for period in constants.PERIOD_TYPES:
-                futures.append(self.fetch_position(period))
-            await asyncio.gather(*futures)
+            futures = [futures.append(self.fetch_position(period)) for period in constants.PERIOD_TYPES]
+            await asyncio.gather(*futures)  # block for each batch. One batch contains all periods
             await asyncio.sleep(constants.POSITION_SYNC_SLEEP_IN_SECOND)
 
     async def read_loop(self):
