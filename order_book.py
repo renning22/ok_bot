@@ -9,7 +9,6 @@ class OrderBook:
     def __init__(self):
         # order book data
         self.table = pd.DataFrame()
-        self.columns = ['timestamp', 'source']
         self.last_record = {}
         self.TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
         self.columns = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
@@ -32,20 +31,20 @@ class OrderBook:
     @staticmethod
     def extract_period(column_name):
         assert '-' not in column_name # ask_minus_bid_columns name should never be passed
-        if column_name.startswith("this_week_"):
-            return "this_week"
-        if column_name.startswith("next_week_"):
-            return "next_week"
-        if column_name.startswith("quarter_"):
-            return "quarter"
-        raise Exception("trying to extract period from [%s], should never happen" % column_name)
+        if column_name.startswith('this_week_'):
+            return 'this_week'
+        if column_name.startswith('next_week_'):
+            return 'next_week'
+        if column_name.startswith('quarter_'):
+            return 'quarter'
+        raise Exception(f'trying to extract period from [{column_name}], should never happen')
 
     def contains_gap_hisotry(self, ask_period, bid_period):
         return OrderBook._pair_column(ask_period, bid_period) in self.table.columns
 
     @staticmethod
     def _pair_column(ask_period, bid_period):
-        return f"{ask_period}_ask_price-{bid_period}_bid_price"
+        return f'{ask_period}_ask_price-{bid_period}_bid_price'
 
     def historical_mean_spread(self, ask_period, bid_period):
         column = OrderBook._pair_column(ask_period, bid_period)
@@ -56,16 +55,16 @@ class OrderBook:
         return self.table[column].astype('float64').values[-1]
 
     def ask_price(self, period):
-        return self.last_record[f"{period}_ask_price"]
+        return self.last_record[f'{period}_ask_price']
 
     def bid_price(self, period):
-        return self.last_record[f"{period}_bid_price"]
+        return self.last_record[f'{period}_bid_price']
 
     def ask_volume(self, period):
-        return self.last_record[f"{period}_ask_vol"]
+        return self.last_record[f'{period}_ask_vol']
 
     def bid_volume(self, period):
-        return self.last_record[f"{period}_bid_vol"]
+        return self.last_record[f'{period}_bid_vol']
 
     def long_position_volume(self, period):
         if period not in self.positions or 'long' not in self.positions[period]:

@@ -14,7 +14,7 @@ import asyncio
 def main(_):
     symbol = absl.flags.FLAGS.symbol
     logging.get_absl_logger()
-    logging.info("starting program with [%s]" % symbol)
+    logging.info(f'starting program with {symbol}')
 
     # initialize components
     order_book = OrderBook()

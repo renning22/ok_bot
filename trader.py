@@ -25,7 +25,7 @@ class Trader:
 
     def new_tick_received(self, order_book):
         if order_book.row_num <= 1 or order_book.time_window < self.min_time_window:
-            logging.info("too few ticks, skip trading")
+            logging.info('too few ticks, skip trading')
             return
 
         self.order_book = order_book
@@ -36,9 +36,9 @@ class Trader:
             history = order_book.historical_mean_spread(ask_period, bid_period)
             current_spread = order_book.current_spread(ask_period, bid_period)
             deviation = current_spread - history
-            logging.debug(f"{ask_period}[%.2f] "
-                          f"{bid_period}[%.2f] spread: {current_spread}, "
-                          f"history: {history}, devidation: {deviation}"
+            logging.debug(f'{ask_period}[%.2f] '
+                          f'{bid_period}[%.2f] spread: {current_spread}, '
+                          f'history: {history}, devidation: {deviation}'
                          % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
             # First check if we should open new position
             if deviation < self.arbitrage_threshold:
@@ -48,15 +48,15 @@ class Trader:
                 self.close_arbitrage(ask_period, bid_period)
 
     def close_arbitrage(self, long_period, short_period):
-        logging.info("closing arbitrage position with (%s, %s)" % (long_period, short_period))
+        logging.info('closing arbitrage position with (%s, %s)' % (long_period, short_period))
         vol = min(self.order_book.long_position_volume(long_period),
                   self.order_book.short_position_volume(short_period),
                   self.order_book.ask_volume(long_period),
                   self.order_book.bid_volume(short_period),
                   self.max_volume_per_trading)
         if vol <= 0:
-            logging.warning(f"trying to close with [{long_period}] and [{short_period}], "
-                            f"but the volume available is {vol}")
+            logging.warning(f'trying to close with [{long_period}] and [{short_period}], '
+                            f'but the volume available is {vol}')
             return
         self.order_executor.close_long(long_period, self.order_book.bid_price(long_period), vol)
         self.order_executor.close_short(short_period, self.order_book.ask_volume(short_period), vol)
@@ -76,7 +76,7 @@ class Trader:
 
     def arbitrage_trading(self, long_period, short_period):
         # TODO: add logic about lock position
-        logging.info("opening arbitrage position with (%s, %s)" % (long_period, short_period))
+        logging.info('opening arbitrage position with (%s, %s)' % (long_period, short_period))
         vol = min(self.order_book.ask_volume(long_period),
                   self.order_book.bid_volume(short_period),
                   self.max_volume_per_trading)
@@ -86,7 +86,7 @@ class Trader:
         self.order_executor.open_short(short_period, self.order_book.bid_price(short_period), vol)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     def main(_):
         executor = OrderExecutor(OKRest('btc'))
         trader = Trader(executor, 0, np.timedelta64(1, 's'))

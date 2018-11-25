@@ -24,15 +24,15 @@ class BookReader:
             f'ok_sub_futureusd_{currency}_depth_next_week_5': 'next_week',
             f'ok_sub_futureusd_{currency}_depth_quarter_5': 'quarter'
         }
-        logging.info("BookReader initiated")
+        logging.info('BookReader initiated')
 
     async def read_loop(self):
         while True:
             try:
                 await self._read_loop_impl()
             except Exception as ex:
-                logging.error("read_loop encountered error: %s\n%s" %
-                              (str(ex), traceback.format_exc()))
+                logging.error('booker reader read_loop encountered error:{str(ex)}\n'
+                              '{traceback.format_exc()}')
 
     async def _read_loop_impl(self):
         async with websockets.connect(OK_WEB_SOCKET_ADDRESS) as ws:
@@ -42,7 +42,7 @@ class BookReader:
                     'channel': channel
                 })
                 await ws.send(msg)
-                logging.info(f"subscribed with {msg}")
+                logging.info(f'subscribed with {msg}')
             while True:
                 response = BookReader._parse_response(await ws.recv())
                 channel = response['channel']
@@ -79,17 +79,17 @@ class BookReader:
             assert len(resp) > 0
             return resp[0]
         except Exception as ex:
-            logging.error("failed to parse OK web socket result" + ex)
+            logging.error('failed to parse OK web socket result' + ex)
             return {}
 
 
 def _testing(_):
-    logging.info("Testing BookReader")
+    logging.info('Testing BookReader')
     order_book = OrderBook()
     reader = BookReader(order_book, 'btc')
     asyncio.ensure_future(reader.read_loop())
     asyncio.get_event_loop().run_forever()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(_testing)

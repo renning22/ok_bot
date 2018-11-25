@@ -17,7 +17,7 @@ class OKRest:
         self.ccxt.load_markets()
 
     def create_order(self, contract_type, type, side, amount, price=None, params={}):
-        logging.info(f"executing order {contract_type} {type} {side} vol: {amount}, price: {price}")
+        logging.info(f'executing order {contract_type} {type} {side} vol: {amount}, price: {price}')
         try:
             market = self.ccxt.market(self.symbol)
             method = 'privatePost'
@@ -61,10 +61,10 @@ class OKRest:
                 'trades': None,
                 'fee': None,
             }
-            logging.info("executed order result: " + ret)
+            logging.info('executed order result: ' + ret)
             return ret
         except Exception as e:
-            logging.error(f"failed to execute order[{contract_type} {type} {side} vol: {amount}, price: {price}]: " +
+            logging.error(f'failed to execute order[{contract_type} {type} {side} vol: {amount}, price: {price}]: ' +
                           str(e))
         return None
     
