@@ -9,7 +9,7 @@ import asyncio
 MIN_TIME_WINDOW_IN_SECOND = 1  # 60 * 3 # 3 minutes
 
 
-class Trader(object):
+class Trader:
     def __init__(self,
                  order_executor,
                  arbitrage_threshold,

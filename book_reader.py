@@ -11,7 +11,7 @@ from order_book import OrderBook
 OK_WEB_SOCKET_ADDRESS = 'wss://real.okex.com:10440/ws/v1'
 
 
-class BookReader(object):
+class BookReader:
     SUBSCRIBED_CHANNELS: Dict[str, str]
 
     def __init__(self, order_book, trader, currency):

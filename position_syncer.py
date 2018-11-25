@@ -5,7 +5,7 @@ import traceback
 import constants
 
 
-class PositionSyncer(object):
+class PositionSyncer:
     def __init__(self, symbol, api, order_book):
         self.api = api
         self.symbol = "%s/USD" % symbol.upper()

@@ -4,7 +4,7 @@ from absl import logging
 import time
 
 
-class OrderExecutor(object):
+class OrderExecutor:
     def __init__(self, api):
         self.api = api
         self.open_order_executors = {

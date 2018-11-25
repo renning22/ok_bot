@@ -8,7 +8,7 @@ from absl import logging
 from decimal import Decimal
 
 
-class OKRest(object):
+class OKRest:
     def __init__(self, currency):
         self.symbol = f'{currency.upper()}/USD'
         self.ccxt = ccxt.okex({

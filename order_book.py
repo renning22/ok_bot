@@ -5,7 +5,7 @@ import pprint
 import constants
 
 
-class OrderBook(object):
+class OrderBook:
     def __init__(self):
         # order book data
         self.table = pd.DataFrame()
