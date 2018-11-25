@@ -22,7 +22,7 @@ class PositionSyncer:
 
     async def read_loop_impl(self):
         while True:
-            futures = [futures.append(self.fetch_position(period)) for period in constants.PERIOD_TYPES]
+            futures = [self.fetch_position(period) for period in constants.PERIOD_TYPES]
             await asyncio.gather(*futures)  # block for each batch. One batch contains all periods
             await asyncio.sleep(constants.POSITION_SYNC_SLEEP_IN_SECOND)
 

@@ -44,7 +44,7 @@ class OrderBook:
         return OrderBook._pair_column(ask_period, bid_period) in self.table.columns
 
     @staticmethod
-    def _pair_column(self, ask_period, bid_period):
+    def _pair_column(ask_period, bid_period):
         return f"{ask_period}_ask_price-{bid_period}_bid_price"
 
     def historical_mean_spread(self, ask_period, bid_period):
