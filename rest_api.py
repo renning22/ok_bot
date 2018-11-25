@@ -1,3 +1,5 @@
+# TODO: make sure load_markets call is necessary or not
+
 import ccxt
 
 import key

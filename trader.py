@@ -33,7 +33,7 @@ class Trader(object):
             history = order_book.historical_mean_spread(pair_column)
             current_spread = order_book.current_spread(pair_column)
             deviation = current_spread - history
-            logging.info(f"{ask_period}[%.2f] "
+            logging.debug(f"{ask_period}[%.2f] "
                          f"{bid_period}[%.2f] spread: {current_spread}, "
                          f"history: {history}, devidation: {deviation}"
                          % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
@@ -43,18 +43,18 @@ class Trader(object):
 
     def arbitrage_trading(self, long_period, short_period):
         # TODO: add logic about lock position
+        logging.info("opening arbitrage position with (%s, %s)" % (long_period, short_period))
         vol = min(self.order_book.ask_volume(long_period),
                   self.order_book.bid_volume(short_period),
                   self.max_volume_per_trading)
-        asyncio.ensure_future(
-            self.arbitrage_with_executors(long_period, self.order_book.ask_price(long_period),
-                                          short_period, self.order_book.bid_price(short_period),
-                                          vol)
-        )
 
-    async def arbitrage_with_executors(self, long_period, long_price, short_period, short_price, volume):
-        self.order_executor.long(long_period, long_price, volume)
-        self.order_executor.short(short_period, short_price, volume)
+        self.arbitrage_with_executors(long_period, self.order_book.ask_price(long_period),
+                                      short_period, self.order_book.bid_price(short_period),
+                                      vol)
+
+    def arbitrage_with_executors(self, long_period, long_price, short_period, short_price, volume):
+        self.order_executor.open_long(long_period, long_price, volume)  # only add future, non-block
+        self.order_executor.open_short(short_period, short_price, volume)  # only add future, non-block
 
 
 if __name__ == "__main__":

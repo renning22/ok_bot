@@ -4,16 +4,16 @@ from order_executor import OrderExecutor
 from position_syncer import PositionSyncer
 from rest_api import OKRest
 from trader import Trader
+import constants
 
 from absl import logging
 import absl
 import asyncio
 
-SPREAD_DEVIATION_THREASHOLD = -26
-
 
 def main(_):
     symbol = absl.flags.FLAGS.symbol
+    logging.get_absl_logger()
     logging.info("starting program with [%s]" % symbol)
 
     # initialize components
@@ -22,13 +22,12 @@ def main(_):
     position_syncer = PositionSyncer(symbol, ok_rest_api, order_book)
     order_executor = OrderExecutor(ok_rest_api)
     trader = Trader(order_executor,
-                    SPREAD_DEVIATION_THREASHOLD)
+                    constants.SPREAD_DEVIATION_THREASHOLD)
     reader = BookReader(order_book,
                         trader,
                         symbol)
-
-    asyncio.ensure_future(position_syncer.read_loop())
-    #asyncio.ensure_future(reader.read_loop())
+    asyncio.ensure_future(position_syncer.read_loop()),
+    asyncio.ensure_future(reader.read_loop())
     asyncio.get_event_loop().run_forever()
 
 

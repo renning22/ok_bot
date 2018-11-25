@@ -4,6 +4,7 @@ from decimal import Decimal
 import websockets
 import zlib
 import json
+import traceback
 from absl import logging, app
 from order_book import OrderBook
 
@@ -26,6 +27,14 @@ class BookReader(object):
         logging.info("BookReader initiated")
 
     async def read_loop(self):
+        while True:
+            try:
+                await self.read_loop_impl()
+            except Exception as ex:
+                logging.error("read_loop encountred error: %s\n%s" %
+                              (str(ex), traceback.format_exc()))
+
+    async def read_loop_impl(self):
         async with websockets.connect(OK_WEB_SOCKET_ADDRESS) as ws:
             for channel in self.SUBSCRIBED_CHANNELS.keys():
                 msg = json.dumps({
