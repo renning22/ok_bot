@@ -1,13 +1,12 @@
-import sys
 import json
 import websockets
 import asyncio
 import zlib
 import hashlib
 
-sys.path.append('./')
-from key import api as api_key  # public key
-from key import secret as api_secret  # private key
+from ..key import api as api_key  # public key
+from ..key import secret as api_secret  # private key
+
 
 def sign(params):
     sign = ''
