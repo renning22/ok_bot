@@ -26,7 +26,7 @@ def main(_):
     reader = BookReader(order_book,
                         trader,
                         symbol)
-    asyncio.ensure_future(position_syncer.read_loop()),
+    position_syncer.read_loop()
     asyncio.ensure_future(reader.read_loop())
     asyncio.get_event_loop().run_forever()
 

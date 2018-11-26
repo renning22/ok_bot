@@ -1,6 +1,7 @@
 from absl import logging
-import asyncio
 import traceback
+import eventlet
+
 
 import constants
 
@@ -11,32 +12,40 @@ class PositionSyncer:
         self.symbol = f'{symbol.upper()}/USD'
         self.order_book = order_book
 
-    async def fetch_position(self, period):
+    def fetch_position(self, period):
+        print(f'start syncing for {period}')
         latest_position = self.api.get_position(period)
         logging.info(f'fetched for {period} and got {len(latest_position)} updates')
         for p in latest_position:
             assert period == p['contract_type']
             logging.log('synced position {period} {p["side"]} p["amount"] %.2f' % p['open_price'])
-        self.order_book.update_position(period, latest_position)
+        if len(latest_position) > 0:
+            self.order_book.update_position(period, latest_position)
+        print(f'done syncing for {period}')
 
-    async def read_loop_impl(self):
+    def read_loop_impl(self):
+        pool = eventlet.GreenPool(size=3)
+        pool.imap(self.fetch_position, constants.PERIOD_TYPES)
         while True:
-            futures = [self.fetch_position(period) for period in constants.PERIOD_TYPES]
-            await asyncio.gather(*futures)  # block for each batch. One batch contains all periods
-            await asyncio.sleep(constants.POSITION_SYNC_SLEEP_IN_SECOND)
+            for period in constants.PERIOD_TYPES:
+                pool.spawn_n(self.fetch_position, period)
+            eventlet.sleep(constants.POSITION_SYNC_SLEEP_IN_SECOND)
+            pool.waitall()
 
-    async def read_loop(self):
+    def read_loop(self):
         while True:
             try:
-                await self.read_loop_impl()
+                self.read_loop_impl()
             except Exception as ex:
-                logging.error('get position read_loop encountered error:{str(ex)}\n'
-                              '{traceback.format_exc()}')
+                logging.error(f'get position read_loop encountered error:{str(ex)}\n'
+                              f'{traceback.format_exc()}')
 
 
 if __name__ == '__main__':
+    rest_api = eventlet.import_patched('rest_api')
+    OKRest = rest_api.OKRest
     from rest_api import OKRest
     syncer = PositionSyncer('btc', OKRest('btc'), None)
-    asyncio.get_event_loop().run_until_complete(asyncio.ensure_future(syncer.read_loop()))
+    syncer.read_loop()
 
 

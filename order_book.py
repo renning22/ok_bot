@@ -69,22 +69,22 @@ class OrderBook:
     def long_position_volume(self, period):
         if period not in self.positions or 'long' not in self.positions[period]:
             return 0
-        self.positions[period]['long']['volume']
+        return self.positions[period]['long']['volume']
 
     def long_position_price(self, period):
         if period not in self.positions or 'long' not in self.positions[period]:
             return 0
-        self.positions[period]['long']['price']
+        return self.positions[period]['long']['price']
 
     def short_position_volume(self, period):
         if period not in self.positions or 'short' not in self.positions[period]:
             return 0
-        self.positions[period]['short']['volume']
+        return self.positions[period]['short']['volume']
 
     def short_position_price(self, period):
         if period not in self.positions or 'short' not in self.positions[period]:
             return 0
-        self.positions[period]['short']['price']
+        return self.positions[period]['short']['price']
 
 
     @property
