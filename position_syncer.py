@@ -13,7 +13,7 @@ class PositionSyncer:
         self.order_book = order_book
 
     def fetch_position(self, period):
-        print(f'start syncing for {period}')
+        #print(f'start syncing for {period}')
         latest_position = self.api.get_position(period)
         logging.info(f'fetched for {period} and got {len(latest_position)} updates')
         for p in latest_position:
@@ -21,7 +21,7 @@ class PositionSyncer:
             logging.log('synced position {period} {p["side"]} p["amount"] %.2f' % p['open_price'])
         if len(latest_position) > 0:
             self.order_book.update_position(period, latest_position)
-        print(f'done syncing for {period}')
+        #print(f'done syncing for {period}')
 
     def read_loop_impl(self):
         pool = eventlet.GreenPool(size=3)
