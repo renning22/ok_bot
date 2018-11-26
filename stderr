@@ -1,0 +1,1209 @@
+I1125 18:06:53.610860 140735923045248 refacted_main.py:17] starting program with btc
+I1125 18:06:53.950253 140735923045248 book_reader.py:27] BookReader initiated
+I1125 18:06:54.154157 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:06:54.355971 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:06:54.577050 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:06:55.277443 140735923045248 book_reader.py:45] subscribed with {"event": "addChannel", "channel": "ok_sub_futureusd_btc_depth_this_week_5"}
+I1125 18:06:55.277670 140735923045248 book_reader.py:45] subscribed with {"event": "addChannel", "channel": "ok_sub_futureusd_btc_depth_next_week_5"}
+I1125 18:06:55.277827 140735923045248 book_reader.py:45] subscribed with {"event": "addChannel", "channel": "ok_sub_futureusd_btc_depth_quarter_5"}
+I1125 18:06:55.451450 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:55.451790 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:55.456847 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:55.697612 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:55.794277 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:56.234591 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:56.336410 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:56.368250 140735923045248 trader.py:28] too few ticks, skip trading
+I1125 18:06:56.783508 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:06:56.982511 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:06:57.194293 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:06:57.200286 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:06:57.200695 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.9 vol:1
+I1125 18:06:57.200986 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.86 vol:1
+I1125 18:06:57.201379 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:06:57.201507 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.98 vol:2
+I1125 18:06:57.201742 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.6 vol:2
+I1125 18:06:57.202112 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.202235 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.98 vol:2
+I1125 18:06:57.202420 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:57.207828 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:06:57.208002 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.9 vol:1
+I1125 18:06:57.208112 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.86 vol:1
+I1125 18:06:57.208451 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:06:57.208570 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.98 vol:2
+I1125 18:06:57.208672 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.6 vol:2
+I1125 18:06:57.209007 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.209133 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.98 vol:2
+I1125 18:06:57.209235 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:57.313573 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:06:57.313778 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.86 vol:1
+I1125 18:06:57.313889 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.6 vol:1
+I1125 18:06:57.314207 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.314337 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.86 vol:1
+I1125 18:06:57.314433 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:1
+I1125 18:06:57.413940 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.414119 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.86 vol:1
+I1125 18:06:57.414216 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:1
+I1125 18:06:57.452096 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.452301 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.86 vol:1
+I1125 18:06:57.452419 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:1
+I1125 18:06:57.857572 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:57.857762 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.85 vol:2
+I1125 18:06:57.857867 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.451215 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.451426 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.451547 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.451910 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.452036 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.452142 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:58.453192 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:58.453323 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.85 vol:2
+I1125 18:06:58.453449 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.457892 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.458101 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.458220 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.458580 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.458703 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.458807 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:58.459850 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:58.459977 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.85 vol:2
+I1125 18:06:58.460088 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.464226 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.464406 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.464521 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.464880 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.465006 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.17 vol:2
+I1125 18:06:58.465111 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:58.466187 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:58.466318 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.84 vol:2
+I1125 18:06:58.466441 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.488151 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.488363 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.488467 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.488782 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.488888 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.488981 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:58.489893 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:58.490000 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.84 vol:2
+I1125 18:06:58.490814 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.533699 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.533903 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.534014 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.534371 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.534494 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.534601 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:58.536122 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:58.536264 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.84 vol:2
+I1125 18:06:58.536388 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.998131 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:58.998354 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.998478 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:58.998863 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:58.998987 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.16 vol:2
+I1125 18:06:58.999094 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:59.000138 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:59.000267 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.83 vol:2
+I1125 18:06:59.000379 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.031149 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:59.031365 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.15 vol:2
+I1125 18:06:59.031490 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.031879 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:59.032014 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.15 vol:2
+I1125 18:06:59.032128 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:59.033279 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:59.033406 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.83 vol:2
+I1125 18:06:59.033514 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.203863 123145520779264 order_executor.py:47] opened short executed for ('quarter', Decimal('1'), Decimal('3912.86'))
+I1125 18:06:59.205359 123145526034432 order_executor.py:47] opened short executed for ('this_week', 2, Decimal('3908.6'))
+I1125 18:06:59.400592 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:06:59.599749 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:06:59.798666 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:06:59.804226 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:59.804401 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.15 vol:2
+I1125 18:06:59.804517 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.804880 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:59.805016 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.15 vol:2
+I1125 18:06:59.805125 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:59.806210 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:59.806416 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.82 vol:2
+I1125 18:06:59.806537 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.810945 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:59.811102 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:06:59.811213 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.811562 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:59.811681 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:06:59.811781 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:59.812791 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:59.812913 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.82 vol:2
+I1125 18:06:59.813019 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.817422 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:06:59.817613 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:06:59.817722 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:06:59.818061 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:06:59.818176 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:06:59.818274 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.64 vol:2
+I1125 18:06:59.819257 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:06:59.819425 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.82 vol:2
+I1125 18:06:59.819547 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.293930 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.294149 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:07:00.294268 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.294635 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.294812 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.14 vol:2
+I1125 18:07:00.294924 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.38 vol:2
+I1125 18:07:00.295982 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.296164 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.64 vol:2
+I1125 18:07:00.296277 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.300371 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.300506 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:2
+I1125 18:07:00.300631 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.300970 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.301085 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:2
+I1125 18:07:00.301183 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.38 vol:2
+I1125 18:07:00.302189 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.302314 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.64 vol:2
+I1125 18:07:00.302417 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.306080 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.306207 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:2
+I1125 18:07:00.306307 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.306622 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.306731 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:2
+I1125 18:07:00.306840 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.38 vol:2
+I1125 18:07:00.307802 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.307913 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.64 vol:2
+I1125 18:07:00.308016 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.911318 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.911583 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:2
+I1125 18:07:00.911776 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.912208 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.912342 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.12 vol:1
+I1125 18:07:00.912473 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.39 vol:1
+I1125 18:07:00.913563 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.913692 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.63 vol:1
+I1125 18:07:00.913818 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:1
+I1125 18:07:00.918091 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.918231 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.11 vol:2
+I1125 18:07:00.918340 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:2
+I1125 18:07:00.918688 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.918806 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.11 vol:1
+I1125 18:07:00.918946 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.39 vol:1
+I1125 18:07:00.920274 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.920474 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.63 vol:1
+I1125 18:07:00.920583 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.24 vol:1
+I1125 18:07:00.924590 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:00.924733 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.11 vol:2
+I1125 18:07:00.924839 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:00.925174 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:00.925288 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.11 vol:1
+I1125 18:07:00.925388 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.39 vol:1
+I1125 18:07:00.926533 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:00.926663 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.63 vol:1
+I1125 18:07:00.926767 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:1
+I1125 18:07:01.203397 123145515524096 order_executor.py:51] opened long executed for ('next_week', Decimal('1'), Decimal('3907.9'))
+I1125 18:07:01.207985 123145526034432 order_executor.py:47] opened short executed for ('this_week', 2, Decimal('3908.6'))
+I1125 18:07:01.231887 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:01.232089 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.11 vol:2
+I1125 18:07:01.232195 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.233179 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:01.233304 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:01.233403 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:01.233741 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:01.233865 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:2
+I1125 18:07:01.233959 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.243639 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:01.243840 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.1 vol:2
+I1125 18:07:01.243975 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.245224 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:01.245356 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:01.245458 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:01.245800 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:01.245914 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:2
+I1125 18:07:01.246009 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.253875 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:01.254073 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.1 vol:2
+I1125 18:07:01.255442 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.256642 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:01.256805 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:01.256907 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:01.258270 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:01.258552 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:2
+I1125 18:07:01.258687 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.774171 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:01.774471 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.1 vol:2
+I1125 18:07:01.774619 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:01.775767 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:01.775928 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.87 vol:1
+I1125 18:07:01.776638 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:01.777410 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:01.777594 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.87 vol:2
+I1125 18:07:01.777714 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.072335 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:02.465662 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:02.670711 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:02.675900 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:02.676050 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.1 vol:2
+I1125 18:07:02.676162 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.677234 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.677361 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.87 vol:1
+I1125 18:07:02.677469 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:02.677824 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:02.677946 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.87 vol:2
+I1125 18:07:02.678050 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.681938 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:02.682074 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.43 vol:1
+I1125 18:07:02.682183 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:1
+I1125 18:07:02.682545 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:02.682688 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.43 vol:1
+I1125 18:07:02.682846 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.1 vol:1
+I1125 18:07:02.683973 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:02.684103 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.87 vol:2
+I1125 18:07:02.684221 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.688282 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:02.688420 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.43 vol:1
+I1125 18:07:02.688530 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:1
+I1125 18:07:02.688894 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:02.689018 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.43 vol:1
+I1125 18:07:02.689126 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:1
+I1125 18:07:02.689970 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.690099 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.1 vol:2
+I1125 18:07:02.690217 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.18 vol:2
+I1125 18:07:02.690595 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:02.690727 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.1 vol:2
+I1125 18:07:02.690835 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.695205 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:02.695410 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.3 vol:1
+I1125 18:07:02.695523 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:1
+I1125 18:07:02.696557 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.696702 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.1 vol:2
+I1125 18:07:02.696821 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:02.697170 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:02.697289 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.1 vol:2
+I1125 18:07:02.697399 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.23 vol:2
+I1125 18:07:02.701816 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:02.701971 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.702075 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:02.702428 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:02.702554 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.702655 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:2
+I1125 18:07:02.702997 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.703109 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.1 vol:2
+I1125 18:07:02.703205 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:02.852600 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:02.852827 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.852944 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:02.853288 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:02.853402 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.853493 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:02.853811 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.853916 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.09 vol:1
+I1125 18:07:02.854007 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:02.916252 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:02.916480 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.916759 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:02.917241 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:02.917445 140735923045248 order_executor.py:25] scheduled to long next_week @ 3904.02 vol:2
+I1125 18:07:02.917582 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:02.918076 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.918563 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.09 vol:1
+I1125 18:07:02.918761 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:02.936879 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:02.939868 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.09 vol:1
+I1125 18:07:02.940100 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:03.210992 123145515524096 order_executor.py:47] opened short executed for ('next_week', 2, Decimal('3904.24'))
+I1125 18:07:03.211323 123145520779264 order_executor.py:51] opened long executed for ('quarter', 2, Decimal('3912.98'))
+I1125 18:07:03.211488 123145526034432 order_executor.py:47] opened short executed for ('this_week', Decimal('1'), Decimal('3908.6'))
+I1125 18:07:03.384160 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:03.384382 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.86 vol:2
+I1125 18:07:03.384493 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:03.448411 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:03.448651 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.86 vol:2
+I1125 18:07:03.448786 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:03.466745 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:03.466970 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.86 vol:2
+I1125 18:07:03.467077 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:03.928194 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:03.928418 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.08 vol:2
+I1125 18:07:03.928544 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:2
+I1125 18:07:04.888886 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:05.090472 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:05.306041 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:06.079159 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:06.079341 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:1
+I1125 18:07:06.079430 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.48 vol:1
+I1125 18:07:06.079707 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:06.079999 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:2
+I1125 18:07:06.080102 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.74 vol:2
+I1125 18:07:06.151756 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:06.151954 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:2
+I1125 18:07:06.152064 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.48 vol:2
+I1125 18:07:06.152387 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:06.152496 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:2
+I1125 18:07:06.152588 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.74 vol:2
+I1125 18:07:06.167412 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:06.167613 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:2
+I1125 18:07:06.167718 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.48 vol:2
+I1125 18:07:06.168068 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:06.168176 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.38 vol:2
+I1125 18:07:06.168267 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.74 vol:2
+I1125 18:07:06.620306 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:06.620546 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:06.620669 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:06.621391 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:06.621541 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:06.621653 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:06.702834 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:06.703087 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:06.703222 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:06.703917 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:06.704058 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:06.704174 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:06.724807 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:06.725296 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:06.725430 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:06.726145 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:06.726287 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:06.726490 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.155557 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.155761 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.155879 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.156506 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.156631 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.156738 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.213618 123145515524096 order_executor.py:51] opened long executed for ('next_week', Decimal('1'), Decimal('3907.9'))
+I1125 18:07:07.213860 123145520779264 order_executor.py:51] opened long executed for ('quarter', 2, Decimal('3912.98'))
+I1125 18:07:07.213983 123145526034432 order_executor.py:51] opened long executed for ('this_week', 2, Decimal('3911.17'))
+I1125 18:07:07.236751 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.236954 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.237050 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.237569 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.237676 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.237763 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.250078 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:07.250258 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.250355 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:07.250657 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.250757 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.250842 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.251365 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.251467 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.251626 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:07.515426 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:07.730928 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:07.937252 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:07.942750 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:07.943046 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.943184 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:07.943634 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.943789 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.943964 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:07.944684 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.944805 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.944902 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:07.949082 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:07.949210 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.949296 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:07.949579 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.949708 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.949814 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:07.950287 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.950381 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.950469 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:07.954082 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:07.954191 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.954276 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:07.954557 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:07.954650 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:07.954730 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:07.955202 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:07.955296 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:07.955376 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:08.588392 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.588626 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:08.588761 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:08.589153 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.589263 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.15 vol:2
+I1125 18:07:08.589358 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:08.589910 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.590022 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.590212 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:08.594496 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.594659 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.594749 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:08.595034 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.595144 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.595225 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:1
+I1125 18:07:08.595703 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.595798 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.595880 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:08.599642 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.599781 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.599869 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:08.600166 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.600262 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.600349 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:1
+I1125 18:07:08.600828 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.600924 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.601009 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.4 vol:2
+I1125 18:07:08.822449 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.822669 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.822796 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:08.823210 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.823354 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.823449 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:08.824023 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.824140 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.824231 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:08.876831 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.877050 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.877179 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:08.877604 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.877712 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.877806 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:08.878355 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.878467 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.878561 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:08.890221 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:08.890402 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.890503 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:08.890846 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:08.890955 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:08.891047 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:08.891610 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:08.891724 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:08.891839 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:09.215644 123145515524096 order_executor.py:47] opened short executed for ('next_week', 2, Decimal('3904.24'))
+I1125 18:07:09.215990 123145520779264 order_executor.py:47] opened short executed for ('quarter', Decimal('1'), Decimal('3912.86'))
+I1125 18:07:09.362694 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:09.362900 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:09.363005 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:09.363342 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:09.363450 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:09.363554 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:09.364128 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:09.364243 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.85 vol:2
+I1125 18:07:09.364338 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:09.412807 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:09.413002 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:09.413110 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:1
+I1125 18:07:09.413419 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:09.413523 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:09.413614 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:09.414113 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:09.414214 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:09.414304 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:09.439107 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:09.439305 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:09.439414 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:09.439733 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:09.439834 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:09.439921 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:09.440424 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:09.440531 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:09.440618 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:09.898550 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:09.898794 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:09.898917 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:09.899280 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:09.899401 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:09.899504 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:09.900099 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:09.900222 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:09.900348 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:10.161018 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:10.360082 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:10.613964 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:10.619379 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:10.619551 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.619667 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:10.620050 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:10.620175 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.620282 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:10.620913 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:10.621040 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:10.621147 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:10.625753 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:10.625952 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.626085 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:10.626487 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:10.626614 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.626720 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:2
+I1125 18:07:10.627110 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:10.627244 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:10.648823 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:10.649392 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:10.649531 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:10.649645 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.9 vol:1
+I1125 18:07:10.650041 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:10.650168 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.39 vol:1
+I1125 18:07:10.650277 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:10.655164 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:10.655362 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.655478 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:10.656130 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:10.656256 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.84 vol:1
+I1125 18:07:10.656367 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:10.657014 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:10.657144 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:10.657253 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:10.661880 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:10.662066 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.09 vol:2
+I1125 18:07:10.662184 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:10.663375 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:10.663504 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:10.663612 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:10.668298 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:10.668472 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:10.668593 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:10.668986 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:10.669111 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:10.669218 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:2
+I1125 18:07:10.670125 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:10.670264 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.88 vol:1
+I1125 18:07:10.670373 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:11.046998 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.047213 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:11.047339 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.047766 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.047896 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:11.048005 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:2
+I1125 18:07:11.048942 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:11.049072 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:1
+I1125 18:07:11.049181 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:11.049560 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:11.049684 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:2
+I1125 18:07:11.049800 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.053961 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.054101 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:11.054214 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.054671 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.054818 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.58 vol:2
+I1125 18:07:11.054938 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:2
+I1125 18:07:11.055329 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:11.055452 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.83 vol:1
+I1125 18:07:11.055558 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:11.056201 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:11.056327 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:1
+I1125 18:07:11.056442 140735923045248 order_executor.py:37] scheduled to short this_week @ 3907.43 vol:1
+I1125 18:07:11.056835 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:11.056967 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:2
+I1125 18:07:11.057073 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.061520 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.061657 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.061763 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.062129 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.062249 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.062351 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.36 vol:2
+I1125 18:07:11.063234 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:11.063365 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:1
+I1125 18:07:11.063471 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.37 vol:1
+I1125 18:07:11.063834 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:11.063951 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.52 vol:2
+I1125 18:07:11.064053 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.215886 123145526034432 order_executor.py:51] opened long executed for ('this_week', 2, Decimal('3911.17'))
+I1125 18:07:11.220067 123145515524096 order_executor.py:47] opened short executed for ('next_week', Decimal('1'), Decimal('3904.24'))
+I1125 18:07:11.513033 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.513201 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.513289 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.73 vol:2
+I1125 18:07:11.513580 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.513673 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.513753 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:11.582835 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.583044 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.583162 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:11.583551 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.583684 140735923045248 order_executor.py:25] scheduled to long this_week @ 3907.19 vol:2
+I1125 18:07:11.583791 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:11.597432 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:11.597637 140735923045248 order_executor.py:25] scheduled to long this_week @ 3906.68 vol:2
+I1125 18:07:11.597746 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:11.598119 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:11.598239 140735923045248 order_executor.py:25] scheduled to long this_week @ 3906.68 vol:2
+I1125 18:07:11.598341 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:12.039920 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:12.040137 140735923045248 order_executor.py:25] scheduled to long this_week @ 3906.68 vol:2
+I1125 18:07:12.040261 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.040691 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:12.040816 140735923045248 order_executor.py:25] scheduled to long this_week @ 3906.68 vol:2
+I1125 18:07:12.040923 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:12.041841 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:12.042001 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.042110 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.38 vol:2
+I1125 18:07:12.042490 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:12.042613 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.042721 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.134979 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:12.135158 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.135249 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.135554 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:12.135648 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.135730 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:12.136451 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:12.136564 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.136650 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:12.136942 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:12.137037 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.137117 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.148997 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:12.149178 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.149269 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.149573 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:12.149672 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.149756 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:12.150115 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:12.150228 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:12.150315 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:12.150629 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:12.150735 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:12.150821 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910 vol:2
+I1125 18:07:12.151182 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:12.151280 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.151371 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:12.151674 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:12.151772 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.11 vol:2
+I1125 18:07:12.151854 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.584823 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:12.585036 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.585160 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.585592 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:12.585743 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.21 vol:2
+I1125 18:07:12.585851 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:12.586234 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:12.586359 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:12.586477 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:12.586864 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:12.587002 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:12.587109 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:12.587511 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:12.587635 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.35 vol:2
+I1125 18:07:12.587758 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:12.588149 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:12.588272 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.35 vol:2
+I1125 18:07:12.588378 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:12.859540 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:13.071997 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:13.219927 123145520779264 order_executor.py:51] opened long executed for ('quarter', 2, Decimal('3912.98'))
+I1125 18:07:13.223312 123145515524096 order_executor.py:47] opened short executed for ('next_week', Decimal('1'), Decimal('3904.24'))
+I1125 18:07:13.284360 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:13.289012 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:13.289238 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.289358 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:13.289878 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.289983 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.290071 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:13.290383 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.290481 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.290565 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.290864 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.290959 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.291041 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:13.291414 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:13.291525 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.35 vol:2
+I1125 18:07:13.291692 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.292027 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:13.292273 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.35 vol:2
+I1125 18:07:13.292392 140735923045248 order_executor.py:37] scheduled to short next_week @ 3902.74 vol:2
+I1125 18:07:13.296570 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.296736 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.296844 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:13.297259 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.297370 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.297573 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.297940 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.298051 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.298137 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.13 vol:2
+I1125 18:07:13.298439 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:13.298571 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.35 vol:2
+I1125 18:07:13.298661 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.303313 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.303571 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.303686 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.304025 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.304123 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.304207 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.304509 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.304605 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.304688 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.304999 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:13.305108 140735923045248 order_executor.py:25] scheduled to long quarter @ 3910.9 vol:2
+I1125 18:07:13.305192 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.68 vol:2
+I1125 18:07:13.309489 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.309647 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.05 vol:2
+I1125 18:07:13.309739 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.310036 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.310132 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.310213 140735923045248 order_executor.py:37] scheduled to short this_week @ 3904.95 vol:2
+I1125 18:07:13.310523 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.310623 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.310706 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.314341 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:13.314447 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.05 vol:2
+I1125 18:07:13.314532 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.47 vol:2
+I1125 18:07:13.314827 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.314923 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.05 vol:2
+I1125 18:07:13.315003 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.315295 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.315388 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.315471 140735923045248 order_executor.py:37] scheduled to short this_week @ 3904.95 vol:2
+I1125 18:07:13.315773 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.315886 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.315969 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.37 vol:2
+I1125 18:07:13.659810 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:13.660026 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.05 vol:2
+I1125 18:07:13.660151 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.47 vol:2
+I1125 18:07:13.660588 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.660713 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.05 vol:2
+I1125 18:07:13.660820 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:13.661202 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.661327 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.661432 140735923045248 order_executor.py:37] scheduled to short this_week @ 3904.95 vol:2
+I1125 18:07:13.661813 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.661936 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.662042 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:13.780117 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:13.780308 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.780410 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.47 vol:2
+I1125 18:07:13.780761 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.780869 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.780960 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:13.781297 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.781402 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.781492 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.45 vol:2
+I1125 18:07:13.781828 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.781933 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.782022 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:13.792830 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:13.793177 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.793298 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.48 vol:2
+I1125 18:07:13.793771 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:13.793907 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:13.793999 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:13.794316 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:13.794416 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.794497 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.45 vol:2
+I1125 18:07:13.794798 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:13.794893 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:13.794981 140735923045248 order_executor.py:37] scheduled to short quarter @ 3910.92 vol:2
+I1125 18:07:14.220103 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:14.220324 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.220451 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.48 vol:2
+I1125 18:07:14.220886 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.221010 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.221117 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.221503 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.221626 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.221738 140735923045248 order_executor.py:37] scheduled to short this_week @ 3905.45 vol:2
+I1125 18:07:14.222121 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.222245 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.222358 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.322726 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:14.322919 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.323019 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.48 vol:2
+I1125 18:07:14.323360 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.323469 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.323561 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.323908 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.324015 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.324108 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.55 vol:2
+I1125 18:07:14.324516 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.324632 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.324737 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.335408 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:14.335631 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.335752 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.58 vol:2
+I1125 18:07:14.336170 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.336305 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.336421 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.336814 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.336923 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.337017 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.55 vol:2
+I1125 18:07:14.337349 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.337454 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.337543 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.77 vol:2
+I1125 18:07:14.781843 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:14.782048 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.782158 140735923045248 order_executor.py:37] scheduled to short next_week @ 3901.58 vol:2
+I1125 18:07:14.782529 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.782644 140735923045248 order_executor.py:25] scheduled to long this_week @ 3908.06 vol:2
+I1125 18:07:14.782745 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:2
+I1125 18:07:14.783118 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.783227 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.783322 140735923045248 order_executor.py:37] scheduled to short this_week @ 3906.55 vol:2
+I1125 18:07:14.783690 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.783869 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.783975 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:2
+I1125 18:07:14.863052 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.863262 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:14.863404 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:1
+I1125 18:07:14.863795 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.863919 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.864025 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:14.864408 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.864529 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.864634 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:2
+I1125 18:07:14.865015 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:14.865145 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912 vol:2
+I1125 18:07:14.865250 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:14.873252 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:14.873461 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:14.873586 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:1
+I1125 18:07:14.873979 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:14.874104 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.874210 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:14.874592 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:14.874714 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:14.874821 140735923045248 order_executor.py:37] scheduled to short quarter @ 3911.92 vol:2
+I1125 18:07:14.875205 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:14.875328 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912 vol:2
+I1125 18:07:14.875440 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:15.220501 123145526034432 order_executor.py:51] opened long executed for ('this_week', 2, Decimal('3911.17'))
+I1125 18:07:15.228696 123145515524096 order_executor.py:47] opened short executed for ('next_week', Decimal('1'), Decimal('3904.24'))
+I1125 18:07:15.495404 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:15.707020 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:15.913230 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:15.918487 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.918650 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.29 vol:1
+I1125 18:07:15.918758 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:1
+I1125 18:07:15.919136 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.919255 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:15.919358 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:15.919727 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.919844 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:15.919945 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:2
+I1125 18:07:15.920435 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.920557 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.07 vol:2
+I1125 18:07:15.920665 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.06 vol:2
+I1125 18:07:15.925111 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.925236 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.925336 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:2
+I1125 18:07:15.925683 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.925801 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:15.925898 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.926344 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.926470 140735923045248 order_executor.py:25] scheduled to long next_week @ 3905.28 vol:2
+I1125 18:07:15.926569 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:2
+I1125 18:07:15.926922 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.927034 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.07 vol:2
+I1125 18:07:15.927130 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.931118 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:15.931235 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.931326 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.37 vol:2
+I1125 18:07:15.931655 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.931760 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.931849 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:2
+I1125 18:07:15.932173 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.932276 140735923045248 order_executor.py:25] scheduled to long next_week @ 3906.7 vol:2
+I1125 18:07:15.932366 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.932699 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.932804 140735923045248 order_executor.py:25] scheduled to long next_week @ 3906.7 vol:2
+I1125 18:07:15.932891 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.02 vol:2
+I1125 18:07:15.933227 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.933331 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.07 vol:2
+I1125 18:07:15.933419 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.933754 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:15.933872 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.07 vol:2
+I1125 18:07:15.933984 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.37 vol:2
+I1125 18:07:15.937361 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:15.937473 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.937560 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.37 vol:2
+I1125 18:07:15.937871 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.938078 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.938188 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.938522 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.938621 140735923045248 order_executor.py:25] scheduled to long next_week @ 3906.7 vol:2
+I1125 18:07:15.938708 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.939029 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.939125 140735923045248 order_executor.py:25] scheduled to long next_week @ 3906.7 vol:2
+I1125 18:07:15.939208 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.939607 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.939713 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.939803 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.940133 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:15.940232 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.940314 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.37 vol:2
+I1125 18:07:15.966774 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:15.966982 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.967109 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:15.967727 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.967871 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.968008 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.968481 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.968596 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:15.968694 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.969058 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.969175 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:15.969272 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.969664 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.970206 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.970338 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.56 vol:2
+I1125 18:07:15.970772 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:15.970922 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.972367 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:15.985965 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:15.986179 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.986294 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:15.986682 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:15.986804 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:15.986921 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.987284 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:15.987398 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:15.987508 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:15.987869 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:15.987984 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:15.988090 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.09 vol:2
+I1125 18:07:15.988460 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:15.988574 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.988677 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:15.989057 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:15.989172 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:15.989270 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:16.384897 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:16.385139 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:16.385263 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:16.385661 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:16.385785 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:1
+I1125 18:07:16.385889 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.1 vol:1
+I1125 18:07:16.386266 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:16.386385 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:16.386501 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:16.386879 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:16.387032 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:1
+I1125 18:07:16.387145 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.1 vol:1
+I1125 18:07:16.387545 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:16.387671 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.387774 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:16.388169 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:16.388291 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.388395 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.38 vol:2
+I1125 18:07:16.510442 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:16.510658 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:2
+I1125 18:07:16.510780 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:16.511216 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:16.511344 140735923045248 order_executor.py:25] scheduled to long this_week @ 3909.68 vol:1
+I1125 18:07:16.511451 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.1 vol:1
+I1125 18:07:16.511841 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:16.511962 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:16.512068 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:16.512463 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:16.512584 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:1
+I1125 18:07:16.512689 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.1 vol:1
+I1125 18:07:16.513087 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:16.513209 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.513319 140735923045248 order_executor.py:37] scheduled to short this_week @ 3908.74 vol:2
+I1125 18:07:16.513719 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:16.513840 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.513946 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:16.524698 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:16.524901 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:16.525019 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:16.525412 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:16.525537 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:1
+I1125 18:07:16.525645 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.1 vol:1
+I1125 18:07:16.526046 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:16.526169 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.526273 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:16.526661 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:16.526785 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.81 vol:2
+I1125 18:07:16.526897 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:16.934077 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:16.934283 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:16.934400 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:16.935066 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:16.935194 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:16.935304 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:16.935695 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:16.935818 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:16.935924 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:17.096364 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:17.096572 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:17.096688 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.097349 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:17.097477 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:17.097588 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.097973 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:17.098095 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:17.098263 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:17.106709 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:17.106924 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:17.107042 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.107706 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:17.107834 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:17.107942 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.108326 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:17.108458 140735923045248 order_executor.py:25] scheduled to long quarter @ 3911.93 vol:2
+I1125 18:07:17.108562 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.4 vol:2
+I1125 18:07:17.222879 123145520779264 order_executor.py:51] opened long executed for ('quarter', 2, Decimal('3912.98'))
+I1125 18:07:17.233370 123145515524096 order_executor.py:47] opened short executed for ('next_week', 2, Decimal('3904.24'))
+I1125 18:07:17.498744 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:17.498954 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:17.499070 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.499740 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:17.499866 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.499975 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.500365 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:17.500488 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.500592 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.4 vol:2
+I1125 18:07:17.630853 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:17.631028 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:17.631120 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.631620 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:17.631716 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.631795 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.632086 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:17.632179 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.632259 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.4 vol:2
+I1125 18:07:17.643110 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:17.643284 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:17.643378 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.643900 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:17.643996 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.644080 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:17.644376 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:17.644474 140735923045248 order_executor.py:25] scheduled to long quarter @ 3912.78 vol:2
+I1125 18:07:17.644553 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.172194 140735923045248 position_syncer.py:16] fetched for this_week and got 0 updates
+I1125 18:07:18.358946 140735923045248 position_syncer.py:16] fetched for next_week and got 0 updates
+I1125 18:07:18.570518 140735923045248 position_syncer.py:16] fetched for quarter and got 0 updates
+I1125 18:07:18.576881 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.577054 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.577168 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:18.577559 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:18.577683 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.577790 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.07 vol:2
+I1125 18:07:18.578179 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.578299 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.578405 140735923045248 order_executor.py:37] scheduled to short this_week @ 3909.68 vol:2
+I1125 18:07:18.578831 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.578954 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.579068 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.583786 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.583925 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.584035 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.584436 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:18.584560 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.584666 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.07 vol:2
+I1125 18:07:18.585050 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.585258 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.585382 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.585797 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.585927 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.586043 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.590885 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.591032 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.591146 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.591544 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:18.591669 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.591775 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.07 vol:2
+I1125 18:07:18.592169 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.592293 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.592401 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.592818 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.592952 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.593059 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.597626 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.597759 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.597863 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.598228 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:18.598343 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.598443 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.25 vol:2
+I1125 18:07:18.598805 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.598935 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.599030 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.599402 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.599514 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.599658 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.713036 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.713242 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.713361 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.713761 140735923045248 trader.py:79] opening arbitrage position with (next_week, quarter)
+I1125 18:07:18.713900 140735923045248 order_executor.py:25] scheduled to long next_week @ 3907.88 vol:2
+I1125 18:07:18.714009 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.25 vol:2
+I1125 18:07:18.714429 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.714554 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.714661 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.715057 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.715182 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.715286 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.39 vol:2
+I1125 18:07:18.732887 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:18.733104 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:18.733226 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:1
+I1125 18:07:18.733948 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:18.734076 140735923045248 order_executor.py:25] scheduled to long next_week @ 3910.25 vol:2
+I1125 18:07:18.734184 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.734864 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:18.734991 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.735107 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:18.735500 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:18.735621 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:18.735727 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:2
+I1125 18:07:19.083636 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:19.083849 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.083974 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:1
+I1125 18:07:19.084421 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:19.084546 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.084651 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.92 vol:1
+I1125 18:07:19.085049 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:19.085170 140735923045248 order_executor.py:25] scheduled to long next_week @ 3910.25 vol:2
+I1125 18:07:19.085276 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.085994 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:19.086179 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.086297 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.086703 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:19.086826 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.086931 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:2
+I1125 18:07:19.222723 123145526034432 order_executor.py:51] opened long executed for ('this_week', 2, Decimal('3911.17'))
+I1125 18:07:19.233865 123145515524096 order_executor.py:47] opened short executed for ('next_week', 2, Decimal('3904.24'))
+I1125 18:07:19.250599 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:19.250816 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.250939 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:1
+I1125 18:07:19.251377 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:19.251497 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.251600 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.92 vol:1
+I1125 18:07:19.252007 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:19.252127 140735923045248 order_executor.py:25] scheduled to long next_week @ 3910.25 vol:2
+I1125 18:07:19.252229 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.252878 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:19.253000 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.253104 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.253490 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:19.253625 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.253730 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:2
+I1125 18:07:19.262933 140735923045248 trader.py:79] opening arbitrage position with (this_week, next_week)
+I1125 18:07:19.263179 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.263321 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:1
+I1125 18:07:19.263731 140735923045248 trader.py:79] opening arbitrage position with (this_week, quarter)
+I1125 18:07:19.263850 140735923045248 order_executor.py:25] scheduled to long this_week @ 3911.13 vol:1
+I1125 18:07:19.263950 140735923045248 order_executor.py:37] scheduled to short quarter @ 3912.92 vol:1
+I1125 18:07:19.264343 140735923045248 trader.py:79] opening arbitrage position with (next_week, this_week)
+I1125 18:07:19.264461 140735923045248 order_executor.py:25] scheduled to long next_week @ 3909.44 vol:2
+I1125 18:07:19.264581 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.265325 140735923045248 trader.py:79] opening arbitrage position with (quarter, this_week)
+I1125 18:07:19.265446 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.265548 140735923045248 order_executor.py:37] scheduled to short this_week @ 3910.44 vol:2
+I1125 18:07:19.266245 140735923045248 trader.py:79] opening arbitrage position with (quarter, next_week)
+I1125 18:07:19.266362 140735923045248 order_executor.py:25] scheduled to long quarter @ 3913 vol:2
+I1125 18:07:19.266458 140735923045248 order_executor.py:37] scheduled to short next_week @ 3904.69 vol:2
+Traceback (most recent call last):
+  File "refacted_main.py", line 36, in <module>
+    absl.app.run(main)
+  File "/anaconda3/lib/python3.7/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/anaconda3/lib/python3.7/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "refacted_main.py", line 31, in main
+    asyncio.get_event_loop().run_forever()
+  File "/anaconda3/lib/python3.7/asyncio/base_events.py", line 523, in run_forever
+    self._run_once()
+  File "/anaconda3/lib/python3.7/asyncio/base_events.py", line 1722, in _run_once
+    event_list = self._selector.select(timeout)
+  File "/anaconda3/lib/python3.7/selectors.py", line 558, in select
+    kev_list = self._selector.control(None, max_ev, timeout)
+KeyboardInterrupt
+Error in atexit._run_exitfuncs:
+Traceback (most recent call last):
+  File "/anaconda3/lib/python3.7/concurrent/futures/thread.py", line 40, in _python_exit
+    t.join()
+  File "/anaconda3/lib/python3.7/threading.py", line 1032, in join
+    self._wait_for_tstate_lock()
+  File "/anaconda3/lib/python3.7/threading.py", line 1048, in _wait_for_tstate_lock
+    elif lock.acquire(block, timeout):
+KeyboardInterrupt

@@ -94,7 +94,7 @@ class OrderBook:
     @property
     def time_window(self):
         if self.row_num <= 1:
-            return 0
+            return np.timedelta64(0, 's')
         return self.table.index[-1] - self.table.index[0]
 
     def _build_table_row(self, record):
