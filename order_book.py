@@ -11,7 +11,6 @@ class OrderBook:
         self.table = pd.DataFrame()
         self.last_record = {}
         self.TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
-        self.columns = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
         self.ask_minus_bid_columns = OrderBook._generate_pair_columns()
         # position data
         self.positions = {}
@@ -99,7 +98,7 @@ class OrderBook:
 
     def _build_table_row(self, record):
         data = {}
-        for c in self.columns:
+        for c in COLUMNS:
             if c != 'timestamp':
                 data[c] = [record[c]]
         for c in self.ask_minus_bid_columns:
@@ -115,9 +114,9 @@ class OrderBook:
         self.last_record['timestamp'] = np.datetime64(datetime.datetime.utcnow())
 
         for key, value in data.items():
-            assert(key in self.columns)
+            assert(key in COLUMNS)
             self.last_record[key] = value
-        if len(self.last_record) == len(self.columns):
+        if len(self.last_record) == len(COLUMNS):
             self.table = self.table.append(self._build_table_row(self.last_record))
             # remove old rows
             self.table = self.table.loc[self.table.index >= self.table.index[-1] - self.TIME_WINDOW]
@@ -134,7 +133,7 @@ class OrderBook:
             }
 
     def print_debug_string(self):
-        pprint.pprint(self.columns)
+        pprint.pprint(COLUMNS)
         pprint.pprint(self.ask_minus_bid_columns)
 
     @staticmethod
@@ -162,6 +161,8 @@ class OrderBook:
                     columns.append(f'{ask}-{bid}')
         return columns
 
+
+COLUMNS = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
 
 if __name__ == '__main__':
     order_book = OrderBook()
