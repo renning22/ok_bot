@@ -10,7 +10,6 @@ class OrderBook:
         # order book data
         self.table = pd.DataFrame()
         self.last_record = {}
-        self.TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
         self.ask_minus_bid_columns = OrderBook._generate_pair_columns()
         # position data
         self.positions = {}
@@ -119,7 +118,7 @@ class OrderBook:
         if len(self.last_record) == len(COLUMNS):
             self.table = self.table.append(self._build_table_row(self.last_record))
             # remove old rows
-            self.table = self.table.loc[self.table.index >= self.table.index[-1] - self.TIME_WINDOW]
+            self.table = self.table.loc[self.table.index >= self.table.index[-1] - TIME_WINDOW]
 
     def update_position(self, period, data):
         self.positions.setdefault(period, {})
@@ -202,6 +201,7 @@ class MockOrderBook:
 
 
 COLUMNS = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
+TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
 if __name__ == '__main__':
     order_book = OrderBook()
