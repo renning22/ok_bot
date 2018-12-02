@@ -1,10 +1,9 @@
+import eventlet
+rest_api = eventlet.import_patched("rest_api")
 import constants
-from order_book import OrderBook
 from order_executor import OrderExecutor
 from absl import logging
-from rest_api import OKRest
 import numpy as np
-import asyncio
 
 MIN_TIME_WINDOW_IN_SECOND = 1  # 60 * 3 # 3 minutes
 
@@ -80,18 +79,18 @@ class Trader:
         vol = min(self.order_book.ask_volume(long_period),
                   self.order_book.bid_volume(short_period),
                   self.max_volume_per_trading)
-        # only add future, non-block
-        self.order_executor.open_long(long_period, self.order_book.ask_price(long_period), vol)
-        # only add future, non-block
-        self.order_executor.open_short(short_period, self.order_book.bid_price(short_period), vol)
+        # will block for execution
+        self.order_executor.open_arbitrage_position(
+            long_period, self.order_book.ask_price(long_period),
+            short_period, self.order_book.bid_price(short_period),
+            vol)
 
 
 if __name__ == '__main__':
+    from order_book import MockOrderBook
     def main(_):
-        executor = OrderExecutor(OKRest('btc'))
+        executor = OrderExecutor(rest_api.OKRest('btc'))
         trader = Trader(executor, 0, np.timedelta64(1, 's'))
-        asyncio.ensure_future(trader.arbitrage_with_executors('this_week', '1000',
-                                                              'quarter', '9000', 100))
-        asyncio.get_event_loop().run_forever()
+        trader.new_tick_received(MockOrderBook())
     from absl import app
     app.run(main)

@@ -162,6 +162,45 @@ class OrderBook:
         return columns
 
 
+class MockOrderBook:
+    def contains_gap_hisotry(self, *args):
+        return True
+
+    def historical_mean_spread(self, *args):
+        return 0
+
+    def current_spread(self, *args):
+        return -500
+
+    def ask_price(self, *args):
+        return 1000
+
+    def bid_price(self, *args):
+        return 2000
+
+    def ask_volume(self, *args):
+        return 100
+
+    def bid_volume(self, *args):
+        return 200
+
+    def long_position_volume(self, *args):
+        return 0
+
+    def short_position_volume(self, *args):
+        return 0
+
+
+
+    @property
+    def row_num(self):
+        return 100000
+
+    @property
+    def time_window(self):
+        return np.timedelta64(60 * 60, 's')
+
+
 COLUMNS = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
 
 if __name__ == '__main__':

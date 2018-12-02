@@ -1,51 +1,41 @@
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
+import eventlet
 from absl import logging
-import time
 
 
 class OrderExecutor:
     def __init__(self, api):
         self.api = api
-        self.open_order_executors = {
-         'this_week': ThreadPoolExecutor(max_workers=1),
-         'next_week': ThreadPoolExecutor(max_workers=1),
-         'quarter': ThreadPoolExecutor(max_workers=1)
-        }
-        self.close_order_executors = {
-         'this_week': ThreadPoolExecutor(max_workers=1),
-         'next_week': ThreadPoolExecutor(max_workers=1),
-         'quarter': ThreadPoolExecutor(max_workers=1)
-        }
+        self.executor_pool = eventlet.GreenPool(2)
+        self.api._open_short_order_stub = self._open_short_order_stub
+        self.api._open_long_order_stub = self._open_long_order_stub
 
-    def open_long(self, period, price, volume):
-        asyncio.get_event_loop().run_in_executor(self.open_order_executors[period],
-                                                 self.api.open_long_order,
-                                                 period, volume, price)
-        logging.info(f'scheduled to long {period} @ {price} vol:{volume}')
+    def open_arbitrage_position(self, long_period, long_price,
+                                short_period, short_price, volume):
+        self.executor_pool.spawn_n(self.api.open_long_order, long_period, volume, long_price)
+        self.executor_pool.spawn_n(self.api.open_short_order, short_period, volume, short_price)
+        self.executor_pool.waitall()  # block for order submission
 
-    def close_long(self, period, price, volume):
-        asyncio.get_event_loop().run_in_executor(self.close_order_executors[period],
-                                                 self.api.close_long_order,
-                                                 period, volume, price)
-        logging.info(f'scheduled to close long {period} @ {price} vol:{volume}')
-
-    def open_short(self, period, price, volume):
-        asyncio.get_event_loop().run_in_executor(self.open_order_executors[period],
-                                                 self.api.open_short_order,
-                                                 period, volume, price)
-        logging.info(f'scheduled to short {period} @ {price} vol:{volume}')
-
-    def close_short(self, period, price, volume):
-        asyncio.get_event_loop().run_in_executor(self.close_order_executors[period],
-                                                 self.api.close_short_order,
-                                                 period, volume, price)
-        logging.info(f'scheduled to close short {period} @ {price} vol:{volume}')
+    def close_arbitrage_position(self, long_period, sell_price,
+                                 short_period, buy_price, volume):
+        self.executor_pool.spawn_n(self.api.close_long_order, long_period, volume, sell_price)
+        self.executor_pool.spawn_n(self.api.close_short_order, short_period, volume, buy_price)
+        self.executor_pool.waitall()  # block for order submission
 
     def _open_short_order_stub(self, *args):  # for dev only
-        time.sleep(2)
-        logging.info('open short executed for ' + str(args))
+        logging.info('opening short executed for ' + str(args))
+        eventlet.sleep(2)
+        logging.info('opened short executed for ' + str(args))
 
     def _open_long_order_stub(self, *args):  # for dev only
-        time.sleep(4)
-        logging.info('open long executed for ' + str(args))
+        logging.info('opening long executed for ' + str(args))
+        eventlet.sleep(4)
+        logging.info('opened long executed for ' + str(args))
+
+
+if __name__ == '__main__':
+    rest_api = eventlet.import_patched("rest_api")
+    def main(_):
+        executor = OrderExecutor(rest_api.OKRest('btc'))
+        executor.open_arbitrage_position("this_week", 1000, "next_week", 1200, 20)
+    from absl import app
+    app.run(main)

@@ -1,4 +1,4 @@
-# TODO: make sure load_markets call is necessary or not
+# TODO(luanjunyi): make sure load_markets call is necessary or not
 
 import ccxt
 
@@ -185,6 +185,30 @@ class OKRest:
                         'contract_type': contract_type,
                     })
         return positions
+
+    def fetch_open_orders(self, contract_type):
+        market = self.ccxt.market(self.symbol)
+        request = {
+            'symbol': market['id'],
+            'contract_type': contract_type,
+            'status': 1,
+            'order_id': -1,
+            'current_page': 0,
+            'page_length': 50,
+        }
+        response = self.ccxt.privatePostFutureOrderInfo(request)
+        ordersField = self.ccxt.get_orders_field()
+        return self.ccxt.parse_orders(response[ordersField], market, None, None)
+
+    def cancel_order(self, order_list, contract_type):
+        market = self.ccxt.market(self.symbol)
+        request = {
+            'symbol': market['id'],
+            'contract_type': contract_type,
+            'order_id': ','.join(map(str, order_list)),
+        }
+        return self.ccxt.privatePostFutureCancel(request)
+
     
     def test(self, x):
         self.open_long_order('this_week', 1, 1000 + x)
