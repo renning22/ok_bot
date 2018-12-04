@@ -1,11 +1,14 @@
 # TODO(luanjunyi): make sure load_markets call is necessary or not
 
+import pprint
+import traceback
+from decimal import Decimal
+
 import ccxt
+from absl import logging
 
 import key
 import slack
-from absl import logging
-from decimal import Decimal
 
 
 class OKRest:
@@ -17,7 +20,8 @@ class OKRest:
         self.ccxt.load_markets()
 
     def create_order(self, contract_type, type, side, amount, price=None, params={}):
-        logging.info(f'executing order {contract_type} {type} {side} vol: {amount}, price: {price}')
+        logging.info(
+            f'executing order {contract_type} {type} {side} vol: {amount}, price: {price}')
         try:
             market = self.ccxt.market(self.symbol)
             method = 'privatePost'
@@ -40,7 +44,8 @@ class OKRest:
                 order['amount'] = amount
             params = self.ccxt.omit(params, 'cost')
             method += 'Trade'
-            response = getattr(self.ccxt, method)(self.ccxt.extend(order, params))
+            response = getattr(self.ccxt, method)(
+                self.ccxt.extend(order, params))
             timestamp = self.ccxt.milliseconds()
             ret = {
                 'info': response,
@@ -63,26 +68,32 @@ class OKRest:
             }
             logging.info('executed order result: ' + ret)
             return ret
-        except Exception as e:
-            logging.error(f'failed to execute order[{contract_type} {type} {side} vol: {amount}, price: {price}]: ' +
-                          str(e))
+        except:
+            logging.error(f'failed to execute order[{contract_type} {type} {side} vol: {amount}, price: {price}]: %s',
+                          traceback.format_exc())
         return None
-    
+
     def notify_slack(self, result):
-        if result is not None:
+        try:
             side_map = {1: 'OPEN LONG',
                         2: 'OPEN SHORT',
                         3: 'CLOSE LONG',
-                        4: 'CLOSE SHORT'}
+                        4: 'CLOSE SHORT',
+                        'buy': 'PENDING LONG ORDER',
+                        'sell': 'PENDING SHORT ORDER'}
             side = side_map[result['side']]
-            contract_type = result['contract_type']
-            price = result['price']
-            amount = result['amount']
-            symbol = result['symbol']
-            timestamp = result['datetime']
+            contract_type = result.get('contract_type', '')
+            price = result.get('price', '')
+            amount = result.get('amount', '')
+            symbol = result.get('symbol', '')
+            timestamp = result.get('datetime', '')
             s = f'{side}  {contract_type}  {price}  {amount}  {symbol}'
-            slack.send_unblock(s)
-    
+        except:
+            logging.error('failed to parse:\n%s\n%s',
+                          pprint.pformat(result), traceback.format_exc())
+            return
+        slack.send_unblock(s)
+
     def open_long_order(self, contract_type, amount, price):
         result = self.create_order(
             contract_type=contract_type,
@@ -92,7 +103,7 @@ class OKRest:
             price=price)
         self.notify_slack(result)
         return result
-    
+
     def open_short_order(self, contract_type, amount, price):
         result = self.create_order(
             contract_type=contract_type,
@@ -102,7 +113,7 @@ class OKRest:
             price=price)
         self.notify_slack(result)
         return result
-    
+
     def close_long_order(self, contract_type, amount, price):
         result = self.create_order(
             contract_type=contract_type,
@@ -112,7 +123,7 @@ class OKRest:
             price=price)
         self.notify_slack(result)
         return result
-    
+
     def close_short_order(self, contract_type, amount, price):
         result = self.create_order(
             contract_type=contract_type,
@@ -132,7 +143,8 @@ class OKRest:
         })
 
         if not response['result']:
-            raise ValueError('privatePostFuturePosition returned response has no result field')
+            raise ValueError(
+                'privatePostFuturePosition returned response has no result field')
 
         positions = []
         for item in response['holding']:
@@ -209,12 +221,10 @@ class OKRest:
         }
         return self.ccxt.privatePostFutureCancel(request)
 
-    
     def test(self, x):
         self.open_long_order('this_week', 1, 1000 + x)
 
 
 if __name__ == '__main__':
-    import pprint
     api = OKRest('btc')
     pprint.pprint(api.get_position('next_week'))

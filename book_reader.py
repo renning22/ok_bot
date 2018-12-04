@@ -1,11 +1,13 @@
-import eventlet
-import pprint
-from typing import Dict
-from decimal import Decimal
-import zlib
 import json
+import pprint
 import traceback
-from absl import logging, app
+import zlib
+from decimal import Decimal
+from typing import Dict
+
+import eventlet
+from absl import app, logging
+
 from order_book import OrderBook
 
 websocket = eventlet.import_patched('websocket')
@@ -14,15 +16,13 @@ OK_WEB_SOCKET_ADDRESS = 'wss://real.okex.com:10440/ws/v1'
 
 
 class BookReader:
-    SUBSCRIBED_CHANNELS: Dict[str, str]
-
     def __init__(self, green_pool, order_book, trader, currency):
         self.green_pool = green_pool
         self.order_book = order_book
         self.currency = currency
         self.trader = trader
 
-        self.SUBSCRIBED_CHANNELS = {
+        self.subscribed_channels = {
             f'ok_sub_futureusd_{currency}_depth_this_week_5': 'this_week',
             f'ok_sub_futureusd_{currency}_depth_next_week_5': 'next_week',
             f'ok_sub_futureusd_{currency}_depth_quarter_5': 'quarter'
@@ -33,7 +33,7 @@ class BookReader:
         while True:
             try:
                 ws = websocket.create_connection(OK_WEB_SOCKET_ADDRESS)
-                for channel in self.SUBSCRIBED_CHANNELS.keys():
+                for channel in self.subscribed_channels.keys():
                     msg = json.dumps({
                         'event': 'addChannel',
                         'channel': channel
@@ -43,9 +43,9 @@ class BookReader:
                 while True:
                     response = BookReader._parse_response(ws.recv())
                     channel = response['channel']
-                    if channel not in self.SUBSCRIBED_CHANNELS.keys():
+                    if channel not in self.subscribed_channels.keys():
                         continue
-                    period = self.SUBSCRIBED_CHANNELS[channel]
+                    period = self.subscribed_channels[channel]
 
                     asks = sorted(response['data']['asks'])
                     bids = sorted(response['data']['bids'], reverse=True)
@@ -63,12 +63,13 @@ class BookReader:
                         f'{period}_bid3_price': Decimal(str(bids[2][0])),
                         f'{period}_bid3_vol': Decimal(str(bids[2][4])),
                     }
-                    logging.info('new tick: \n' + pprint.pformat(asks_bids))
+                    logging.debug('new tick:\n %s', pprint.pformat(asks_bids))
                     self.order_book.update_book(period, asks_bids)
                     self.trader.new_tick_received(self.order_book)
             except Exception as ex:
-                logging.error('book reader reading loop encountered error:\n' +
-                              traceback.format_exc())
+                logging.error(
+                    'book reader reading loop encountered error:\n %s',
+                    traceback.format_exc())
 
     def read_loop(self):
         self.green_pool.spawn_n(self._read_loop_impl)
@@ -97,13 +98,14 @@ def _testing(_):
     reader = BookReader(pool, order_book, TraderMock(), 'btc')
 
     reader.read_loop()
+
     def echo(id):
         while True:
             print(f'start echo {id}')
             eventlet.sleep(id)
             print(f'finished echo {id}')
     for i in range(2):
-        pool.spawn_n(echo, i+1)
+        pool.spawn_n(echo, i + 1)
     pool.waitall()
 
 

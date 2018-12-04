@@ -1,8 +1,27 @@
-import pandas as pd
-import numpy as np
 import datetime
 import pprint
+from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+from absl import logging
+
 import constants
+
+
+def _generate_table_columns():
+    columns = []
+    for period in constants.PERIOD_TYPES:
+        for side in ['bid', 'ask']:
+            for depth in ['', '2', '3']:
+                columns.append(f'{period}_{side}{depth}_price')
+                columns.append(f'{period}_{side}{depth}_vol')
+    return columns
+
+
+_COLUMNS = set(['timestamp', 'source'] + _generate_table_columns())
+_TIME_WINDOW = np.timedelta64(
+    constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
 
 class OrderBook:
@@ -12,30 +31,36 @@ class OrderBook:
         self.last_record = {}
         self.ask_minus_bid_columns = OrderBook._generate_pair_columns()
         # position data
-        self.positions = {}
+        self.positions = defaultdict(dict)
 
-    # return periods from ask_minus_bid_columns
-    # for example:
-    # next_week_ask_price-this_week_bid_price => (next_week, this_week)
     @staticmethod
     def _extract_ask_bid_period(column_name):
+        """Returns periods from ask_minus_bid_columns.
+
+        Example:
+         next_week_ask_price-this_week_bid_price => (next_week, this_week)
+        """
         assert '-' in column_name
         ask, bid = column_name.split('-')
         return OrderBook.extract_period(ask), OrderBook.extract_period(bid)
 
-    # return period from column name
-    # for example:
-    # this_week_ask_price => this_week
     @staticmethod
     def extract_period(column_name):
-        assert '-' not in column_name # ask_minus_bid_columns name should never be passed
+        """Returns period from column name.
+
+        Example:
+         this_week_ask_price => this_week
+        """
+        # ask_minus_bid_columns name should never be passed
+        assert '-' not in column_name
         if column_name.startswith('this_week_'):
             return 'this_week'
         if column_name.startswith('next_week_'):
             return 'next_week'
         if column_name.startswith('quarter_'):
             return 'quarter'
-        raise Exception(f'trying to extract period from [{column_name}], should never happen')
+        raise Exception(
+            f'trying to extract period from [{column_name}], should never happen')
 
     def contains_gap_hisotry(self, ask_period, bid_period):
         return OrderBook._pair_column(ask_period, bid_period) in self.table.columns
@@ -84,7 +109,6 @@ class OrderBook:
             return 0
         return self.positions[period]['short']['price']
 
-
     @property
     def row_num(self):
         return len(self.table)
@@ -97,7 +121,7 @@ class OrderBook:
 
     def _build_table_row(self, record):
         data = {}
-        for c in COLUMNS:
+        for c in _COLUMNS:
             if c != 'timestamp':
                 data[c] = [record[c]]
         for c in self.ask_minus_bid_columns:
@@ -110,21 +134,21 @@ class OrderBook:
 
     def update_book(self, period, data):
         self.last_record['source'] = period
-        self.last_record['timestamp'] = np.datetime64(datetime.datetime.utcnow())
+        self.last_record['timestamp'] = np.datetime64(
+            datetime.datetime.utcnow())
 
         for key, value in data.items():
-            assert(key in COLUMNS)
+            assert(key in _COLUMNS)
             self.last_record[key] = value
-        if len(self.last_record) == len(COLUMNS):
-            self.table = self.table.append(self._build_table_row(self.last_record))
+        if len(self.last_record) == len(_COLUMNS):
+            self.table = self.table.append(
+                self._build_table_row(self.last_record))
             # remove old rows
-            self.table = self.table.loc[self.table.index >= self.table.index[-1] - TIME_WINDOW]
+            self.table = self.table.loc[self.table.index >=
+                                        self.table.index[-1] - _TIME_WINDOW]
 
     def update_position(self, period, data):
-        self.positions.setdefault(period, {})
-        if period in self.positions:
-            self.positions[period].clear()
-
+        self.positions[period].clear()
         for p in data:
             self.positions[period][p['side']] = {
                 'volume': p['amount'],
@@ -132,18 +156,8 @@ class OrderBook:
             }
 
     def print_debug_string(self):
-        pprint.pprint(COLUMNS)
+        pprint.pprint(_COLUMNS)
         pprint.pprint(self.ask_minus_bid_columns)
-
-    @staticmethod
-    def _generate_table_columns():
-        columns = []
-        for period in constants.PERIOD_TYPES:
-            for side in ['bid', 'ask']:
-                for depth in ['', '2', '3']:
-                    columns.append(f'{period}_{side}{depth}_price')
-                    columns.append(f'{period}_{side}{depth}_vol')
-        return columns
 
     @staticmethod
     def _generate_pair_columns():
@@ -189,8 +203,6 @@ class MockOrderBook:
     def short_position_volume(self, *args):
         return 0
 
-
-
     @property
     def row_num(self):
         return 100000
@@ -199,9 +211,10 @@ class MockOrderBook:
     def time_window(self):
         return np.timedelta64(60 * 60, 's')
 
+    def update_position(self, period, data):
+        logging.info(
+            'MockOrderBook.update_position:\n %s\n %s', period, data)
 
-COLUMNS = set(['timestamp', 'source'] + OrderBook._generate_table_columns())
-TIME_WINDOW = np.timedelta64(constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
 if __name__ == '__main__':
     order_book = OrderBook()
