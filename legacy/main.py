@@ -68,8 +68,7 @@ def trigger_arbitrage(ask_type, bid_type):
     ask_vol = last_record[f'{ask_type}_ask_vol']
     bid_price = last_record[f'{bid_type}_bid_price']
     bid_vol = last_record[f'{bid_type}_bid_vol']
-    amount = max_order_amount
-    amount = min(amount, bid_vol, ask_vol)
+    amount = min(max_order_amount, bid_vol, ask_vol)
 
     gap = (ask_price - best_ask_price) + (best_bid_price - bid_price)
     if gap > gap_threshold:
@@ -108,16 +107,16 @@ def check_close_position(ask_type, bid_type):
         short_amount, short_price = last_position[ask_type]['short']
         best_ask_price = last_record[f'{ask_type}_ask_price']
         best_bid_price = last_record[f'{bid_type}_bid_price']
-        amount = Decimal('1')
-        estimate_price_diff = (best_bid_price - long_price) + \
+        amount = Decimal('1')  # TODO: use availabe order book depth from last_record
+        estimated_earning = (best_bid_price - long_price) + \
             (short_price - best_ask_price)
-        if estimate_price_diff > close_position_take_profit_threshold:
+        if estimated_earning > close_position_take_profit_threshold:
             if not close_position_cooldown.check():
                 return
             send_unblock(
                 f'Close Position: {ask_type}-{ask_type}, '
                 f'({best_bid_price} - {long_price}) + '
-                f'({short_price} - {best_ask_price}) = {estimate_price_diff}')
+                f'({short_price} - {best_ask_price}) = {estimated_earning}')
 
             long_order = functools.partial(
                 order.close_long_order, bid_type, amount, best_bid_price)
@@ -154,7 +153,7 @@ def calculate():
             history = table[pair].astype('float64')
             spread = history[-1]
             spread_minus_avg = spread - history.mean()
-            zscores = stats.zscore(history)
+            zscores = stats.zscore(history)  # why zscore didn't work?
 
             if log_cooldown_ready:
                 logging.info('{:<5} {:<50} {:>10.4} {:>10.4} {:>10.4}'.format(
@@ -167,6 +166,15 @@ def calculate():
             # if abs(zscores[-1]) < close_position_zscore_threshold:
             check_close_position(ask_type, bid_type)
 
+            # TODO: use a more intuitive trigger condition
+            # Below logic works with the following illustration. Assume there's contract
+            # A and B. A is around $100. B is around 200$. Then A - B is monitored by
+            # A_ask - B_bid and B - A is monitored by B_ask - A_bid. A_ask - B_bid should
+            # fluctuate around -100 and B_ask - A_bin should around 100. When the spread
+            # suddenly increase, A_ask - B_bid will be smaller(bigger in absolute value), thus
+            # triggering arbitrage. When the spread suddenly shrink, B_ask - A_bid will be
+            # smaller, also triggering arbitrage.
+
             # if zscores[-1] < zscore_threshold and diff < spread_minus_avg_threshold:
             if spread_minus_avg < spread_minus_avg_threshold:
                 trigger_arbitrage(ask_type, bid_type)
@@ -176,7 +184,7 @@ def last_record_to_row():
     data = {}
     for c in columns:
         if c != 'timestamp':
-            data[c] = [last_record[c]]
+            data[c] = [last_record[c]]  # Are those necessary? Where are they used?
     for pair in columns_cross:
         i, j = tuple(pair.split('-'))
         data[f'{i}-{j}'] = [last_record[i] - last_record[j]]

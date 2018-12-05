@@ -1,8 +1,6 @@
-import asyncio
 from decimal import *
 
 import ccxt
-import numpy as np
 
 from . import key, slack
 from .util import current_time, delta, every_five, to_time

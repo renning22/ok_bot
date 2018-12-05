@@ -7,8 +7,8 @@ for contract in contract_types:
             columns.append(f'{contract}_{side}{depth}_price')
             columns.append(f'{contract}_{side}{depth}_vol')
 
-columns_best_asks = [i for i in columns if 'ask_price' in i]
-columns_best_bids = [i for i in columns if 'bid_price' in i]
+columns_best_asks = [col for col in columns if 'ask_price' in col]
+columns_best_bids = [col for col in columns if 'bid_price' in col]
 
 columns_cross = []
 for ask in columns_best_asks:
