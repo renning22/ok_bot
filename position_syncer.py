@@ -2,7 +2,7 @@ import pprint
 import traceback
 
 import eventlet
-from absl import logging
+from absl import app, logging
 
 import constants
 
@@ -38,11 +38,9 @@ class PositionSyncer:
                     'get position read_loop encountered error:\n%s', traceback.format_exc())
 
 
-def _testing():
+def _testing(_):
     from order_book import MockOrderBook
     rest_api = eventlet.import_patched('rest_api')
-
-    logging.set_verbosity(logging.INFO)
 
     pool = eventlet.GreenPool(10)
     syncer = PositionSyncer(
@@ -52,4 +50,4 @@ def _testing():
 
 
 if __name__ == '__main__':
-    _testing()
+    app.run(_testing)

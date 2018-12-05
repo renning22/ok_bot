@@ -6,12 +6,14 @@ https://www.anaconda.com/download/
 ### Pip dependencies
 ```sh
 conda install python=3.6.7
-pip install absl-py ccxt slackclient python-socketio websockets eventlet pandas
+pip install absl-py ccxt slackclient websockets eventlet pandas
+
 ```
 ### Clone
 ```sh
 git clone https://github.com/renning22/ok_bot.git
 ```
+
 ### Run
 ```sh
 python -m ok_bot
