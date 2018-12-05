@@ -1,11 +1,11 @@
-import eventlet
-rest_api = eventlet.import_patched('rest_api')
-import constants
-from rest_api import OKRest
-from absl import logging
 import traceback
-import numpy as np
 from datetime import datetime
+
+import eventlet
+import numpy as np
+from absl import logging
+
+import constants
 
 
 class OrderCanceller:
@@ -22,8 +22,8 @@ class OrderCanceller:
                                             constants.PENDING_ORDER_TTL_IN_SECOND)
                 eventlet.sleep(constants.ORDER_CANCELLER_SLEEP_IN_SECOND)
             except Exception as ex:
-                logging.error('order canceller loop encountered error:\n'
-                              + traceback.format_exc())
+                logging.error('order canceller loop encountered error:\n %s',
+                              traceback.format_exc())
 
     def cancel_pending_orders(self, period, ttl):
         logging.info(f'fetching pending orders for {period}')
@@ -36,19 +36,22 @@ class OrderCanceller:
             if now - np.datetime64(order['datetime']) > np.timedelta64(ttl, 's'):
                 self.api.notify_slack(order)
                 orders_to_be_cancelled.append(order_id)
-        for order_list in self._every_five(orders_to_be_cancelled):
+        for order_list in OrderCanceller._every_five(orders_to_be_cancelled):
             self.api.cancel_order(order_list, period)
 
-    def _every_five(self, l):
+    @staticmethod
+    def _every_five(l):
         if not len(l):
             return
         yield l[:5]
-        yield from self._every_five(l[5:])
+        yield from OrderCanceller._every_five(l[5:])
 
 
 def main(argv):
-    canceller = OrderCanceller(eventlet.GreenPool(), OKRest('btc'))
+    rest_api = eventlet.import_patched('rest_api')
+    canceller = OrderCanceller(eventlet.GreenPool(), rest_api.OKRest('btc'))
     canceller.read_cancel_loop()
+
 
 if __name__ == '__main__':
     from absl import app
