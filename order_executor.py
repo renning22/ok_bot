@@ -1,5 +1,5 @@
 import eventlet
-from absl import logging
+from absl import app, logging
 
 
 class OrderExecutor:
@@ -11,14 +11,19 @@ class OrderExecutor:
 
     def open_arbitrage_position(self, long_period, long_price,
                                 short_period, short_price, volume):
-        self.executor_pool.spawn_n(self.api.open_long_order, long_period, volume, long_price)
-        self.executor_pool.spawn_n(self.api.open_short_order, short_period, volume, short_price)
+        self.executor_pool.spawn_n(
+            self.api.open_long_order, long_period, volume, long_price)
+        self.executor_pool.spawn_n(
+            self.api.open_short_order, short_period, volume, short_price)
         self.executor_pool.waitall()  # block for order submission
+        logging.info('finished waiting')
 
     def close_arbitrage_position(self, long_period, sell_price,
                                  short_period, buy_price, volume):
-        self.executor_pool.spawn_n(self.api.close_long_order, long_period, volume, sell_price)
-        self.executor_pool.spawn_n(self.api.close_short_order, short_period, volume, buy_price)
+        self.executor_pool.spawn_n(
+            self.api.close_long_order, long_period, volume, sell_price)
+        self.executor_pool.spawn_n(
+            self.api.close_short_order, short_period, volume, buy_price)
         self.executor_pool.waitall()  # block for order submission
 
     def _open_short_order_stub(self, *args):  # for dev only
@@ -33,9 +38,11 @@ class OrderExecutor:
 
 
 if __name__ == '__main__':
-    rest_api = eventlet.import_patched("rest_api")
-    def main(_):
-        executor = OrderExecutor(rest_api.OKRest('btc'))
-        executor.open_arbitrage_position("this_week", 1000, "next_week", 1200, 20)
-    from absl import app
-    app.run(main)
+    rest_api = eventlet.import_patched('rest_api')
+
+    def testing(_):
+        executor = OrderExecutor(rest_api.OKRest('eth'))
+        executor.open_arbitrage_position(
+            'this_week', 30, 'next_week', 300, 1)
+        logging.info('end')
+    app.run(testing)

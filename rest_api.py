@@ -1,5 +1,3 @@
-# TODO(luanjunyi): make sure load_markets call is necessary or not
-
 import pprint
 import traceback
 from decimal import Decimal
@@ -66,7 +64,7 @@ class OKRest:
                 'trades': None,
                 'fee': None,
             }
-            logging.info('executed order result: ' + ret)
+            logging.info('executed order result:\n%s', pprint.pformat(ret))
             return ret
         except:
             logging.error(f'failed to execute order[{contract_type} {type} {side} vol: {amount}, price: {price}]: %s',
@@ -74,6 +72,9 @@ class OKRest:
         return None
 
     def notify_slack(self, result):
+        if not result:
+            logging.warn(f'sending null to slack.')
+            return
         try:
             side_map = {1: 'OPEN LONG',
                         2: 'OPEN SHORT',
