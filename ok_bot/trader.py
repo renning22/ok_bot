@@ -2,10 +2,10 @@ import eventlet
 import numpy as np
 from absl import logging
 
-import constants
-from order_executor import OrderExecutor
+from . import constants
+from .order_executor import OrderExecutor
 
-rest_api = eventlet.import_patched("rest_api")
+rest_api = eventlet.import_patched('ok_bot.rest_api')
 
 MIN_TIME_WINDOW_IN_SECOND = 1  # 60 * 3 # 3 minutes
 

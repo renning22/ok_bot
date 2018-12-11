@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from absl import logging
 
-import constants
+from . import constants
 
 
 def _generate_table_columns():

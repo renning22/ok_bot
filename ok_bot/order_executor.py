@@ -38,7 +38,7 @@ class OrderExecutor:
 
 
 if __name__ == '__main__':
-    rest_api = eventlet.import_patched('rest_api')
+    rest_api = eventlet.import_patched('ok_bot.rest_api')
 
     def testing(_):
         executor = OrderExecutor(rest_api.OKRest('eth'))

@@ -4,7 +4,7 @@ import traceback
 import eventlet
 from absl import app, logging
 
-import constants
+from . import constants
 
 
 class PositionSyncer:
@@ -40,7 +40,7 @@ class PositionSyncer:
 
 def _testing(_):
     from order_book import MockOrderBook
-    rest_api = eventlet.import_patched('rest_api')
+    rest_api = eventlet.import_patched('ok_bot.rest_api')
 
     pool = eventlet.GreenPool(10)
     syncer = PositionSyncer(

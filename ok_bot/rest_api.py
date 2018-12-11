@@ -5,8 +5,7 @@ from decimal import Decimal
 import ccxt
 from absl import logging
 
-import key
-import slack
+from . import key, slack
 
 
 class OKRest:

@@ -5,7 +5,7 @@ import eventlet
 import numpy as np
 from absl import logging
 
-import constants
+from . import constants
 
 
 class OrderCanceller:
@@ -48,7 +48,7 @@ class OrderCanceller:
 
 
 def main(argv):
-    rest_api = eventlet.import_patched('rest_api')
+    rest_api = eventlet.import_patched('ok_bot.rest_api')
     canceller = OrderCanceller(eventlet.GreenPool(), rest_api.OKRest('btc'))
     canceller.read_cancel_loop()
 

@@ -8,7 +8,7 @@ from typing import Dict
 import eventlet
 from absl import app, logging
 
-from order_book import OrderBook
+from .order_book import OrderBook
 
 websocket = eventlet.import_patched('websocket')
 
