@@ -7,8 +7,8 @@ https://www.anaconda.com/download/
 ```sh
 conda install python=3.6.7
 pip install absl-py ccxt slackclient websockets eventlet pandas
-
 ```
+
 ### Clone
 ```sh
 git clone https://github.com/renning22/ok_bot.git
@@ -17,8 +17,11 @@ git clone https://github.com/renning22/ok_bot.git
 ### Run
 ```sh
 python -m ok_bot
-python ok_bot/order_canceller.py
-python oi_bot/webserver.py
+```
+
+### Test
+```sh
+python -m unittest
 ```
 
 ### More
