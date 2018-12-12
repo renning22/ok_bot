@@ -2,15 +2,15 @@ import absl
 import eventlet
 from absl import logging
 
-import constants
-from book_reader import BookReader
-from order_book import OrderBook
-from order_canceller import OrderCanceller
-from order_executor import OrderExecutor
-from position_syncer import PositionSyncer
-from trader import Trader
+from . import constants
+from .book_reader import BookReader
+from .order_book import OrderBook
+from .order_canceller import OrderCanceller
+from .order_executor import OrderExecutor
+from .position_syncer import PositionSyncer
+from .trader import Trader
 
-rest_api = eventlet.import_patched("rest_api")
+rest_api = eventlet.import_patched("ok_bot.rest_api")
 
 
 def main(_):
@@ -36,9 +36,3 @@ def main(_):
     green_pool.spawn_n(order_canceller.read_cancel_loop)
     green_pool.spawn_n(position_syncer.read_loop)
     green_pool.waitall()
-
-
-if __name__ == '__main__':
-    absl.flags.DEFINE_string(
-        'symbol', 'btc', 'symbol for crypto-currency in under case')
-    absl.app.run(main)

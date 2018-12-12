@@ -1,9 +1,11 @@
 import eventlet
-rest_api = eventlet.import_patched("rest_api")
-import constants
-from order_executor import OrderExecutor
-from absl import logging
 import numpy as np
+from absl import logging
+
+from . import constants
+from .order_executor import OrderExecutor
+
+rest_api = eventlet.import_patched('ok_bot.rest_api')
 
 MIN_TIME_WINDOW_IN_SECOND = 1  # 60 * 3 # 3 minutes
 
@@ -12,9 +14,10 @@ class Trader:
     def __init__(self,
                  order_executor,
                  arbitrage_threshold,
-                 min_time_window = np.timedelta64(MIN_TIME_WINDOW_IN_SECOND, 's'),
-                 max_volume_per_trading = 2,
-                 close_position_take_profit_threshold = 40):
+                 min_time_window=np.timedelta64(
+                     MIN_TIME_WINDOW_IN_SECOND, 's'),
+                 max_volume_per_trading=2,
+                 close_position_take_profit_threshold=40):
         self.arbitrage_threshold = arbitrage_threshold
         self.min_time_window = min_time_window
         self.order_executor = order_executor
@@ -38,7 +41,7 @@ class Trader:
             logging.debug(f'{ask_period}[%.2f] '
                           f'{bid_period}[%.2f] spread: {current_spread}, '
                           f'history: {history}, devidation: {deviation}'
-                         % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
+                          % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
             # First check if we should open new position
             if deviation < self.arbitrage_threshold:
                 self.arbitrage_trading(ask_period, bid_period)
@@ -47,7 +50,8 @@ class Trader:
                 self.close_arbitrage(ask_period, bid_period)
 
     def close_arbitrage(self, long_period, short_period):
-        logging.info('closing arbitrage position with (%s, %s)' % (long_period, short_period))
+        logging.info('closing arbitrage position with (%s, %s)' %
+                     (long_period, short_period))
         vol = min(self.order_book.long_position_volume(long_period),
                   self.order_book.short_position_volume(short_period),
                   self.order_book.ask_volume(long_period),
@@ -57,8 +61,10 @@ class Trader:
             logging.warning(f'trying to close with [{long_period}] and [{short_period}], '
                             f'but the volume available is {vol}')
             return
-        self.order_executor.close_long(long_period, self.order_book.bid_price(long_period), vol)
-        self.order_executor.close_short(short_period, self.order_book.ask_volume(short_period), vol)
+        self.order_executor.close_long(
+            long_period, self.order_book.bid_price(long_period), vol)
+        self.order_executor.close_short(
+            short_period, self.order_book.ask_volume(short_period), vol)
 
     # right now the logic is to close positions when there's enough profit
     def should_close_arbitrage(self, long_period, short_period):
@@ -75,7 +81,8 @@ class Trader:
 
     def arbitrage_trading(self, long_period, short_period):
         # TODO: add logic about lock position
-        logging.info('opening arbitrage position with (%s, %s)' % (long_period, short_period))
+        logging.info('opening arbitrage position with (%s, %s)' %
+                     (long_period, short_period))
         vol = min(self.order_book.ask_volume(long_period),
                   self.order_book.bid_volume(short_period),
                   self.max_volume_per_trading)
@@ -88,6 +95,7 @@ class Trader:
 
 if __name__ == '__main__':
     from order_book import MockOrderBook
+
     def main(_):
         executor = OrderExecutor(rest_api.OKRest('btc'))
         trader = Trader(executor, 0, np.timedelta64(1, 's'))
