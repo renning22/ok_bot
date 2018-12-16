@@ -1,6 +1,8 @@
+import os
+
 import absl
 import eventlet
-from absl import logging
+from absl import flags, logging
 
 from . import constants
 from .book_reader import BookReader
@@ -13,9 +15,16 @@ from .trader import Trader
 rest_api = eventlet.import_patched("ok_bot.rest_api")
 
 
+def config_logging():
+    os.makedirs('log', exist_ok=True)
+    logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
+
+
 def main(_):
-    symbol = absl.flags.FLAGS.symbol
-    logging.info(f'starting program with {symbol}')
+    config_logging()
+
+    symbol = flags.FLAGS.symbol
+    logging.info('starting program with %s', symbol)
 
     # initialize components
     green_pool = eventlet.GreenPool(1000)

@@ -15,8 +15,15 @@ git clone https://github.com/renning22/ok_bot.git
 ```
 
 ### Run
+
+# Log to file by default (into "log/" folder)
 ```sh
 python -m ok_bot
+```
+
+# Log to screen (stderr)
+```sh
+python -m ok_bot --logtostderr
 ```
 
 ### Test

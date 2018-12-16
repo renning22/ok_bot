@@ -140,6 +140,7 @@ class OrderBook:
         for key, value in data.items():
             assert(key in _COLUMNS)
             self.last_record[key] = value
+
         if len(self.last_record) == len(_COLUMNS):
             self.table = self.table.append(
                 self._build_table_row(self.last_record))

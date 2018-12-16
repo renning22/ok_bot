@@ -27,7 +27,8 @@ class Trader:
 
     def new_tick_received(self, order_book):
         if order_book.row_num <= 1 or order_book.time_window < self.min_time_window:
-            logging.info('too few ticks, skip trading')
+            logging.log_every_n(
+                logging.INFO, 'too few ticks, skip trading', 10)
             return
 
         self.order_book = order_book
@@ -38,10 +39,13 @@ class Trader:
             history = order_book.historical_mean_spread(ask_period, bid_period)
             current_spread = order_book.current_spread(ask_period, bid_period)
             deviation = current_spread - history
-            logging.debug(f'{ask_period}[%.2f] '
-                          f'{bid_period}[%.2f] spread: {current_spread}, '
-                          f'history: {history}, devidation: {deviation}'
-                          % (order_book.ask_price(ask_period), order_book.bid_price(bid_period)))
+
+            logging.debug(
+                f'%s, %s, spread: {current_spread}, '
+                f'history: {history}, devidation: {deviation}',
+                order_book.ask_price(ask_period),
+                order_book.bid_price(bid_period))
+
             # First check if we should open new position
             if deviation < self.arbitrage_threshold:
                 self.arbitrage_trading(ask_period, bid_period)
