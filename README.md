@@ -16,19 +16,19 @@ git clone https://github.com/renning22/ok_bot.git
 
 ### Run
 
-# Log to file by default (into "log/" folder)
+# Log to screen
 ```sh
 python -m ok_bot
 ```
 
-# Log to screen (stderr)
+# Log to file ("log/" folder)
 ```sh
-python -m ok_bot --logtostderr
+python -m ok_bot --logtofile
 ```
 
 # Also log to slack
 ```sh
-python -m ok_bot --logtostderr --alsologtoslack
+python -m ok_bot --alsologtoslack
 ```
 
 ### Test

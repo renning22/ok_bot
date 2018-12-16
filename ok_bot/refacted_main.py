@@ -17,9 +17,11 @@ rest_api = eventlet.import_patched("ok_bot.rest_api")
 
 
 def config_logging():
-    os.makedirs('log', exist_ok=True)
-    logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
-    logging.get_absl_logger().addHandler(SlackLoggingHandler('INFO'))
+    if flags.FLAGS.logtofile:
+        os.makedirs('log', exist_ok=True)
+        logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
+    if flags.FLAGS.alsologtoslack:
+        logging.get_absl_logger().addHandler(SlackLoggingHandler('INFO'))
 
 
 def main(_):
