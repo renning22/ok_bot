@@ -26,6 +26,11 @@ python -m ok_bot
 python -m ok_bot --logtostderr
 ```
 
+# Also log to slack
+```sh
+python -m ok_bot --logtostderr --alsologtoslack
+```
+
 ### Test
 ```sh
 python -m unittest
