@@ -10,6 +10,7 @@ from .order_book import OrderBook
 from .order_canceller import OrderCanceller
 from .order_executor import OrderExecutor
 from .position_syncer import PositionSyncer
+from .slack import SlackLoggingHandler
 from .trader import Trader
 
 rest_api = eventlet.import_patched("ok_bot.rest_api")
@@ -18,6 +19,7 @@ rest_api = eventlet.import_patched("ok_bot.rest_api")
 def config_logging():
     os.makedirs('log', exist_ok=True)
     logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
+    logging.get_absl_logger().addHandler(SlackLoggingHandler('INFO'))
 
 
 def main(_):
