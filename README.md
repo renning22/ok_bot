@@ -16,17 +16,17 @@ git clone https://github.com/renning22/ok_bot.git
 
 ### Run
 
-# Log to screen
+#### Log to screen
 ```sh
 python -m ok_bot
 ```
 
-# Log to file ("log/" folder)
+#### Log to file ("log/" folder)
 ```sh
 python -m ok_bot --logtofile
 ```
 
-# Also log to slack
+#### Also log to slack
 ```sh
 python -m ok_bot --alsologtoslack
 ```
