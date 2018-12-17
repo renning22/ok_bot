@@ -4,6 +4,10 @@ from . import refacted_main
 
 flags.DEFINE_string(
     'symbol', 'btc', 'symbol for crypto-currency in under case.')
+flags.DEFINE_boolean(
+    'logtofile', False, 'log to file.')
+flags.DEFINE_boolean(
+    'alsologtoslack', False, 'also log to slack.')
 
 
 if __name__ == '__main__':

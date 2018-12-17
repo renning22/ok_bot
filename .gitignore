@@ -4,6 +4,7 @@ api_key_v3
 secret_key_v3
 pass_phrase_v3
 stderr
+log/
 
 # IDE project file
 .idea/
