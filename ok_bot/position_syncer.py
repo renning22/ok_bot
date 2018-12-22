@@ -6,7 +6,6 @@ from absl import app, logging
 
 from . import constants
 
-
 class PositionSyncer:
     def __init__(self, green_pool, symbol, api, order_book):
         self.green_pool = green_pool
@@ -40,11 +39,10 @@ class PositionSyncer:
 
 def _testing(_):
     from .order_book import MockOrderBook
-    from .rest_api import RestApi
-
+    rest_api = eventlet.import_patched('ok_bot.rest_api')
     pool = eventlet.GreenPool(10)
     syncer = PositionSyncer(
-        pool, 'ETH', RestApi('ETH'), MockOrderBook())
+        pool, 'ETH', rest_api.RestApi('ETH'), MockOrderBook())
     pool.spawn_n(syncer.read_loop)
     pool.waitall()
 
