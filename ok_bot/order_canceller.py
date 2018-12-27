@@ -48,8 +48,8 @@ class OrderCanceller:
 
 
 def main(argv):
-    rest_api = eventlet.import_patched('ok_bot.rest_api')
-    canceller = OrderCanceller(eventlet.GreenPool(), rest_api.OKRest('btc'))
+    from rest_api import RestApi
+    canceller = OrderCanceller(eventlet.GreenPool(), RestApi('btc'))
     canceller.read_cancel_loop()
 
 

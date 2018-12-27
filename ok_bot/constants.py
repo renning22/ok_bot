@@ -1,5 +1,3 @@
-PERIOD_TYPES = ['this_week', 'next_week', 'quarter']
-PERIOD_PAIRS = [(a, b) for a in PERIOD_TYPES for b in PERIOD_TYPES if a != b]
 POSITION_SYNC_SLEEP_IN_SECOND = 2
 ORDER_CANCELLER_SLEEP_IN_SECOND = 2
 PENDING_ORDER_TTL_IN_SECOND = 1

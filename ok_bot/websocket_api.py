@@ -18,20 +18,9 @@ websocket = eventlet.import_patched('websocket')
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
 OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
-OK_TICKER_ADDRESS = 'http://www.okex.com/api/futures/v3/instruments/ticker'
 
 
-def _get_all_instrument_ids(symbol):
-    response = requests.get(OK_TICKER_ADDRESS)
-    if response.status_code == 200:
-        return [asset['instrument_id'] for asset in response.json()
-                if symbol in asset['instrument_id']]
-    else:
-        logging.fatal('no trading assets')
-        return []
-
-
-def _get_server_time_ios():
+def _get_server_time_iso():
     response = requests.get(OK_TIMESERVER_ADDRESS)
     if response.status_code == 200:
         return response.json()['iso']
@@ -41,7 +30,7 @@ def _get_server_time_ios():
 
 
 def _get_server_timestamp():
-    server_time = _get_server_time_ios()
+    server_time = _get_server_time_iso()
     parsed_t = dp.parse(server_time)
     timestamp = parsed_t.timestamp()
     return timestamp
@@ -70,20 +59,18 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self,  green_pool, book_reader, symbol='BTC'):
+    def __init__(self,  green_pool, book_reader, schema):
         self._green_pool = green_pool
         self._book_reader = book_reader
-        self._symbol = symbol
+        self._schema = schema
+        self._currency = schema.currency
         self._ws = None
-        self._instrument_ids = None
 
     def _receive(self):
         res_bin = self._ws.recv()
         return json.loads(_inflate(res_bin).decode())
 
     def _create_and_login(self):
-        self._instrument_ids = _get_all_instrument_ids(self._symbol)
-
         self._ws = websocket.create_connection(OK_WEBSOCKET_ADDRESS)
         timestamp = str(_get_server_timestamp())
         login_str = _create_login_params(
@@ -106,7 +93,7 @@ class WebsocketApi:
                                'futures/position']
         self._subscribe(
             [f'{channel}:{id}'
-             for id in self._instrument_ids
+             for id in self._schema.get_all_instrument_ids()
              for channel in interested_channels])
 
     def _receive_and_dispatch(self):
@@ -252,8 +239,16 @@ class WebsocketApi:
 
 
 def _testing(_):
+    from .schema import Schema
+
+    class MockBookReader:
+        def _received_futures_depth5(self, **argkw):
+            logging.info('%s', pprint.pformat(argkw))
+
     pool = eventlet.GreenPool()
-    reader = WebsocketApi(pool, symbol='ETH')
+
+    schema = Schema('ETH')
+    reader = WebsocketApi(pool, MockBookReader(), schema)
     reader.start_read_loop()
     pool.waitall()
 

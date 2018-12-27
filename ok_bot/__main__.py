@@ -3,7 +3,7 @@ from absl import app, flags
 from . import refacted_main
 
 flags.DEFINE_string(
-    'symbol', 'btc', 'symbol for crypto-currency in under case.')
+    'symbol', 'BTC', 'symbol for crypto-currency in under case.')
 flags.DEFINE_boolean(
     'logtofile', False, 'log to file.')
 flags.DEFINE_boolean(

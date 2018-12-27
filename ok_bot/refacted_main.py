@@ -1,6 +1,5 @@
 import os
 
-import absl
 import eventlet
 from absl import flags, logging
 
@@ -10,10 +9,11 @@ from .order_book import OrderBook
 from .order_canceller import OrderCanceller
 from .order_executor import OrderExecutor
 from .position_syncer import PositionSyncer
+from .rest_api import RestApi
+from .schema import Schema
 from .slack import SlackLoggingHandler
 from .trader import Trader
-
-rest_api = eventlet.import_patched("ok_bot.rest_api")
+from .websocket_api import WebsocketApi
 
 
 def config_logging():
@@ -32,20 +32,22 @@ def main(_):
 
     # initialize components
     green_pool = eventlet.GreenPool(1000)
-    order_book = OrderBook()
-    ok_rest_api = rest_api.OKRest(symbol)
-    order_canceller = OrderCanceller(green_pool, ok_rest_api)
-    position_syncer = PositionSyncer(
-        green_pool, symbol, ok_rest_api, order_book)
-    order_executor = OrderExecutor(ok_rest_api)
-    trader = Trader(order_executor,
+
+    schema = Schema(symbol)
+    rest_api = RestApi(symbol)
+    order_executor = OrderExecutor(rest_api)
+    trader = Trader(schema,
+                    order_executor,
                     constants.SPREAD_DEVIATION_THRESHOLD)
-    reader = BookReader(green_pool,
-                        order_book,
-                        trader,
-                        symbol)
+    order_book = OrderBook(schema, trader)
+    order_canceller = OrderCanceller(green_pool, rest_api)
+    position_syncer = PositionSyncer(
+        green_pool, symbol, rest_api, order_book)
+    reader = BookReader(order_book)
+    ws_api = WebsocketApi(green_pool, reader, schema)
+
     # start the three loops
-    green_pool.spawn_n(reader.read_loop)
-    green_pool.spawn_n(order_canceller.read_cancel_loop)
-    green_pool.spawn_n(position_syncer.read_loop)
+    # green_pool.spawn_n(order_canceller.read_cancel_loop)
+    # green_pool.spawn_n(position_syncer.read_loop)
+    ws_api.start_read_loop()
     green_pool.waitall()

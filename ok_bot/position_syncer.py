@@ -39,12 +39,12 @@ class PositionSyncer:
 
 
 def _testing(_):
-    from order_book import MockOrderBook
-    rest_api = eventlet.import_patched('ok_bot.rest_api')
+    from .order_book import MockOrderBook
+    from .rest_api import RestApi
 
     pool = eventlet.GreenPool(10)
     syncer = PositionSyncer(
-        pool, 'eth', rest_api.OKRest('eth'), MockOrderBook())
+        pool, 'ETH', RestApi('ETH'), MockOrderBook())
     pool.spawn_n(syncer.read_loop)
     pool.waitall()
 
