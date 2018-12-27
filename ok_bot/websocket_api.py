@@ -160,9 +160,9 @@ class WebsocketApi:
              instrument_id	String	合约ID BTC-USD-170310
              [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
         """
-        logging.info(asks)
-        logging.info(bids)
-        logging.info(instrument_id)
+        # logging.info(asks)
+        # logging.info(bids)
+        # logging.info(instrument_id)
 
     def _received_futures_order(self,
                                 leverage,
@@ -191,6 +191,15 @@ class WebsocketApi:
             instrument_id_val	String	合约面值
             leverage	String	杠杆倍数 value:10/20 默认10
         """
+        logging.info('_received_futures_order:')
+        logging.info(instrument_id)
+        logging.info(size)
+        logging.info(filled_qty)
+        logging.info(price)
+        logging.info(price_avg)
+        logging.info(order_id)
+        logging.info(status)
+        logging.info(type)
 
     def _received_futures_position(self,
                                    long_qty,
@@ -225,6 +234,11 @@ class WebsocketApi:
             created_at	String	创建时间
             updated_at	String	更新时间
         """
+        logging.info('_received_futures_position:')
+        logging.info(long_qty)
+        logging.info(long_avg_cost)
+        logging.info(short_qty)
+        logging.info(short_avg_cost)
 
     @decorator.try_catch_loop
     def _read_loop_impl(self):
@@ -239,7 +253,7 @@ class WebsocketApi:
 
 def _testing(_):
     pool = eventlet.GreenPool()
-    reader = WebsocketApi(pool, symbol='BTC')
+    reader = WebsocketApi(pool, symbol='ETH')
     reader.start_read_loop()
     pool.waitall()
 
