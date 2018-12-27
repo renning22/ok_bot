@@ -70,8 +70,9 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self, green_pool=None, symbol='BTC'):
-        self._green_pool = green_pool if green_pool else eventlet.GreenPool()
+    def __init__(self,  green_pool, book_reader, symbol='BTC'):
+        self._green_pool = green_pool
+        self._book_reader = book_reader
         self._symbol = symbol
         self._ws = None
         self._instrument_ids = None
@@ -160,9 +161,8 @@ class WebsocketApi:
              instrument_id	String	合约ID BTC-USD-170310
              [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
         """
-        # logging.info(asks)
-        # logging.info(bids)
-        # logging.info(instrument_id)
+        self._book_reader.received_futures_depth5(
+            asks, bids, instrument_id, timestamp)
 
     def _received_futures_order(self,
                                 leverage,
