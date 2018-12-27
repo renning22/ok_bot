@@ -27,6 +27,7 @@ def _get_all_instrument_ids(symbol):
         return [asset['instrument_id'] for asset in response.json()
                 if symbol in asset['instrument_id']]
     else:
+        logging.fatal('no trading assets')
         return []
 
 
@@ -35,6 +36,7 @@ def _get_server_time_ios():
     if response.status_code == 200:
         return response.json()['iso']
     else:
+        logging.fatal('failed to request server time')
         return ''
 
 
@@ -67,7 +69,7 @@ def _inflate(data):
     return inflated
 
 
-class WsReader:
+class WebsocketApi:
     def __init__(self, green_pool=None, symbol='BTC'):
         self._green_pool = green_pool if green_pool else eventlet.GreenPool()
         self._symbol = symbol
@@ -114,58 +116,54 @@ class WsReader:
             logging.info('confirmed "%s" is subscribed', res['channel'])
             return
 
-        assert 'table' in res
+        if ('table' not in res) or ('data' not in res):
+            logging.fatal('unrecgonized websocket response:\n%s',
+                          pprint.pformat(res))
 
-        try:
-            method_suffix = res.get('table', '').replace('/', '_')
-            method = getattr(self, f'_received_{method_suffix}')
-        except AttributeError:
-            logging.error('websocket unknown table name: %s', table)
+        table = res.get('table')
 
-        # Debug: view raw res.
-        # logging.info(pprint.pformat(res))
-        for data in res.get('data', []):
-            method(**data)
+        if table == 'futures/depth5':
+            for data in res.get('data', []):
+                self._received_futures_depth5(**data)
+        elif table == 'futures/order':
+            for data in res.get('data', []):
+                self._received_futures_order(**data)
+        elif table == 'futures/position':
+            for data in res.get('data', []):
+                self._received_futures_position(**data)
+        else:
+            logging.error('received unsubscribed event:\n%s',
+                          pprint.pformat(res))
 
-    # {'asks': [[3635.45, 1, 0, 1],
-    #          [3635.46, 51, 0, 2],
-    #          [3635.49, 3, 0, 1],
-    #          [3635.72, 41, 0, 2],
-    #          [3635.8, 3, 0, 1]],
-    # 'bids': [[3635.11, 1, 0, 1],
-    #          [3634.87, 3, 0, 1],
-    #          [3634.81, 26, 0, 1],
-    #          [3634.8, 16, 0, 1],
-    #          [3634.47, 16, 0, 1]],
-    # 'instrument_id': 'BTC-USD-190329',
-    # 'timestamp': '2018-12-25T12:14:50.085Z'}
-    #
-    # asks	String	卖方深度
-    # bids	String	买方深度
-    # timestamp	String	时间戳
-    # instrument_id	String	合约ID BTC-USD-170310
-    # [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
     def _received_futures_depth5(self,
                                  asks,
                                  bids,
                                  instrument_id,
                                  timestamp):
+        """
+             {'asks': [[3635.45, 1, 0, 1],
+                      [3635.46, 51, 0, 2],
+                      [3635.49, 3, 0, 1],
+                      [3635.72, 41, 0, 2],
+                      [3635.8, 3, 0, 1]],
+             'bids': [[3635.11, 1, 0, 1],
+                      [3634.87, 3, 0, 1],
+                      [3634.81, 26, 0, 1],
+                      [3634.8, 16, 0, 1],
+                      [3634.47, 16, 0, 1]],
+             'instrument_id': 'BTC-USD-190329',
+             'timestamp': '2018-12-25T12:14:50.085Z'}
+
+             asks	String	卖方深度
+             bids	String	买方深度
+             timestamp	String	时间戳
+             instrument_id	String	合约ID BTC-USD-170310
+             [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
+        """
         logging.info(asks)
         logging.info(bids)
         logging.info(instrument_id)
 
-    # instrument_id	String	合约ID，如BTC-USDT-180213
-    # size	String	数量
-    # timestamp	String	委托时间
-    # filled_qty	String	成交数量
-    # fee	String	手续费
-    # order_id	String	订单ID
-    # price	String	订单价格
-    # price_avg	String	平均价格
-    # status	String	订单状态(-1.撤单成功；0:等待成交 1:部分成交 2:全部成交 6：未完成（等待成交+部分成交）7：已完成（撤单成功+全部成交））
-    # type	String	订单类型(1:开多 2:开空 3:平多 4:平空)
-    # instrument_id_val	String	合约面值
-    # leverage	String	杠杆倍数 value:10/20 默认10
     def _received_futures_order(self,
                                 leverage,
                                 size,
@@ -179,23 +177,21 @@ class WsReader:
                                 order_id,
                                 timestamp,
                                 status):
-        pass
+        """
+            instrument_id	String	合约ID，如BTC-USDT-180213
+            size	String	数量
+            timestamp	String	委托时间
+            filled_qty	String	成交数量
+            fee	String	手续费
+            order_id	String	订单ID
+            price	String	订单价格
+            price_avg	String	平均价格
+            status	String	订单状态(-1.撤单成功；0:等待成交 1:部分成交 2:全部成交 6：未完成（等待成交+部分成交）7：已完成（撤单成功+全部成交））
+            type	String	订单类型(1:开多 2:开空 3:平多 4:平空)
+            instrument_id_val	String	合约面值
+            leverage	String	杠杆倍数 value:10/20 默认10
+        """
 
-    # margin_mode	String	账户类型：全仓 crossed
-    # liquidation_price	String	预估爆仓价
-    # long_qty	String	多仓数量
-    # long_avail_qty	String	多仓可平仓数量
-    # long_avg_cost	String	开仓平均价
-    # long_settlement_price	String	结算基准价
-    # realized_pnl	String	已实现盈余
-    # leverage	String	杠杆倍数
-    # short_qty	String	空仓数量
-    # short_avail_qty	String	空仓可平仓数量
-    # short_avg_cost	String	开仓平均价
-    # short_settlement_price	String	结算基准价
-    # instrument_id	String	合约ID，如BTC-USDT-180213
-    # created_at	String	创建时间
-    # updated_at	String	更新时间
     def _received_futures_position(self,
                                    long_qty,
                                    long_avail_qty,
@@ -212,7 +208,23 @@ class WsReader:
                                    created_at,
                                    updated_at,
                                    margin_mode):
-        pass
+        """
+            margin_mode	String	账户类型：全仓 crossed
+            liquidation_price	String	预估爆仓价
+            long_qty	String	多仓数量
+            long_avail_qty	String	多仓可平仓数量
+            long_avg_cost	String	开仓平均价
+            long_settlement_price	String	结算基准价
+            realized_pnl	String	已实现盈余
+            leverage	String	杠杆倍数
+            short_qty	String	空仓数量
+            short_avail_qty	String	空仓可平仓数量
+            short_avg_cost	String	开仓平均价
+            short_settlement_price	String	结算基准价
+            instrument_id	String	合约ID，如BTC-USDT-180213
+            created_at	String	创建时间
+            updated_at	String	更新时间
+        """
 
     @decorator.try_catch_loop
     def _read_loop_impl(self):
@@ -227,7 +239,7 @@ class WsReader:
 
 def _testing(_):
     pool = eventlet.GreenPool()
-    reader = WsReader(pool, symbol='BTC')
+    reader = WebsocketApi(pool, symbol='BTC')
     reader.start_read_loop()
     pool.waitall()
 
