@@ -6,8 +6,6 @@ from absl import logging
 from . import constants
 from .order_executor import OrderExecutor
 
-MIN_TIME_WINDOW_IN_SECOND = 10
-
 
 class Trader:
     def __init__(self,
@@ -15,7 +13,7 @@ class Trader:
                  order_executor,
                  arbitrage_threshold,
                  min_time_window=np.timedelta64(
-                     MIN_TIME_WINDOW_IN_SECOND, 's'),
+                     constants.MIN_TIME_WINDOW_IN_SECOND, 's'),
                  max_volume_per_trading=2,
                  close_position_take_profit_threshold=40):
         self.arbitrage_threshold = arbitrage_threshold
@@ -39,9 +37,7 @@ class Trader:
 
     def new_tick_received__regular(self, order_book):
         self.order_book = order_book
-        cartesian_products = self._schema.get_markets_cartesian_product().copy()
-        shuffle(cartesian_products)
-        for ask_market, bid_market, product in cartesian_products:
+        for ask_market, bid_market, product in self._schema.markets_cartesian_product:
             self._process_pair(ask_market, bid_market, product)
 
     def _process_pair(self, ask_market, bid_market, product):

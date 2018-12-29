@@ -93,35 +93,39 @@ class WebsocketApi:
                                'futures/position']
         self._subscribe(
             [f'{channel}:{id}'
-             for id in self._schema.get_all_instrument_ids()
+             for id in self._schema.all_instrument_ids
              for channel in interested_channels])
 
     def _receive_and_dispatch(self):
         res_bin = self._ws.recv()
         res = json.loads(_inflate(res_bin).decode())
+
+        # This is event message that ACKs to subscriptions.
         if 'event' in res:
             assert res['event'] == 'subscribe'
             logging.info('confirmed "%s" is subscribed', res['channel'])
             return
 
+        # Otherwise it's data message.
         if ('table' not in res) or ('data' not in res):
-            logging.fatal('unrecgonized websocket response:\n%s',
-                          pprint.pformat(res))
+            raise Exception(
+                f'unrecgonized websocket response:\n{pprint.pformat(res)}')
 
-        table = res.get('table')
+        table = res['table']
+        data_list = res['data']
 
         if table == 'futures/depth5':
-            for data in res.get('data', []):
+            for data in data_list:
                 self._received_futures_depth5(**data)
         elif table == 'futures/order':
-            for data in res.get('data', []):
+            for data in data_list:
                 self._received_futures_order(**data)
         elif table == 'futures/position':
-            for data in res.get('data', []):
+            for data in data_list:
                 self._received_futures_position(**data)
         else:
-            logging.error('received unsubscribed event:\n%s',
-                          pprint.pformat(res))
+            raise Exception(
+                f'received unsubscribed event:\n{pprint.pformat(res)}')
 
     def _received_futures_depth5(self,
                                  asks,
@@ -242,11 +246,10 @@ def _testing(_):
     from .schema import Schema
 
     class MockBookReader:
-        def _received_futures_depth5(self, **argkw):
-            logging.info('%s', pprint.pformat(argkw))
+        def received_futures_depth5(self, *argv):
+            logging.info('%s', pprint.pformat(argv))
 
     pool = eventlet.GreenPool()
-
     schema = Schema('ETH')
     reader = WebsocketApi(pool, MockBookReader(), schema)
     reader.start_read_loop()

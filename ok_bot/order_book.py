@@ -85,7 +85,7 @@ class OrderBook:
                                                       bid_prices,
                                                       bid_vols)
 
-        if set(self._schema.get_all_necessary_source_columns()) == set(self.last_record.keys()):
+        if set(self._schema.all_necessary_source_columns) == set(self.last_record.keys()):
             logging.info('have all the necessary prices in every market, ramping up finished:\n%s',
                          pprint.pformat(self.last_record))
             # Finshed ramping up
@@ -121,7 +121,7 @@ class OrderBook:
         data = self.last_record.copy()
 
         # Calculate new derived data.
-        for ask_market, bid_market, product in self._schema.get_markets_cartesian_product():
+        for ask_market, bid_market, product in self._schema.markets_cartesian_product:
             ask_price_name = Schema.make_column_name(
                 ask_market, 'ask', 'price')
             bid_price_name = Schema.make_column_name(
