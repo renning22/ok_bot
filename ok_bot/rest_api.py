@@ -155,6 +155,7 @@ class RestApi:
                 'privatePostFuturePosition returned response has no result field')
 
         positions = []
+        import pdb; pdb.set_trace()
         for item in response['holding']:
             if item['symbol'] == native_symbol and item['contract_type'] == contract_type:
                 # {'buy_amount': 0,

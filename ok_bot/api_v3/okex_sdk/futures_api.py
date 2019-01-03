@@ -51,6 +51,7 @@ class FutureAPI(Client):
     # take order
     def take_order(self, client_oid, instrument_id, otype, price, size, match_price, leverage):
         # params = {'instrument_id': instrument_id, 'otype': otype, 'price': price, 'order': order_Qty, 'match_price': match_price, 'client_id': client_id}
+        #import pdb; pdb.set_trace()
         params = {'client_oid': client_oid, 'instrument_id': instrument_id, 'type': otype, 'price': price, 'size': size, 'match_price':match_price, 'leverage': leverage}
         return self._request_with_params(POST, FUTURE_ORDER, params)
 
@@ -75,7 +76,8 @@ class FutureAPI(Client):
     #    return self._request_with_params(GET, FUTURE_ORDERS_LIST, params)
 
     # query order list
-    def get_order_list(self, status, froms, to, limit, instrument_id=''):
+    def get_order_list(self, instrument_id, status, froms=None, to=None, limit=None):
+        url = '/api/futures/v3/orders/' + instrument_id
         params = {'status': status, 'instrument_id': instrument_id}
         if froms:
             params['from'] = froms
@@ -85,7 +87,7 @@ class FutureAPI(Client):
             params['limit'] = limit
         if instrument_id:
             params['instrument_id'] = instrument_id
-        return self._request_with_params(GET, FUTURE_ORDERS_LIST, params)
+        return self._request_with_params(GET, url, params)
 
     # query order info
     def get_order_info(self, order_id, instrument_id):

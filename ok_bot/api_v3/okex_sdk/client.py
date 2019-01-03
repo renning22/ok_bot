@@ -31,12 +31,13 @@ class Client(object):
 
         sign = utils.sign(utils.pre_hash(timestamp, method, request_path, str(body)), self.API_SECRET_KEY)
         header = utils.get_header(self.API_KEY, sign, timestamp, self.PASSPHRASE)
-
+        print(f'timestamp: [{timestamp}]')
+        #import pdb; pdb.set_trace()
         # send request
         response = None
-        #print("url:", url)
-        #print("headers:", header)
-        #print("body:", body)
+        print("url:", url)
+        print("headers:", header)
+        print("body:", body)
         if method == c.GET:
             response = requests.get(url, headers=header)
         elif method == c.POST:

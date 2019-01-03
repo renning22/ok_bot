@@ -6,6 +6,7 @@ from absl import app, logging
 
 from . import constants
 
+
 class PositionSyncer:
     def __init__(self, green_pool, symbol, api, order_book):
         self.green_pool = green_pool

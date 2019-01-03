@@ -1,6 +1,5 @@
 import hmac
 import base64
-import time
 import datetime
 from . import consts as c
 
@@ -35,8 +34,10 @@ def parse_params_to_str(params):
 
 
 def get_timestamp():
-    now = datetime.datetime.now()
-    t = now.isoformat()
+    # According to https://www.okex.com/docs/zh/#summary-yan-zheng,
+    # timestamp should be UTC time in ISO8601 format, to milliseconds
+    now = datetime.datetime.utcnow()
+    t = now.isoformat()[:23]
     return t + "Z"
 
 
