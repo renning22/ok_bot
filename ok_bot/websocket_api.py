@@ -66,10 +66,6 @@ class WebsocketApi:
         self._currency = schema.currency
         self._ws = None
 
-    def _receive(self):
-        res_bin = self._ws.recv()
-        return json.loads(_inflate(res_bin).decode())
-
     def _create_and_login(self):
         self._ws = websocket.create_connection(OK_WEBSOCKET_ADDRESS)
         timestamp = str(_get_server_timestamp())
@@ -80,7 +76,9 @@ class WebsocketApi:
             api_key_v3.KEY_SECRET)
 
         self._ws.send(login_str)
-        login_res = _inflate(self._ws.recv())
+
+        # Consume login response.
+        self._ws.recv()
 
     def _subscribe(self, channels):
         sub_param = {'op': 'subscribe', 'args': channels}
