@@ -32,7 +32,6 @@ class Client(object):
         sign = utils.sign(utils.pre_hash(timestamp, method, request_path, str(body)), self.API_SECRET_KEY)
         header = utils.get_header(self.API_KEY, sign, timestamp, self.PASSPHRASE)
         print(f'timestamp: [{timestamp}]')
-        #import pdb; pdb.set_trace()
         # send request
         response = None
         print("url:", url)
@@ -42,7 +41,6 @@ class Client(object):
             response = requests.get(url, headers=header)
         elif method == c.POST:
             response = requests.post(url, data=body, headers=header)
-            #response = requests.post(url, json=body, headers=header)
         elif method == c.DELETE:
             response = requests.delete(url, headers=header)
 
