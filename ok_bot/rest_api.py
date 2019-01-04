@@ -1,8 +1,9 @@
 import pprint
 import traceback
 from decimal import Decimal
-
 import eventlet
+import ccxt
+from ccxt.base.errors import ExchangeError
 from absl import logging
 
 from . import key, slack
@@ -139,10 +140,15 @@ class RestApi:
     def get_position(self, contract_type):
         market = self.ccxt.market(self.symbol)
         native_symbol = market['id']
-        response = self.ccxt.privatePostFuturePosition(params={
-            'symbol': native_symbol,
-            'contract_type': contract_type,
-        })
+        logging.debug('querying %s position for %s', native_symbol, contract_type)
+        try:
+            response = self.ccxt.privatePostFuturePosition(params={
+                'symbol': native_symbol,
+                'contract_type': contract_type,
+            })
+        except ExchangeError as ex:
+            logging.error('failed to get %s position for %s: [%s]', native_symbol, contract_type, str(ex))
+            return []
 
         if not response['result']:
             raise ValueError(
@@ -228,5 +234,5 @@ class RestApi:
 
 
 if __name__ == '__main__':
-    api = RestApi('btc')
-    pprint.pprint(api.get_position('next_week'))
+    api = OKRest('eth')
+    pprint.pprint(api.get_position('quarter'))
