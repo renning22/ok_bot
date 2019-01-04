@@ -38,10 +38,10 @@ class OrderExecutor:
 
 
 if __name__ == '__main__':
-    rest_api = eventlet.import_patched('ok_bot.rest_api')
+    from .rest_api import RestApi
 
     def testing(_):
-        executor = OrderExecutor(rest_api.OKRest('eth'))
+        executor = OrderExecutor(RestApi('ETH'))
         executor.open_arbitrage_position(
             'this_week', 30, 'next_week', 300, 1)
         logging.info('end')

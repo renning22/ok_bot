@@ -2,13 +2,15 @@ import pprint
 import traceback
 from decimal import Decimal
 
-import ccxt
+import eventlet
 from absl import logging
 
 from . import key, slack
 
+ccxt = eventlet.import_patched('ccxt')
 
-class OKRest:
+
+class RestApi:
     def __init__(self, currency):
         self.symbol = f'{currency.upper()}/USD'
         self.ccxt = ccxt.okex({
@@ -226,5 +228,5 @@ class OKRest:
 
 
 if __name__ == '__main__':
-    api = OKRest('btc')
+    api = RestApi('btc')
     pprint.pprint(api.get_position('next_week'))
