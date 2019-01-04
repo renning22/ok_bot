@@ -19,13 +19,14 @@ class OKHttpV3:
         print(f'{instrument_id} finished at {datetime.now()}')
         return json.dumps(data)
 
-    def create_order(self, client_oid, instrument_id, order_type, amount, price, leverage=10):
+    def create_order(self, client_oid, instrument_id, order_type, amount, price, is_market_order=False, leverage=10):
         """
         :param client_oid: the order ID customized by client side
         :param instrument_id: for example: "TC-USD-180213"
         :param order_type: 1:open long 2:open short 3:close long 4:close short
         :param amount:
         :param price:
+        :param is_market_order: place market order if True, price will be ignored for market orders
         :param leverage: 10 or 20
         :return: Order ID if success, None otherwise
 
@@ -45,7 +46,7 @@ class OKHttpV3:
                 order_type,
                 price,
                 amount,
-                match_price=0,
+                match_price=1 if is_market_order else 0,
                 leverage=leverage)
             return int(resp['order_id']) \
                 if resp['result'] is True and resp['order_id'] != '-1' \
@@ -54,43 +55,47 @@ class OKHttpV3:
             logging.error(f'Failed to place order: {ex}')
             return None
 
-    def open_long_order(self, instrument_id, amount, price, custom_order_id):
+    def open_long_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
             1,
             amount,
-            price
+            price,
+            is_market_order
         )
         return ret
 
-    def open_short_order(self, instrument_id, amount, price, custom_order_id):
+    def open_short_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
             2,
             amount,
-            price
+            price,
+            is_market_order
         )
         return ret
 
-    def close_long_order(self, instrument_id, amount, price, custom_order_id):
+    def close_long_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
             3,
             amount,
-            price
+            price,
+            is_market_order
         )
         return ret
 
-    def close_short_order(self, instrument_id, amount, price, custom_order_id):
+    def close_short_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
             4,
             amount,
-            price
+            price,
+            is_market_order
         )
         return ret
 
@@ -136,6 +141,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('--custom-id', type=str)
     arg_parser.add_argument('--order-id', type=str)
     arg_parser.add_argument('--instrument-id', type=str, help='Instrument ID is symbols like BTC-USD-190104')
+    arg_parser.add_argument('--market-order', default=False, action='store_true', dest='market_order',
+                            help='if True, will place market order')
     args = arg_parser.parse_args()
     api = OKHttpV3(API_KEY, KEY_SECRET, PASS_PHRASE)
 
@@ -144,5 +151,6 @@ if __name__ == '__main__':
         print(f'action:{args.action}, {args.instrument_id} {args.order_id}')
         print(func(args.instrument_id, args.order_id))
     else:
-        print(f'action:{args.action}, {args.instrument_id} {args.price}@{args.volume}, {args.custom_id}')
-        print(func(args.instrument_id, args.volume, args.price, args.custom_id))
+        print(f'action:{args.action}, {args.instrument_id} {args.price}@{args.volume}, {args.custom_id}, '
+              'market_order:{args.market_order}')
+        print(func(args.instrument_id, args.volume, args.price, args.custom_id, args.market_order))
