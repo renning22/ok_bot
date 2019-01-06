@@ -106,7 +106,6 @@ class OrderBook:
                                                       ask_vols,
                                                       bid_prices,
                                                       bid_vols)
-
         self.table = self.table.append(
             self._convert_last_record_to_table_row(), sort=True)
         # remove old rows

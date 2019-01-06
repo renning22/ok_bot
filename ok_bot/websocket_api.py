@@ -3,9 +3,7 @@ import base64
 import hmac
 import json
 import pprint
-import traceback
 import zlib
-from decimal import Decimal
 
 import dateutil.parser as dp
 import eventlet
@@ -59,9 +57,9 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self,  green_pool, book_reader, schema):
+    def __init__(self,  green_pool, book_listener, schema):
         self._green_pool = green_pool
-        self._book_reader = book_reader
+        self._book_listener = book_listener
         self._schema = schema
         self._currency = schema.currency
         self._ws = None
@@ -88,7 +86,7 @@ class WebsocketApi:
     def _subscribe_all_interested(self):
         interested_channels = ['futures/depth5',
                                'futures/order',
-                               'futures/position']
+                              ]
         self._subscribe(
             [f'{channel}:{id}'
              for id in self._schema.all_instrument_ids
@@ -118,9 +116,6 @@ class WebsocketApi:
         elif table == 'futures/order':
             for data in data_list:
                 self._received_futures_order(**data)
-        elif table == 'futures/position':
-            for data in data_list:
-                self._received_futures_position(**data)
         else:
             raise Exception(
                 f'received unsubscribed event:\n{pprint.pformat(res)}')
@@ -150,7 +145,7 @@ class WebsocketApi:
              instrument_id	String	合约ID BTC-USD-170310
              [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
         """
-        self._book_reader.received_futures_depth5(
+        self._book_listener.received_futures_depth5(
             asks, bids, instrument_id, timestamp)
 
     def _received_futures_order(self,
@@ -243,13 +238,13 @@ class WebsocketApi:
 def _testing(_):
     from .schema import Schema
 
-    class MockBookReader:
+    class MockBookListener:
         def received_futures_depth5(self, *argv):
-            logging.info('%s', pprint.pformat(argv))
+            logging.info('MockBookReader:\n%s', pprint.pformat(argv))
 
     pool = eventlet.GreenPool()
     schema = Schema('ETH')
-    reader = WebsocketApi(pool, MockBookReader(), schema)
+    reader = WebsocketApi(pool, MockBookListener(), schema)
     reader.start_read_loop()
     pool.waitall()
 
