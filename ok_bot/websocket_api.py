@@ -240,7 +240,7 @@ def _testing(_):
 
     class MockBookListener:
         def received_futures_depth5(self, *argv):
-            logging.info('MockBookReader:\n%s', pprint.pformat(argv))
+            logging.info('MockBookListener:\n%s', pprint.pformat(argv))
 
     pool = eventlet.GreenPool()
     schema = Schema('ETH')
