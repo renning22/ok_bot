@@ -1,15 +1,17 @@
-from .okex_sdk.futures_api import FutureAPI
 import json
+
 import eventlet
 from absl import logging
 
+from .api_v3.okex_sdk.futures_api import FutureAPI
+from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
 
 requests = eventlet.import_patched('requests')
 
 
-class OKHttpV3:
-    def __init__(self, api_key, api_secret_key, passphrase):
-        self.future_sdk = FutureAPI(api_key, api_secret_key, passphrase)
+class RestApiV3:
+    def __init__(self):
+        self.future_sdk = FutureAPI(API_KEY, KEY_SECRET, PASS_PHRASE)
 
     def ticker(self, instrument_id):
         # use print to show it's non-blocking
@@ -55,7 +57,7 @@ class OKHttpV3:
             logging.error(f'Failed to place order: {ex}')
             return None
 
-    def open_long_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
+    def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
@@ -66,7 +68,7 @@ class OKHttpV3:
         )
         return ret
 
-    def open_short_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
+    def open_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
@@ -77,7 +79,7 @@ class OKHttpV3:
         )
         return ret
 
-    def close_long_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
+    def close_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
@@ -88,7 +90,7 @@ class OKHttpV3:
         )
         return ret
 
-    def close_short_order(self, instrument_id, amount, price, custom_order_id, is_market_order=False):
+    def close_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
         ret = self.create_order(
             custom_order_id,
             instrument_id,
@@ -130,7 +132,6 @@ class OKHttpV3:
 
 
 if __name__ == '__main__':
-    from ..api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
     from argparse import ArgumentParser
     arg_parser = ArgumentParser(description='Manually make/cancel orders')
     arg_parser.add_argument('--action', choices=['open_long_order', 'open_short_order',
@@ -140,11 +141,12 @@ if __name__ == '__main__':
     arg_parser.add_argument('--volume', type=int)
     arg_parser.add_argument('--custom-id', type=str)
     arg_parser.add_argument('--order-id', type=str)
-    arg_parser.add_argument('--instrument-id', type=str, help='Instrument ID is symbols like BTC-USD-190104')
+    arg_parser.add_argument('--instrument-id', type=str,
+                            help='Instrument ID is symbols like BTC-USD-190104')
     arg_parser.add_argument('--market-order', default=False, action='store_true', dest='market_order',
                             help='if True, will place market order')
     args = arg_parser.parse_args()
-    api = OKHttpV3(API_KEY, KEY_SECRET, PASS_PHRASE)
+    api = RestApiV3()
 
     func = getattr(api, args.action)
     if args.action == 'cancel_order':
@@ -153,4 +155,5 @@ if __name__ == '__main__':
     else:
         print(f'action:{args.action}, {args.instrument_id} {args.price}@{args.volume}, {args.custom_id}, '
               'market_order:{args.market_order}')
-        print(func(args.instrument_id, args.volume, args.price, args.custom_id, args.market_order))
+        print(func(args.instrument_id, args.volume,
+                   args.price, args.custom_id, args.market_order))
