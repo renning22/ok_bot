@@ -11,7 +11,7 @@ import dateutil.parser as dp
 import eventlet
 from absl import app, logging
 
-from . import api_key_v3, decorator
+from . import api_v3_key_reader, decorator
 
 requests = eventlet.import_patched('requests')
 websocket = eventlet.import_patched('websocket')
@@ -71,9 +71,9 @@ class WebsocketApi:
         timestamp = str(_get_server_timestamp())
         login_str = _create_login_params(
             str(timestamp),
-            api_key_v3.API_KEY,
-            api_key_v3.PASSPHRASE,
-            api_key_v3.KEY_SECRET)
+            api_v3_key_reader.API_KEY,
+            api_v3_key_reader.PASS_PHRASE,
+            api_v3_key_reader.KEY_SECRET)
 
         self._ws.send(login_str)
 
