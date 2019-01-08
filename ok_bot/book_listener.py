@@ -1,5 +1,5 @@
-from decimal import Decimal
 from collections import defaultdict
+from decimal import Decimal
 
 import eventlet
 from absl import app, logging
@@ -23,7 +23,8 @@ class BookListener:
         :return: None
         '''
         if not hasattr(responder, 'tick_received'):
-            raise Exception(f"{type(responder)} doesn't have tick_received method")
+            raise Exception(
+                f"{type(responder)} doesn't have tick_received method")
         self.subscribers[instrument_id].add(responder)
 
     def unsubscribe(self, instrument_id, responder):
@@ -73,7 +74,7 @@ def _testing(_):
     book_listener = BookListener()
     trader = MockTrader()
     book_listener.subscribe('BTC-USD-190118', trader)
-    api = WebsocketApi(pool, book_listener, schema)
+    api = WebsocketApi(pool, schema=schema, book_listener=book_listener)
     api.start_read_loop()
     pool.waitall()
 

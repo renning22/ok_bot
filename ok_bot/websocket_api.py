@@ -4,6 +4,7 @@ import hmac
 import json
 import pprint
 import zlib
+from decimal import Decimal
 
 import dateutil.parser as dp
 import eventlet
@@ -57,10 +58,11 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self,  green_pool, book_listener, schema):
+    def __init__(self, green_pool, schema, book_listener=None, order_listener=None):
         self._green_pool = green_pool
-        self._book_listener = book_listener
         self._schema = schema
+        self._book_listener = book_listener
+        self._order_listener = order_listener
         self._currency = schema.currency
         self._ws = None
 
@@ -84,9 +86,12 @@ class WebsocketApi:
         self._ws.send(sub_str)
 
     def _subscribe_all_interested(self):
-        interested_channels = ['futures/depth5',
-                               'futures/order',
-                              ]
+        interested_channels = []
+        if self._book_listener is not None:
+            interested_channels.append('futures/depth5')
+        if self._order_listener is not None:
+            interested_channels.append('futures/order')
+
         self._subscribe(
             [f'{channel}:{id}'
              for id in self._schema.all_instrument_ids
@@ -175,15 +180,19 @@ class WebsocketApi:
             instrument_id_val	String	合约面值
             leverage	String	杠杆倍数 value:10/20 默认10
         """
-        logging.info('_received_futures_order:')
-        logging.info(instrument_id)
-        logging.info(size)
-        logging.info(filled_qty)
-        logging.info(price)
-        logging.info(price_avg)
-        logging.info(order_id)
-        logging.info(status)
-        logging.info(type)
+        self._order_listener._received_futures_order(
+            int(leverage),
+            int(size),
+            int(filled_qty),
+            Decimal(str(price)),
+            Decimal(str(fee)),
+            contract_val,
+            Decimal(str(price_avg)),
+            int(type),
+            instrument_id,
+            int(order_id),
+            timestamp,
+            int(status))
 
     def _received_futures_position(self,
                                    long_qty,
