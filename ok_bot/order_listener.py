@@ -13,6 +13,10 @@ class OrderListener:
     def __init__(self):
         logging.info('OrderListener initiated')
         self._subscribers = defaultdict(set)
+
+        # There is no guarantee Websocket order notification always comes
+        # after REST API http responses (for the same order). The buffer makes
+        # sure no Websocket order notification is missed for the subscriber.
         self._buffer = defaultdict(list)
 
     def subscribe(self, order_id, responder):
@@ -58,6 +62,12 @@ class OrderListener:
                                 timestamp,
                                 status):
         order_id = int(order_id)
+
+        # Order Status:
+        #   -1 cancelled
+        #   0: pending
+        #   1: partially filled
+        #   2: fully filled
         if status == -1:
             self._buffer[order_id].append(
                 lambda trader: trader.order_cancelled(order_id))
@@ -78,7 +88,8 @@ class OrderListener:
                                                       price,
                                                       price_avg))
         else:
-            logging.error('unknown order update message type: %s', status)
+            raise ValueException(
+                f'unknown order update message type: {status}')
 
         self._dispatch_buffer(order_id)
 
