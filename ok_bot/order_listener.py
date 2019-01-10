@@ -46,7 +46,7 @@ class OrderListener:
 
     def unsubscribe(self, order_id, responder):
         self._subscribers[order_id].discard(responder)
-        if not self._subscribers[order_id]:
+        if len(self._subscribers[order_id]) == 0:
             del self._subscribers[order_id]
 
     def _received_futures_order(self,
