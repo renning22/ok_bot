@@ -116,7 +116,7 @@ class OrderExecutor:
             if result is None:
                 # timeout
                 future.send(OPEN_POSITION_STATUS__TIMEOUT)
-            elif reulst == 'cancelled':
+            elif result == 'cancelled':
                 future.send(OPEN_POSITION_STATUS__CANCELLED)
             elif result == 'fulfilled':
                 future.send(OPEN_POSITION_STATUS__SUCCEEDED)
