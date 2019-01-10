@@ -68,10 +68,10 @@ class WebsocketApi:
         self._currency = schema.currency
         self._ws = None
 
-    def _recv(self, timeout):
+    def _recv(self, timeout_sec):
         green_thread = self._pool.spawn(self._ws.recv)
         eventlet.greenthread.spawn_after_local(
-            timeout, lambda: green_thread.kill())
+            timeout_sec, lambda: green_thread.kill())
         try:
             result = green_thread.wait()
         except greenlet.GreenletExit:
@@ -125,15 +125,15 @@ class WebsocketApi:
         # 3，期待一个文字字符串'pong'作为回应。如果在 N秒内未收到，请发出错误或重新连接。
         #
         # 出现网络问题会自动断开连接
-        res_bin = self._recv(timeout=2)
+        res_bin = self._recv(timeout_sec=2)
         if res_bin is None:
-            logging.info('sending ping')
+            logging.info('Sending heartbeat message')
             self._ws.send('ping')
             return
 
         res_text = _inflate(res_bin).decode()
         if res_text == 'pong':
-            logging.info('pong')
+            logging.info('Received heartbeat message')
             return
 
         res = json.loads(res_text)
