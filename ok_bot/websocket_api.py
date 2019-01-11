@@ -60,8 +60,8 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self, pool, schema, book_listener=None, order_listener=None):
-        self._pool = pool
+    def __init__(self, green_pool, schema, book_listener=None, order_listener=None):
+        self._green_pool = green_pool
         self._schema = schema
         self._book_listener = book_listener
         self._order_listener = order_listener
@@ -69,7 +69,7 @@ class WebsocketApi:
         self._ws = None
 
     def _recv(self, timeout_sec):
-        green_thread = self._pool.spawn(self._ws.recv)
+        green_thread = self._green_pool.spawn(self._ws.recv)
         eventlet.greenthread.spawn_after_local(
             timeout_sec, lambda: green_thread.kill())
         try:
@@ -278,7 +278,7 @@ class WebsocketApi:
             self._receive_and_dispatch()
 
     def start_read_loop(self):
-        self._pool.spawn_n(self._read_loop_impl)
+        self._green_pool.spawn_n(self._read_loop_impl)
 
 
 def _testing(_):
@@ -288,11 +288,11 @@ def _testing(_):
         def received_futures_depth5(self, *argv):
             logging.info('MockBookListener:\n%s', pprint.pformat(argv))
 
-    pool = eventlet.GreenPool()
+    green_pool = eventlet.GreenPool()
     schema = Schema('ETH')
-    reader = WebsocketApi(pool, MockBookListener(), schema)
+    reader = WebsocketApi(green_pool, MockBookListener(), schema)
     reader.start_read_loop()
-    pool.waitall()
+    green_pool.waitall()
 
 
 if __name__ == '__main__':
