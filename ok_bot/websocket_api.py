@@ -10,6 +10,8 @@ import dateutil.parser as dp
 import eventlet
 from absl import app, logging
 
+import greenlet
+
 from . import api_v3_key_reader, decorator
 
 requests = eventlet.import_patched('requests')
@@ -66,6 +68,17 @@ class WebsocketApi:
         self._currency = schema.currency
         self._ws = None
 
+    def _recv(self, timeout_sec):
+        green_thread = self._green_pool.spawn(self._ws.recv)
+        eventlet.greenthread.spawn_after_local(
+            timeout_sec, lambda: green_thread.kill())
+        try:
+            result = green_thread.wait()
+        except greenlet.GreenletExit:
+            # timeout
+            return None
+        return result
+
     def _create_and_login(self):
         self._ws = websocket.create_connection(OK_WEBSOCKET_ADDRESS)
         timestamp = str(_get_server_timestamp())
@@ -98,8 +111,32 @@ class WebsocketApi:
              for channel in interested_channels])
 
     def _receive_and_dispatch(self):
-        res_bin = self._ws.recv()
-        res = json.loads(_inflate(res_bin).decode())
+        # 连接限制
+        # 连接限制：1次/s
+        #
+        # 订阅限制：每小时240次
+        #
+        # 连接上ws后如果一直没有数据返回，30s 后自动断开链接， 建议用户进行以下操作:
+        #
+        # 1，每次接收到消息后，用户设置一个定时器 ，定时N秒。
+        #
+        # 2，如果定时器被触发（N 秒内没有收到新消息），发送字符串 'ping'。
+        #
+        # 3，期待一个文字字符串'pong'作为回应。如果在 N秒内未收到，请发出错误或重新连接。
+        #
+        # 出现网络问题会自动断开连接
+        res_bin = self._recv(timeout_sec=2)
+        if res_bin is None:
+            logging.info('Sending heartbeat message')
+            self._ws.send('ping')
+            return
+
+        res_text = _inflate(res_bin).decode()
+        if res_text == 'pong':
+            logging.info('Received heartbeat message')
+            return
+
+        res = json.loads(res_text)
 
         # This is event message that ACKs to subscriptions.
         if 'event' in res:
@@ -251,11 +288,13 @@ def _testing(_):
         def received_futures_depth5(self, *argv):
             logging.info('MockBookListener:\n%s', pprint.pformat(argv))
 
-    pool = eventlet.GreenPool()
+    green_pool = eventlet.GreenPool()
     schema = Schema('ETH')
-    reader = WebsocketApi(pool, MockBookListener(), schema)
+    reader = WebsocketApi(green_pool=green_pool,
+                          schema=schema,
+                          book_listener=MockBookListener())
     reader.start_read_loop()
-    pool.waitall()
+    green_pool.waitall()
 
 
 if __name__ == '__main__':
