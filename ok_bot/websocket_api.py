@@ -282,19 +282,19 @@ class WebsocketApi:
 
 
 def _testing(_):
-    from .schema import Schema
+    from . import singleton
 
     class MockBookListener:
         def received_futures_depth5(self, *argv):
             logging.info('MockBookListener:\n%s', pprint.pformat(argv))
 
-    green_pool = eventlet.GreenPool()
-    schema = Schema('ETH')
-    reader = WebsocketApi(green_pool=green_pool,
-                          schema=schema,
-                          book_listener=MockBookListener())
-    reader.start_read_loop()
-    green_pool.waitall()
+    singleton.initalize_objects('ETH')
+
+    ws = WebsocketApi(green_pool=singleton.green_pool,
+                      schema=singleton.schema,
+                      book_listener=MockBookListener())
+    ws.start_read_loop()
+    singleton.green_pool.waitall()
 
 
 if __name__ == '__main__':

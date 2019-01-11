@@ -146,8 +146,7 @@ def _testing(_):
     logging.info('instruments: %s', schema.all_instrument_ids)
     instrument_id = schema.all_instrument_ids[0]
 
-    order_listener = OrderListener()
-    ws_api = WebsocketApi(pool, schema=schema, order_listener=order_listener)
+    ws_api = WebsocketApi(pool, schema=schema, order_listener=singleton_order_listener)
     ws_api.start_read_loop()
 
     pool.spawn_n(_testing_thread,

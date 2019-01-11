@@ -72,10 +72,9 @@ def _testing(_):
 
     pool = eventlet.GreenPool()
     schema = Schema('BTC')
-    book_listener = BookListener()
     trader = MockTrader()
     book_listener.subscribe('BTC-USD-190118', trader)
-    api = WebsocketApi(pool, schema=schema, book_listener=book_listener)
+    api = WebsocketApi(pool, schema=schema, book_listener=singleton_book_listener)
     api.start_read_loop()
     pool.waitall()
 
