@@ -109,10 +109,10 @@ class Trader:
 
 if __name__ == '__main__':
     from .order_book import MockOrderBook
-    from .rest_api import RestApi
+    from .rest_api_v3 import RestApiV3
 
     def main(_):
-        executor = OrderExecutor(RestApi('BTC'))
+        executor = OrderExecutor(RestApiV3())
         trader = Trader(executor, 0, np.timedelta64(1, 's'))
         trader.new_tick_received(MockOrderBook())
     from absl import app
