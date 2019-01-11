@@ -45,8 +45,9 @@ class OrderListener:
         self._dispatch_buffer(order_id)
 
     def unsubscribe(self, order_id, responder):
-        if responder in self._subscribers[order_id]:
-            self._subscribers.remove(responder)
+        self._subscribers[order_id].discard(responder)
+        if len(self._subscribers[order_id]) == 0:
+            del self._subscribers[order_id]
 
     def _received_futures_order(self,
                                 leverage,
@@ -62,7 +63,6 @@ class OrderListener:
                                 timestamp,
                                 status):
         order_id = int(order_id)
-
         # Order Status:
         #   -1 cancelled
         #   0: pending

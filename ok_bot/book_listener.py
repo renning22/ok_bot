@@ -28,8 +28,9 @@ class BookListener:
         self.subscribers[instrument_id].add(responder)
 
     def unsubscribe(self, instrument_id, responder):
-        if responder in self.subscribers[instrument_id]:
-            self.subscribers.remove(responder)
+        self.subscribers[instrument_id].discard(responder)
+        if len(self.subscribers[instrument_id]) == 0:
+            del self.subscribers[instrument_id]
 
     def received_futures_depth5(self,
                                 asks,
