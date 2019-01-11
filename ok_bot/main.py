@@ -4,12 +4,11 @@ import eventlet
 from absl import flags, logging
 
 from . import constants
-from .book_reader import BookReader
+from .book_listener import BookListener
 from .order_book import OrderBook
-from .order_canceller import OrderCanceller
 from .order_executor import OrderExecutor
-from .position_syncer import PositionSyncer
-from .rest_api import RestApi
+from .order_listener import OrderListener
+from .rest_api_v3 import RestApiV3
 from .schema import Schema
 from .slack import SlackLoggingHandler
 from .trader import Trader
@@ -34,20 +33,20 @@ def main(_):
     green_pool = eventlet.GreenPool(1000)
 
     schema = Schema(symbol)
-    rest_api = RestApi(symbol)
-    order_executor = OrderExecutor(rest_api)
+    rest_api_v3 = RestApiV3()
+    order_executor = OrderExecutor(
+        pool=green_pool,
+        rest_api_v3=rest_api_v3,
+        order_listener=OrderListener())
     trader = Trader(schema,
                     order_executor,
                     constants.SPREAD_DEVIATION_THRESHOLD)
+    # TODO: integrate order_book.
     order_book = OrderBook(schema, trader)
-    order_canceller = OrderCanceller(green_pool, rest_api)
-    position_syncer = PositionSyncer(
-        green_pool, symbol, rest_api, order_book)
-    reader = BookReader(order_book)
-    ws_api = WebsocketApi(green_pool, reader, schema)
 
-    # start the three loops
-    # green_pool.spawn_n(order_canceller.read_cancel_loop)
-    # green_pool.spawn_n(position_syncer.read_loop)
+    book_listener = BookListener()
+    ws_api = WebsocketApi(green_pool=green_pool,
+                          schema=schema,
+                          book_listener=book_listener)
     ws_api.start_read_loop()
     green_pool.waitall()

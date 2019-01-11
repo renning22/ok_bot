@@ -1,6 +1,6 @@
 from absl import app, flags
 
-from . import refacted_main
+from . import main
 
 flags.DEFINE_string(
     'symbol', 'BTC', 'symbol for crypto-currency in under case.')
@@ -11,4 +11,4 @@ flags.DEFINE_boolean(
 
 
 if __name__ == '__main__':
-    app.run(refacted_main.main)
+    app.run(main.main)
