@@ -290,7 +290,9 @@ def _testing(_):
 
     green_pool = eventlet.GreenPool()
     schema = Schema('ETH')
-    reader = WebsocketApi(green_pool, MockBookListener(), schema)
+    reader = WebsocketApi(green_pool=green_pool,
+                          schema=schema,
+                          book_listener=MockBookListener())
     reader.start_read_loop()
     green_pool.waitall()
 
