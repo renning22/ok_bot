@@ -72,6 +72,7 @@ class OrderExecutor:
     def open_long_position(self, instrument_id, amount, price, timeout_sec):
         """Returns eventlet.event.Event[OpenPositionStatus]"""
         return self._open_position(
+            instrument_id,
             partial(singleton.rest_api.open_long_order,
                     instrument_id,
                     amount,
@@ -81,22 +82,25 @@ class OrderExecutor:
     def open_short_position(self, instrument_id, amount, price, timeout_sec):
         """Returns eventlet.event.Event[OpenPositionStatus]"""
         return self._open_position(
+            instrument_id,
             partial(singleton.rest_api.open_short_order,
                     instrument_id,
                     amount,
                     price),
             timeout_sec)
 
-    def _open_position(self, rest_request_functor, timeout_sec):
+    def _open_position(self, instrument_id, rest_request_functor, timeout_sec):
         """Returns eventlet.event.Event[OpenPositionStatus]"""
         future = eventlet.event.Event()
         singleton.green_pool.spawn_n(self._async_place_order_and_await,
+                                     instrument_id,
                                      rest_request_functor,
                                      timeout_sec,
                                      future)
         return future
 
     def _async_place_order_and_await(self,
+                                     instrument_id,
                                      rest_request_functor,
                                      timeout_sec,
                                      future):
@@ -110,14 +114,19 @@ class OrderExecutor:
         with OrderAwaiter(order_id) as await_status:
             result = await_status.wait(timeout_sec)
             if result is None:
-                # timeout
+                # timeout, cancel the pending order
+                singleton.green_pool.spawn_n(singleton.rest_api.cancel_order,
+                                             instrument_id,
+                                             order_id)
+                logging.info(f'{order_id} for {instrument_id} failed to fulfill in time'
+                             ' and is canceled')
                 future.send(OPEN_POSITION_STATUS__TIMEOUT)
             elif result == ORDER_AWAIT_STATUS__CANCELLED:
                 future.send(OPEN_POSITION_STATUS__CANCELLED)
             elif result == ORDER_AWAIT_STATUS__FULFILLED:
                 future.send(OPEN_POSITION_STATUS__SUCCEEDED)
             else:
-                future.send(OPEN_POSITION_STATUS__UNKNOWN)
+                raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
 
 def _testing_thread(instrument_id):
@@ -126,7 +135,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor()
     future = executor.open_short_position(
-        instrument_id, amount=1, price=3200, timeout_sec=30)
+        instrument_id, amount=1, price=3200, timeout_sec=10)
 
     logging.info('open_long_position has been called')
     result = future.wait()
@@ -135,7 +144,7 @@ def _testing_thread(instrument_id):
 
 def _testing(_):
     singleton.initialize_objects(currency='ETH')
-    singleton.websocket._book_listener = None # test heartbeat in websocket_api
+    singleton.websocket._book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_testing_thread,
                                  instrument_id=singleton.schema.all_instrument_ids[0])
