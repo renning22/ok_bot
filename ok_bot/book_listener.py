@@ -4,6 +4,8 @@ from decimal import Decimal
 import eventlet
 from absl import app, logging
 
+from . import singleton
+
 
 class BookListener:
     def __init__(self):
@@ -53,9 +55,6 @@ class BookListener:
 
 
 def _testing(_):
-    from .websocket_api import WebsocketApi
-    from .schema import Schema
-
     class MockTrader:
         def tick_received(self,
                           instrument_id,
@@ -70,13 +69,13 @@ def _testing(_):
                          ask_prices[0], ask_vols[0],
                          bid_prices[0], bid_vols[0])
 
-    pool = eventlet.GreenPool()
-    schema = Schema('BTC')
     trader = MockTrader()
-    book_listener.subscribe('BTC-USD-190118', trader)
-    api = WebsocketApi(pool, schema=schema, book_listener=singleton_book_listener)
-    api.start_read_loop()
-    pool.waitall()
+    singleton.initialize_objects('ETH')
+    singleton.book_listener.subscribe(
+        singleton.schema.all_instrument_ids[0],
+        trader)
+    singleton.websocket.start_read_loop()
+    singleton.green_pool.waitall()
 
 
 if __name__ == '__main__':
