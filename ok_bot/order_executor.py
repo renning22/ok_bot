@@ -8,8 +8,7 @@ from . import singleton
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
                                 ['result',  # boolean, successful or not.
-                                 # Detailed error message if failed.
-                                 'message',
+                                 'message',  # detailed error message if failed.
                                  ])
 
 OPEN_POSITION_STATUS__SUCCEEDED = OpenPositionStatus(result=True, message='order fulfilled')
@@ -135,7 +134,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor()
     future = executor.open_short_position(
-        instrument_id, amount=1, price=3200, timeout_sec=10)
+        instrument_id, amount=1, price=122.5, timeout_sec=10)
 
     logging.info('open_long_position has been called')
     result = future.wait()

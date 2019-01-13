@@ -28,7 +28,7 @@ def _request_all_instrument_ids(currency):
         raise Exception(
             f'Wrong currency? no trading market found for "{currency}"')
 
-    return all_ids
+    return sorted(all_ids)
 
 
 class Schema:
