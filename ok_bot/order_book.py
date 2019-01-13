@@ -1,12 +1,12 @@
 import datetime
 import pprint
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
 from absl import logging
 
 from . import constants
+from . import  singleton
 from .schema import Schema
 
 _TIME_WINDOW = np.timedelta64(
@@ -14,15 +14,17 @@ _TIME_WINDOW = np.timedelta64(
 
 
 class OrderBook:
-    def __init__(self, schema, trader):
-        self._schema = schema
-        self._trader = trader
+    def __init__(self):
+        self._schema = singleton.schema
+        self._trader = singleton.trader
 
         # order book data
         self.table = pd.DataFrame()
         self.last_record = {}
 
         self.update_book = self._update_book__ramp_up_mode
+        for instrument_id in singleton.schema.all_instrument_ids:
+            singleton.book_listener.subscribe(instrument_id, self)
 
     def has_ramped_up(self):
         return self.update_book == self._update_book__regular
@@ -58,6 +60,16 @@ class OrderBook:
     def recent_tick_source(self):
         return self.last_record['source']
 
+    def tick_received(self,
+                      instrument_id,
+                      ask_prices,
+                      ask_vols,
+                      bid_prices,
+                      bid_vols,
+                      timestamp):
+        logging.info('Received tick for %s', instrument_id)
+        self.update_book(instrument_id, ask_prices, ask_vols, bid_prices, bid_vols)
+
     def _sink_piece_of_fresh_data_to_last_record(self,
                                                  instrument_id,
                                                  ask_prices,
@@ -88,7 +100,7 @@ class OrderBook:
         if set(self._schema.all_necessary_source_columns) == set(self.last_record.keys()):
             logging.info('have all the necessary prices in every market, ramping up finished:\n%s',
                          pprint.pformat(self.last_record))
-            # Finshed ramping up
+            # Finished ramp-up
             self.update_book = self._update_book__regular
 
     def _update_book__regular(self,
@@ -116,6 +128,9 @@ class OrderBook:
         self._trader.new_tick_received(self)
 
     def _convert_last_record_to_table_row(self):
+        # TODO(luanjunyi): consider removing the handicap data from table. Use table only
+        # for price spread history
+
         # Move old source data.
         data = self.last_record.copy()
 

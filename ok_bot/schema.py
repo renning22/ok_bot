@@ -83,10 +83,10 @@ class Schema:
     def _init_all_necessary_source_columns(self):
         """MARKET_ask_price, MARKET_ask_vol, etc.."""
         columns = []
-        for period in self._all_instrument_ids:
+        for instrument_id in self._all_instrument_ids:
             for side in ['bid', 'ask']:
-                columns.append(f'{period}_{side}_price')
-                columns.append(f'{period}_{side}_vol')
+                columns.append(f'{instrument_id}_{side}_price')
+                columns.append(f'{instrument_id}_{side}_vol')
         return columns
 
 
