@@ -1,5 +1,4 @@
 from collections import defaultdict
-from decimal import Decimal
 
 import eventlet
 from absl import app, logging
@@ -7,6 +6,7 @@ from absl import app, logging
 from .rest_api_v3 import RestApiV3
 from .schema import Schema
 from .websocket_api import WebsocketApi
+from . import singleton
 
 
 class OrderListener:
@@ -127,33 +127,28 @@ class MockTrader:
         logging.info('order_partially_filled: %s', order_id)
 
 
-def _testing_thread(instrument_id, order_listener):
+def _testing_thread(instrument_id):
     eventlet.sleep(5)
-
-    api = RestApiV3()
-    order_id = api.open_long_order(instrument_id, amount=1, price=50)
+    order_id = singleton.rest_api.open_long_order(
+        instrument_id, amount=1, price=50)
     logging.info('order has been placed order_id: %s', order_id)
 
     eventlet.sleep(5)
 
     trader = MockTrader()
-    order_listener.subscribe(order_id, trader)
+    singleton.order_listener.subscribe(order_id, trader)
 
 
 def _testing(_):
-    pool = eventlet.GreenPool()
-    schema = Schema('ETH')
-    logging.info('instruments: %s', schema.all_instrument_ids)
-    instrument_id = schema.all_instrument_ids[0]
+    singleton.initialize_objects('ETH')
+    logging.info('instruments: %s',
+                 singleton.schema.all_instrument_ids)
+    instrument_id = singleton.schema.all_instrument_ids[0]
+    singleton.websocket.start_read_loop()
 
-    order_listener = OrderListener()
-    ws_api = WebsocketApi(pool, schema=schema, order_listener=order_listener)
-    ws_api.start_read_loop()
-
-    pool.spawn_n(_testing_thread,
-                 instrument_id=instrument_id,
-                 order_listener=order_listener)
-    pool.waitall()
+    singleton.green_pool.spawn_n(_testing_thread,
+                                 instrument_id=instrument_id)
+    singleton.green_pool.waitall()
 
 
 if __name__ == '__main__':
