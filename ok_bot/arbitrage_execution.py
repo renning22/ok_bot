@@ -142,9 +142,11 @@ class ArbitrageTransaction:
 
 def _testing(_):
     def _test_aribitrage():
-        sleep = 5
-        logging.info(f'sleeping for {sleep} seconds, wait for WS subscription to finish')
-        eventlet.sleep(sleep)
+        sleep = 1
+        while not singleton.websocket.ready:
+            logging.info(f'sleeping for {sleep} seconds, wait for WS subscription to finish')
+            eventlet.sleep(sleep)
+        logging.info('WebSocket subscription finished')
         week_instrument = singleton.schema.all_instrument_ids[0]
         quarter_instrument = singleton.schema.all_instrument_ids[-1]
         transaction = ArbitrageTransaction(
@@ -152,11 +154,11 @@ def _testing(_):
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                   side=LONG,
                                   volume=1,
-                                  price=118.6),
+                                  price=110.6),
             fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                                   side=SHORT,
                                   volume=1,
-                                  price=123.0),
+                                  price=114.0),
             close_price_gap_threshold=1,
         )
         transaction.process()
@@ -165,7 +167,6 @@ def _testing(_):
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_test_aribitrage)
     singleton.green_pool.waitall()
-
 
 
 if __name__ == '__main__':

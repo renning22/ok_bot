@@ -67,6 +67,9 @@ class WebsocketApi:
         self._order_listener = order_listener
         self._currency = schema.currency
         self._ws = None
+        self._subscribed_channels = None
+        self._acked_channels = set()
+        self.ready = False
 
     def _recv(self, timeout_sec):
         green_thread = self._green_pool.spawn(self._ws.recv)
@@ -94,7 +97,7 @@ class WebsocketApi:
         self._ws.recv()
 
     def _subscribe(self, channels):
-        sub_param = {'op': 'subscribe', 'args': channels}
+        sub_param = {'op': 'subscribe', 'args': list(channels)}
         sub_str = json.dumps(sub_param)
         self._ws.send(sub_str)
 
@@ -105,10 +108,10 @@ class WebsocketApi:
         if self._order_listener is not None:
             interested_channels.append('futures/order')
 
-        self._subscribe(
-            [f'{channel}:{id}'
+        self._subscribed_channels = set([f'{channel}:{id}'
              for id in self._schema.all_instrument_ids
              for channel in interested_channels])
+        self._subscribe(self._subscribed_channels)
 
     def _receive_and_dispatch(self):
         # 连接限制
@@ -141,7 +144,11 @@ class WebsocketApi:
         # This is event message that ACKs to subscriptions.
         if 'event' in res:
             assert res['event'] == 'subscribe'
-            logging.info('confirmed "%s" is subscribed', res['channel'])
+            self._acked_channels.add(res['channel'])
+            logging.info('Confirmed "%s" is subscribed', res['channel'])
+            if self._acked_channels == self._subscribed_channels:
+                logging.info('All channel subscriptions got ACK')
+                self.ready = True
             return
 
         # Otherwise it's data message.
