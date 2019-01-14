@@ -64,7 +64,11 @@ class Schema:
         E.g. BTC-USD-190329*BTC-USD-190104
 
         Returns:
-            [(MARKET_A, MARKET_B, MARKET_A*MARKET_B), ...]
+            [(MARKET_A, MARKET_B, MARKET_B*MARKET_A), ...]
+
+        It means if we wanna long MARKET_A and short MARKET_B,
+        we should look at if MARKET_B*MARKET_A(price_B - price_A)
+        has increased beyond the gap threshold.
         """
         columns = []
         for ask_market in self._all_instrument_ids:
@@ -75,7 +79,7 @@ class Schema:
                             ask_market,
                             bid_market,
                             Schema.make_market_cross_product(
-                                ask_market, bid_market)
+                                bid_market, ask_market)
                         )
                     )
         return columns

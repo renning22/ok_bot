@@ -33,6 +33,7 @@ def initialize_objects(currency):
     book_listener = book_listener_module.BookListener()
     order_listener = order_listener_module.OrderListener()
     schema = schema_module.Schema(currency)
+    trader = Trader()
     order_book = OrderBook()
     websocket = websocket_api_module.WebsocketApi(
         green_pool=green_pool,
