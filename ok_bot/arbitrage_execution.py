@@ -18,27 +18,37 @@ class WaitingPriceConverge:
         self._transaction = transaction
         self._slow_leg = transaction.slow_leg
         self._fast_leg = transaction.fast_leg
-        self._ask_observing_instrument = \
-            self._slow_leg.instrument_id if self._slow_leg.side == SHORT else self._fast_leg.instrument_id
-        self._bid_observing_instrument = \
-            self._slow_leg.instrument_id if self._slow_leg.side == LONG else self._fast_leg.instrument_id
+        if self._slow_leg.side == SHORT and self._fast_leg.side == LONG:
+            self._ask_observing_instrument, self._bid_observing_instrument = \
+                self._slow_leg.instrument_id,  self._fast_leg.instrument_id
+        elif self._slow_leg.side == LONG and self._fast_leg.side == SHORT:
+            self._ask_observing_instrument, self._bid_observing_instrument = \
+                self._fast_leg.instrument_id, self._slow_leg.instrument_id
+        else:
+            raise Exception(f'Slow leg: {self._slow_leg.side}, '
+                            f'fast leg: {self._fast_leg.side}')
         self._ask_observing = None
         self._bid_observing = None
 
     def __enter__(self):
-        singleton.book_listener.subscribe(self._transaction.slow_leg.instrument_id, self)
-        singleton.book_listener.subscribe(self._transaction.fast_leg.instrument_id, self)
+        singleton.book_listener.subscribe(
+            self._transaction.slow_leg.instrument_id, self)
+        singleton.book_listener.subscribe(
+            self._transaction.fast_leg.instrument_id, self)
         self._future = eventlet.event.Event()
         return self._future
 
     def __exit__(self, type, value, traceback):
-        singleton.book_listener.unsubscribe(self._transaction.slow_leg.instrument_id, self)
-        singleton.book_listener.unsubscribe(self._transaction.fast_leg.instrument_id, self)
+        singleton.book_listener.unsubscribe(
+            self._transaction.slow_leg.instrument_id, self)
+        singleton.book_listener.unsubscribe(
+            self._transaction.fast_leg.instrument_id, self)
 
     def tick_received(self, instrument_id,
                       ask_prices, ask_vols, bid_prices, bid_vols,
                       timestamp):
-        assert instrument_id in [self._fast_leg.instrument_id, self._slow_leg.instrument_id]
+        assert instrument_id in [self._ask_observing_instrument,
+                                 self._bid_observing_instrument]
 
         if instrument_id == self._bid_observing_instrument:
             self._bid_observing = zip(bid_prices, bid_vols)
@@ -57,7 +67,8 @@ class WaitingPriceConverge:
         bid_copy = [[t[0], t[1]] for t in self._bid_observing]
         for ask_price, ask_volume in self._ask_observing:
             for i, (bid_price, bid_volume) in enumerate(bid_copy):
-                if ask_price - bid_price > self._transaction.close_price_gap_threshold:
+                if ask_price - bid_price > \
+                        self._transaction.close_price_gap_threshold:
                     break
                 if ask_volume <= 0 or bid_volume <= 0:
                     continue
@@ -65,7 +76,8 @@ class WaitingPriceConverge:
                 ask_volume -= amount
                 bid_copy[i][1] -= amount
                 available_amount += amount
-        return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, available_amount
+        return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,\
+               available_amount
 
 
 class ArbitrageTransaction:
@@ -111,31 +123,40 @@ class ArbitrageTransaction:
                      f'slow:{self.slow_leg} and fast{self.fast_leg}')
 
         slow_leg_order_status =\
-            self.open_position(self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
+            self.open_position(self.slow_leg,
+                               SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            logging.info(f'slow leg {self.slow_leg} is not successful({slow_leg_order_status}), '
+            logging.info(f'slow leg {self.slow_leg} is not '
+                         f'successful({slow_leg_order_status}), '
                          'will abort the rest of this transaction')
             return
-        logging.info(f'{self.slow_leg} is successful, will open position for fast leg')
+        logging.info(f'{self.slow_leg} is successful, '
+                     f'will open position for fast leg')
 
         fast_leg_order_status =\
-            self.open_position(self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
+            self.open_position(self.fast_leg,
+                               FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            logging.info(f'fast leg {self.slow_leg} is not successful({fast_leg_order_status}), '
-                         'will close slow leg position before aborting the rest of this transaction')
+            logging.info(f'fast leg {self.slow_leg} is not '
+                         f'successful({fast_leg_order_status}), '
+                         'will close slow leg position before aborting the rest'
+                         ' of this transaction')
             self.close_position(self.slow_leg)
             return
 
-        logging.info(f'fast leg {self.fast_leg} order fulfilled, will wait for converge for'
+        logging.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
+                     f'for converge for'
                      f' {PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
 
         with WaitingPriceConverge(self) as converge_future:
             converge = converge_future.wait(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
             if converge is None:
                 # timeout, close the position
-                logging.info('Prices failed to converge in time, closing both legs')
+                logging.info('Prices failed to converge in time, closing '
+                             'both legs')
             else:
-                logging.info(f'Prices converged with enough margin({converge}), closing both legs')
+                logging.info(f'Prices converged with enough margin({converge}),'
+                             f' closing both legs')
             self.close_position(self.fast_leg)
             self.close_position(self.slow_leg)
 
@@ -144,7 +165,8 @@ def _testing(_):
     def _test_aribitrage():
         sleep = 1
         while not singleton.websocket.ready:
-            logging.info(f'sleeping for {sleep} seconds, wait for WS subscription to finish')
+            logging.info(f'sleeping for {sleep} seconds, wait for WS'
+                         f' subscription to finish')
             eventlet.sleep(sleep)
         logging.info('WebSocket subscription finished')
         week_instrument = singleton.schema.all_instrument_ids[0]
