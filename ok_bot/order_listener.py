@@ -3,9 +3,6 @@ from collections import defaultdict
 import eventlet
 from absl import app, logging
 
-from .rest_api_v3 import RestApiV3
-from .schema import Schema
-from .websocket_api import WebsocketApi
 from . import singleton
 
 
