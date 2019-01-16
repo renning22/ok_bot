@@ -4,11 +4,13 @@ import eventlet
 from absl import app, logging
 
 from . import singleton
-from .order_executor import OrderExecutor, OPEN_POSITION_STATUS__SUCCEEDED
+from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
+                        MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
+                        PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
+                        SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
+from .future import Future
+from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
-from .constants import LONG, SHORT, \
-    SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, \
-    MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, PRICE_CONVERGE_TIMEOUT_IN_SECOND
 
 ArbitrageLeg = collections.namedtuple('ArbitrageLeg',
                                       ['instrument_id', 'side', 'volume', 'price'])
@@ -36,7 +38,7 @@ class WaitingPriceConverge:
             self._transaction.slow_leg.instrument_id, self)
         singleton.book_listener.subscribe(
             self._transaction.fast_leg.instrument_id, self)
-        self._future = eventlet.event.Event()
+        self._future = Future()
         return self._future
 
     def __exit__(self, type, value, traceback):
@@ -59,10 +61,7 @@ class WaitingPriceConverge:
 
         should_close, amount_margin = self._should_close_arbitrage()
         if should_close:
-            try:
-                self._future.send(amount_margin)
-            except AssertionError as err:
-                logging.warning(f'Sending future failed: {err}')
+            self._future.set(amount_margin)
 
     def _should_close_arbitrage(self):
         if self._ask_stack is None or self._bid_stack is None:
@@ -72,7 +71,7 @@ class WaitingPriceConverge:
             self._ask_stack,
             self._bid_stack,
             lambda ask_price,
-                   bid_price:
+            bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
         logging.log_every_n_seconds(
@@ -86,7 +85,7 @@ class WaitingPriceConverge:
             available_amount
         )
         return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, \
-               available_amount
+            available_amount
 
 
 class ArbitrageTransaction:
@@ -134,7 +133,6 @@ class ArbitrageTransaction:
         logging.info('starting arbitrage transaction on '
                      f'slow:{self.slow_leg} and fast{self.fast_leg}')
 
-
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).wait()
@@ -164,7 +162,7 @@ class ArbitrageTransaction:
                      f' {PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
 
         with WaitingPriceConverge(self) as converge_future:
-            converge = converge_future.wait(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
+            converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
             if converge is None:
                 # timeout, close the position
                 logging.info('Prices failed to converge in time, closing '
@@ -178,11 +176,7 @@ class ArbitrageTransaction:
 
 def _testing(_):
     def _test_aribitrage():
-        sleep = 1
-        while not singleton.websocket.ready:
-            logging.info(f'sleeping for {sleep} seconds, wait for WS'
-                         f' subscription to finish')
-            eventlet.sleep(sleep)
+        singleton.websocket.ready.get()
         logging.info('WebSocket subscription finished')
         week_instrument = singleton.schema.all_instrument_ids[0]
         quarter_instrument = singleton.schema.all_instrument_ids[-1]
@@ -191,11 +185,11 @@ def _testing(_):
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                   side=LONG,
                                   volume=1,
-                                  price=110.6),
+                                  price=100.0),
             fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                                   side=SHORT,
                                   volume=1,
-                                  price=114.0),
+                                  price=160.0),
             close_price_gap_threshold=1,
         )
         transaction.process()
