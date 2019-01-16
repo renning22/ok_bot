@@ -17,7 +17,7 @@ class OrderListener:
         self._buffer = defaultdict(list)
 
     def subscribe(self, order_id, responder):
-        '''
+        """
         :param order_id:
         :param responder: responder needs to implement:
                       order_pending(order_id)
@@ -32,7 +32,7 @@ class OrderListener:
                                              size,
                                              filled_qty)
         :return: None
-        '''
+        """
         order_id = int(order_id)
         assert hasattr(responder, 'order_pending')
         assert hasattr(responder, 'order_cancelled')
@@ -46,19 +46,19 @@ class OrderListener:
         if len(self._subscribers[order_id]) == 0:
             del self._subscribers[order_id]
 
-    def _received_futures_order(self,
-                                leverage,
-                                size,
-                                filled_qty,
-                                price,
-                                fee,
-                                contract_val,
-                                price_avg,
-                                type,
-                                instrument_id,
-                                order_id,
-                                timestamp,
-                                status):
+    def received_futures_order(self,
+                               leverage,
+                               size,
+                               filled_qty,
+                               price,
+                               fee,
+                               contract_val,
+                               price_avg,
+                               type,
+                               instrument_id,
+                               order_id,
+                               timestamp,
+                               status):
         order_id = int(order_id)
         # Order Status:
         #   -1 cancelled
@@ -67,15 +67,18 @@ class OrderListener:
         #   2: fully filled
         if status == -1:
             self._buffer[order_id].append(
-                lambda trader: trader.order_cancelled(order_id))
+                lambda trader: trader.order_cancelled(order_id)
+            )
         elif status == 0:
             self._buffer[order_id].append(
-                lambda trader: trader.order_pending(order_id))
+                lambda trader: trader.order_pending(order_id),
+            )
         elif status == 1:
             self._buffer[order_id].append(
                 lambda trader: trader.order_partially_filled(order_id,
                                                              size,
-                                                             filled_qty))
+                                                             filled_qty)
+            )
         elif status == 2:
             self._buffer[order_id].append(
                 lambda trader: trader.order_fulfilled(order_id,
@@ -83,15 +86,15 @@ class OrderListener:
                                                       filled_qty,
                                                       fee,
                                                       price,
-                                                      price_avg))
+                                                      price_avg)
+            )
         else:
-            raise ValueException(
-                f'unknown order update message type: {status}')
+            raise Exception(f'unknown order update message type: {status}')
 
         self._dispatch_buffer(order_id)
 
     def _dispatch_buffer(self, order_id):
-        if not self._subscribers[order_id]:
+        if len(self._subscribers[order_id]) == 0:
             return
 
         for func in self._buffer[order_id]:

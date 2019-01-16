@@ -109,6 +109,7 @@ class OrderExecutor:
             logging.error('failure from rest api')
             future.send(OPEN_POSITION_STATUS__REST_API)
             return
+        logging.info(f'Order {order_id} created for {instrument_id}')
 
         with OrderAwaiter(order_id) as await_status:
             result = await_status.wait(timeout_sec)
@@ -129,12 +130,13 @@ class OrderExecutor:
 
 
 def _testing_thread(instrument_id):
-    eventlet.sleep(5)
+    while not singleton.websocket.ready:
+        eventlet.sleep(1)
     logging.info('start')
 
     executor = OrderExecutor()
-    future = executor.open_short_position(
-        instrument_id, amount=1, price=122.5, timeout_sec=10)
+    future = executor.open_long_position(
+        instrument_id, amount=1, price=116.5, timeout_sec=10)
 
     logging.info('open_long_position has been called')
     result = future.wait()

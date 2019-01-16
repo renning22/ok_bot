@@ -5,6 +5,7 @@ from absl import app, logging
 
 from . import singleton
 from .order_executor import OrderExecutor, OPEN_POSITION_STATUS__SUCCEEDED
+from .util import amount_margin
 from .constants import LONG, SHORT, \
     SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, \
     MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, PRICE_CONVERGE_TIMEOUT_IN_SECOND
@@ -19,16 +20,16 @@ class WaitingPriceConverge:
         self._slow_leg = transaction.slow_leg
         self._fast_leg = transaction.fast_leg
         if self._slow_leg.side == SHORT and self._fast_leg.side == LONG:
-            self._ask_observing_instrument, self._bid_observing_instrument = \
+            self._ask_stack_instrument, self._bid_stack_instrument = \
                 self._slow_leg.instrument_id,  self._fast_leg.instrument_id
         elif self._slow_leg.side == LONG and self._fast_leg.side == SHORT:
-            self._ask_observing_instrument, self._bid_observing_instrument = \
+            self._ask_stack_instrument, self._bid_stack_instrument = \
                 self._fast_leg.instrument_id, self._slow_leg.instrument_id
         else:
             raise Exception(f'Slow leg: {self._slow_leg.side}, '
                             f'fast leg: {self._fast_leg.side}')
-        self._ask_observing = None
-        self._bid_observing = None
+        self._ask_stack = None
+        self._bid_stack = None
 
     def __enter__(self):
         singleton.book_listener.subscribe(
@@ -47,36 +48,44 @@ class WaitingPriceConverge:
     def tick_received(self, instrument_id,
                       ask_prices, ask_vols, bid_prices, bid_vols,
                       timestamp):
-        assert instrument_id in [self._ask_observing_instrument,
-                                 self._bid_observing_instrument]
+        assert instrument_id in [self._ask_stack_instrument,
+                                 self._bid_stack_instrument]
 
-        if instrument_id == self._bid_observing_instrument:
-            self._bid_observing = zip(bid_prices, bid_vols)
+        if instrument_id == self._bid_stack_instrument:
+            self._bid_stack = list(zip(bid_prices, bid_vols))
         else:
-            assert instrument_id == self._ask_observing_instrument
-            self._ask_observing = zip(ask_prices, ask_vols)
+            assert instrument_id == self._ask_stack_instrument
+            self._ask_stack = list(zip(ask_prices, ask_vols))
 
         should_close, amount_margin = self._should_close_arbitrage()
         if should_close:
-            self._future.send(amount_margin)
+            try:
+                self._future.send(amount_margin)
+            except AssertionError as err:
+                logging.warning(f'Sending future failed: {err}')
 
     def _should_close_arbitrage(self):
-        if self._ask_observing is None or self._bid_observing is None:
+        if self._ask_stack is None or self._bid_stack is None:
             return False, -1
-        available_amount = 0
-        bid_copy = [[t[0], t[1]] for t in self._bid_observing]
-        for ask_price, ask_volume in self._ask_observing:
-            for i, (bid_price, bid_volume) in enumerate(bid_copy):
-                if ask_price - bid_price > \
-                        self._transaction.close_price_gap_threshold:
-                    break
-                if ask_volume <= 0 or bid_volume <= 0:
-                    continue
-                amount = min(ask_volume, bid_volume)
-                ask_volume -= amount
-                bid_copy[i][1] -= amount
-                available_amount += amount
-        return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,\
+
+        available_amount = amount_margin(
+            self._ask_stack,
+            self._bid_stack,
+            lambda ask_price,
+                   bid_price:
+            ask_price - bid_price <= self._transaction.close_price_gap_threshold)
+
+        logging.log_every_n_seconds(
+            logging.INFO,
+            '%s:%s current_gap:%.3f, max_gap: %.3f, available_amount: %d',
+            20,
+            self._ask_stack_instrument,
+            self._bid_stack_instrument,
+            self._ask_stack[0][0] - self._bid_stack[0][0],
+            self._transaction.close_price_gap_threshold,
+            available_amount
+        )
+        return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, \
                available_amount
 
 
@@ -118,13 +127,18 @@ class ArbitrageTransaction:
                                                  price=-1,
                                                  is_market_order=True)
 
+    # def wait_for_order_execution(self, order_exe_future):
+    #     order_exe_future.wait()
+
     def process(self):
         logging.info('starting arbitrage transaction on '
                      f'slow:{self.slow_leg} and fast{self.fast_leg}')
 
-        slow_leg_order_status =\
-            self.open_position(self.slow_leg,
-                               SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
+
+        slow_leg_order_status = self.open_position(
+            self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
+        ).wait()
+
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             logging.info(f'slow leg {self.slow_leg} is not '
                          f'successful({slow_leg_order_status}), '
@@ -133,9 +147,10 @@ class ArbitrageTransaction:
         logging.info(f'{self.slow_leg} is successful, '
                      f'will open position for fast leg')
 
-        fast_leg_order_status =\
-            self.open_position(self.fast_leg,
-                               FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND).wait()
+        fast_leg_order_status = self.open_position(
+            self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
+        ).wait()
+
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             logging.info(f'fast leg {self.slow_leg} is not '
                          f'successful({fast_leg_order_status}), '

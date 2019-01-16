@@ -224,7 +224,7 @@ class WebsocketApi:
             instrument_id_val	String	合约面值
             leverage	String	杠杆倍数 value:10/20 默认10
         """
-        self._order_listener._received_futures_order(
+        self._order_listener.received_futures_order(
             int(leverage),
             int(size),
             int(filled_qty),
