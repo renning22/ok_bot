@@ -13,6 +13,7 @@ from absl import app, logging
 import greenlet
 
 from . import api_v3_key_reader, decorator
+from .future import Future
 
 requests = eventlet.import_patched('requests')
 websocket = eventlet.import_patched('websocket')
@@ -69,7 +70,7 @@ class WebsocketApi:
         self._ws = None
         self._subscribed_channels = None
         self._acked_channels = set()
-        self.ready = False
+        self.ready = Future()
 
     def _recv(self, timeout_sec):
         green_thread = self._green_pool.spawn(self._ws.recv)
@@ -108,7 +109,8 @@ class WebsocketApi:
         if self._order_listener is not None:
             interested_channels.append('futures/order')
 
-        self._subscribed_channels = set([f'{channel}:{id}'
+        self._subscribed_channels = set(
+            [f'{channel}:{id}'
              for id in self._schema.all_instrument_ids
              for channel in interested_channels])
         self._subscribe(self._subscribed_channels)
@@ -148,7 +150,7 @@ class WebsocketApi:
             logging.info('Confirmed "%s" is subscribed', res['channel'])
             if self._acked_channels == self._subscribed_channels:
                 logging.info('All channel subscriptions got ACK')
-                self.ready = True
+                self.ready.set(True)
             return
 
         # Otherwise it's data message.
