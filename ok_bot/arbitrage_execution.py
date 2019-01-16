@@ -70,8 +70,7 @@ class WaitingPriceConverge:
         available_amount = amount_margin(
             self._ask_stack,
             self._bid_stack,
-            lambda ask_price,
-            bid_price:
+            lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
         logging.log_every_n_seconds(
@@ -84,8 +83,8 @@ class WaitingPriceConverge:
             self._transaction.close_price_gap_threshold,
             available_amount
         )
-        return available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE, \
-            available_amount
+        return (available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
+                available_amount)
 
 
 class ArbitrageTransaction:

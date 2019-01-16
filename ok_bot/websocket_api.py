@@ -109,9 +109,10 @@ class WebsocketApi:
         if self._order_listener is not None:
             interested_channels.append('futures/order')
 
-        self._subscribed_channels = set([f'{channel}:{id}'
-                                         for id in self._schema.all_instrument_ids
-                                         for channel in interested_channels])
+        self._subscribed_channels = set(
+            [f'{channel}:{id}'
+             for id in self._schema.all_instrument_ids
+             for channel in interested_channels])
         self._subscribe(self._subscribed_channels)
 
     def _receive_and_dispatch(self):
