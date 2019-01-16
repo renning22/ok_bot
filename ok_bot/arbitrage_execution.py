@@ -20,16 +20,16 @@ class WaitingPriceConverge:
         self._slow_leg = transaction.slow_leg
         self._fast_leg = transaction.fast_leg
         if self._slow_leg.side == SHORT and self._fast_leg.side == LONG:
-            self._ask_observing_instrument, self._bid_observing_instrument = \
+            self._ask_stack_instrument, self._bid_stack_instrument = \
                 self._slow_leg.instrument_id,  self._fast_leg.instrument_id
         elif self._slow_leg.side == LONG and self._fast_leg.side == SHORT:
-            self._ask_observing_instrument, self._bid_observing_instrument = \
+            self._ask_stack_instrument, self._bid_stack_instrument = \
                 self._fast_leg.instrument_id, self._slow_leg.instrument_id
         else:
             raise Exception(f'Slow leg: {self._slow_leg.side}, '
                             f'fast leg: {self._fast_leg.side}')
-        self._ask_observing = None
-        self._bid_observing = None
+        self._ask_stack = None
+        self._bid_stack = None
 
     def __enter__(self):
         singleton.book_listener.subscribe(
@@ -48,14 +48,14 @@ class WaitingPriceConverge:
     def tick_received(self, instrument_id,
                       ask_prices, ask_vols, bid_prices, bid_vols,
                       timestamp):
-        assert instrument_id in [self._ask_observing_instrument,
-                                 self._bid_observing_instrument]
+        assert instrument_id in [self._ask_stack_instrument,
+                                 self._bid_stack_instrument]
 
-        if instrument_id == self._bid_observing_instrument:
-            self._bid_observing = list(zip(bid_prices, bid_vols))
+        if instrument_id == self._bid_stack_instrument:
+            self._bid_stack = list(zip(bid_prices, bid_vols))
         else:
-            assert instrument_id == self._ask_observing_instrument
-            self._ask_observing = list(zip(ask_prices, ask_vols))
+            assert instrument_id == self._ask_stack_instrument
+            self._ask_stack = list(zip(ask_prices, ask_vols))
 
         should_close, amount_margin = self._should_close_arbitrage()
         if should_close:
@@ -65,12 +65,12 @@ class WaitingPriceConverge:
                 logging.warning(f'Sending future failed: {err}')
 
     def _should_close_arbitrage(self):
-        if self._ask_observing is None or self._bid_observing is None:
+        if self._ask_stack is None or self._bid_stack is None:
             return False, -1
 
         available_amount = amount_margin(
-            self._ask_observing,
-            self._bid_observing,
+            self._ask_stack,
+            self._bid_stack,
             lambda ask_price,
                    bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
@@ -79,9 +79,9 @@ class WaitingPriceConverge:
             logging.INFO,
             '%s:%s current_gap:%.3f, max_gap: %.3f, available_amount: %d',
             20,
-            self._ask_observing_instrument,
-            self._bid_observing_instrument,
-            self._ask_observing[0][0] - self._bid_observing[0][0],
+            self._ask_stack_instrument,
+            self._bid_stack_instrument,
+            self._ask_stack[0][0] - self._bid_stack[0][0],
             self._transaction.close_price_gap_threshold,
             available_amount
         )

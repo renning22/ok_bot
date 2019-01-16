@@ -42,11 +42,12 @@ class Trader:
             extract_date(long_instrument_id))
         short_instrument_period = instrument_period(
             extract_date(short_instrument_id))
-        if (long_instrument_period,
-           short_instrument_period) in constants.OPEN_THRESHOLDS:
+        if (long_instrument_period, short_instrument_period) in \
+                constants.OPEN_THRESHOLDS:
             return constants.OPEN_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
-        assert short_instrument_period,long_instrument_period in constants.OPEN_THRESHOLDS
+        assert short_instrument_period, long_instrument_period in \
+            constants.OPEN_THRESHOLDS
         return constants.OPEN_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -56,11 +57,12 @@ class Trader:
             extract_date(long_instrument_id))
         short_instrument_period = instrument_period(
             extract_date(short_instrument_id))
-        if (long_instrument_period,
-           short_instrument_period) in constants.CLOSE_THRESHOLDS:
+        if (long_instrument_period, short_instrument_period) in \
+                constants.CLOSE_THRESHOLDS:
             return constants.CLOSE_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
-        assert short_instrument_period, long_instrument_period in constants.CLOSE_THRESHOLDS
+        assert short_instrument_period, long_instrument_period in \
+            constants.CLOSE_THRESHOLDS
         return constants.CLOSE_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -85,7 +87,8 @@ class Trader:
                                    bid_prices, bid_vols):
         self.market_depth[instrument_id] = [list(zip(ask_prices, ask_vols)),
                                             list(zip(bid_prices, bid_vols))]
-        for long_instrument, short_instrument, product in self._schema.markets_cartesian_product:
+        for long_instrument, short_instrument, product in \
+                self._schema.markets_cartesian_product:
             if instrument_id in [long_instrument, short_instrument]:
                 self._process_pair(long_instrument, short_instrument, product)
 
@@ -123,7 +126,8 @@ class Trader:
             threshold * 100, available_acount
         )
 
-        if available_acount >= constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+        if available_acount >= \
+                constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
             # trigger arbitrage
             close_price_gap = \
                 history_gap + self.close_aribitrage_gap_threshold(
@@ -134,7 +138,8 @@ class Trader:
             short_instrument_speed = self.order_book.price_speed(
                 short_instrument, 'bid')
             logging.info(f'Long instrument speed: {long_instrument_speed:.3f}, '
-                         f'short instrument speed: {short_instrument_speed:.3f}')
+                         f'short instrument speed: '
+                         f'{short_instrument_speed:.3f}')
             if long_instrument_speed > short_instrument_speed:
                 self.trigger_arbitrage(
                     slow_instrument_id=short_instrument,
@@ -162,7 +167,8 @@ class Trader:
             slow_price = float(self.market_depth[slow_instrument_id][0][0][0])
             for price, vol in self.market_depth[slow_instrument_id][0]:
                 amount += vol
-                if amount >= constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+                if amount >= \
+                        constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
                     slow_price = float(price)
                     break
             fast_price = slow_price + open_price_gap
@@ -172,7 +178,8 @@ class Trader:
             slow_price = float(self.market_depth[slow_instrument_id][1][0][0])
             for price, vol in self.market_depth[slow_instrument_id][1]:
                 amount += vol
-                if amount >= constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+                if amount >= \
+                        constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
                     slow_price = float(price)
                     break
             fast_price = slow_price - open_price_gap

@@ -6,7 +6,7 @@ import pandas as pd
 from absl import logging
 
 from . import constants
-from . import  singleton
+from . import singleton
 from .schema import Schema
 
 _TIME_WINDOW = np.timedelta64(
