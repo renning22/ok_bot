@@ -125,16 +125,13 @@ class ArbitrageTransaction:
                                                  price=-1,
                                                  is_market_order=True)
 
-    # def wait_for_order_execution(self, order_exe_future):
-    #     order_exe_future.wait()
-
     def process(self):
         logging.info('starting arbitrage transaction on '
                      f'slow:{self.slow_leg} and fast{self.fast_leg}')
 
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
-        ).wait()
+        ).get()
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             logging.info(f'slow leg {self.slow_leg} is not '
@@ -146,7 +143,7 @@ class ArbitrageTransaction:
 
         fast_leg_order_status = self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
-        ).wait()
+        ).get()
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             logging.info(f'fast leg {self.slow_leg} is not '
