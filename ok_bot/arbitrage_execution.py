@@ -1,7 +1,4 @@
 import collections
-import logging as py_logging
-import os
-import time
 import uuid
 
 import eventlet
@@ -13,13 +10,12 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .future import Future
+from .logger import create_transaction_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
 
 ArbitrageLeg = collections.namedtuple('ArbitrageLeg',
                                       ['instrument_id', 'side', 'volume', 'price'])
-
-os.makedirs('transaction', exist_ok=True)
 
 
 class WaitingPriceConverge:
@@ -93,26 +89,6 @@ class WaitingPriceConverge:
                 available_amount)
 
 
-class TransactionLoggingFormatter(py_logging.Formatter):
-    def __init__(self, id):
-        super().__init__(fmt='%(message)s')
-        self.id = id
-        self.created_time = time.time()
-
-    def format(self, record):
-        relative_time = time.time() - self.created_time
-        prefix = f'{relative_time:12.8f} sec : '
-        return prefix + super().format(record)
-
-
-def _create_transaction_logger(id):
-    logger = py_logging.getLogger(f'absl.{id}')
-    fh = py_logging.FileHandler(f'transaction/{id}.log')
-    fh.setFormatter(TransactionLoggingFormatter(id))
-    logger.addHandler(fh)
-    return logger
-
-
 class ArbitrageTransaction:
     def __init__(self,
                  slow_leg,
@@ -123,7 +99,7 @@ class ArbitrageTransaction:
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
 
-        self.logger = _create_transaction_logger(self.id)
+        self.logger = create_transaction_logger(self.id)
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
@@ -216,17 +192,6 @@ def _testing(_):
             close_price_gap_threshold=1,
         )
         transaction.process()
-
-    # Test logging
-    # logger = _create_transaction_logger(uuid.uuid4())
-    # logger.info('1111')
-    # logger.critical('2222')
-    #
-    # logger = _create_transaction_logger(uuid.uuid4())
-    # logger.info('3333')
-    # eventlet.sleep(1)
-    # logger.critical('4444')
-    # return
 
     singleton.initialize_objects('ETH')
     singleton.websocket.start_read_loop()
