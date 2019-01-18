@@ -2,7 +2,7 @@ import os
 
 from absl import flags, logging
 
-from . import singleton
+from . import define_cli_flags, singleton
 from .logger import init_global_logger
 from .slack import SlackLoggingHandler
 
