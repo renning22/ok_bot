@@ -7,6 +7,7 @@ from .slack import SlackLoggingHandler
 
 
 def config_logging():
+    os.makedirs('transaction', exist_ok=True)
     if flags.FLAGS.logtofile:
         os.makedirs('log', exist_ok=True)
         logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
@@ -23,5 +24,3 @@ def main(_):
     # initialize components
     singleton.initialize_objects(symbol)
     singleton.start_loop()
-
-

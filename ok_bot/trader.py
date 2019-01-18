@@ -4,10 +4,10 @@ import re
 import numpy as np
 from absl import logging
 
-from . import constants
-from . import singleton
+from . import constants, singleton
+from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
+                                  ArbitrageTransaction)
 from .util import amount_margin
-from .arbitrage_execution import ArbitrageLeg, ArbitrageTransaction, SHORT, LONG
 
 
 def extract_date(instrument_id):
@@ -116,7 +116,7 @@ class Trader:
             ask_stack=self.market_depth[long_instrument][0],
             bid_stack=self.market_depth[short_instrument][1],
             condition=lambda ask_price,
-                             bid_price: bid_price - ask_price >= min_price_gap)
+            bid_price: bid_price - ask_price >= min_price_gap)
         logging.log_every_n_seconds(
             logging.INFO,
             '%s spread: %.3f '
@@ -185,10 +185,7 @@ class Trader:
                     break
             fast_price = slow_price - open_price_gap
 
-        timestamp = datetime.datetime.now().strftime('%m%d-%H:%M:%S')
         transaction = ArbitrageTransaction(
-            arbitrage_id=f'{timestamp}_{slow_instrument_id}({slow_side})'
-                         f'{fast_instrument_id}({fast_side})',
             slow_leg=ArbitrageLeg(
                 instrument_id=slow_instrument_id,
                 side=slow_side,
@@ -212,12 +209,10 @@ if __name__ == '__main__':
             f'trigger arbitrage({trans_id}) on {slow_leg} and {fast_leg},'
             f' close threshold: {close_threshold}')
 
-
     def main(_):
         singleton.initialize_objects('ETH')
         singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
         singleton.start_loop()
-
 
     from absl import app
 
