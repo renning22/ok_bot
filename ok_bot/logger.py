@@ -1,10 +1,38 @@
+import getpass
 import logging as py_logging
 import os
+import socket
 import time
 
-from absl import app
+from absl import app, flags, logging
 
+from . import slack
+
+_USERNAME = getpass.getuser()
+_HOSTNAME = socket.gethostname()
+
+os.makedirs('log', exist_ok=True)
 os.makedirs('transaction', exist_ok=True)
+
+
+class SlackHandler(py_logging.Handler):
+
+    def format(self, record):
+        created_tuple = time.localtime(record.created)
+        prefix = '%s@%s [%02d%02d %02d:%02d:%02d %s:%d] ' % (
+            _USERNAME,
+            _HOSTNAME,
+            created_tuple.tm_mon,
+            created_tuple.tm_mday,
+            created_tuple.tm_hour,
+            created_tuple.tm_min,
+            created_tuple.tm_sec,
+            record.filename,
+            record.lineno)
+        return prefix + super().format(record)
+
+    def emit(self, record):
+        slack.send_unblock(self.format(record))
 
 
 class RelativeTimeFormatter(py_logging.Formatter):
@@ -27,12 +55,10 @@ def create_transaction_logger(id):
 
 
 def init_global_logger():
-    os.makedirs('transaction', exist_ok=True)
     if flags.FLAGS.logtofile:
-        os.makedirs('log', exist_ok=True)
         logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
     if flags.FLAGS.alsologtoslack:
-        logging.get_absl_logger().addHandler(SlackLoggingHandler('INFO'))
+        logging.get_absl_logger().addHandler(SlackHandler('INFO'))
 
 
 def _testing(_):
