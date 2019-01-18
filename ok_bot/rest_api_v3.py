@@ -1,4 +1,5 @@
 import json
+import re
 
 import eventlet
 from absl import logging
@@ -20,6 +21,16 @@ class RestApiV3:
         data = self.future_sdk.get_specific_ticker(instrument_id)
         print(f'{instrument_id} finished at {datetime.now()}')
         return json.dumps(data)
+
+    def all_instrument_ids(self, currency):
+        instruments = self.future_sdk.get_ticker()
+        ret = []
+        for instrument in instruments:
+            # Crash if regex failed to match, as it is fatal
+            if re.match(r'([A-Z]{3})-USD-[0-9]{6}',
+                        instrument['instrument_id']).group(1) == currency:
+                ret.append(instrument['instrument_id'])
+        return sorted(ret)
 
     def create_order(self, client_oid, instrument_id, order_type, amount, price, is_market_order=False, leverage=10):
         """
