@@ -19,9 +19,9 @@ def instrument_period(instrument_date):
     now = datetime.datetime.now().replace(
         hour=0, minute=0, second=0, microsecond=0)
     delta = instrument_date - now
-    if delta.days <= 7:
+    if delta.days < 7:
         return 'this_week'
-    if delta.days <= 14:
+    if delta.days < 14:
         return 'next_week'
     return 'quarter'
 
