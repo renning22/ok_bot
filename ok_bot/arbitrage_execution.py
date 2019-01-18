@@ -174,7 +174,6 @@ class ArbitrageTransaction:
 
 
 def _testing(_):
-
     def _test_aribitrage():
         singleton.websocket.ready.get()
         logging.info('WebSocket subscription finished')
@@ -200,4 +199,5 @@ def _testing(_):
 
 
 if __name__ == '__main__':
+    from . import define_cli_flags
     app.run(_testing)
