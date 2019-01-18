@@ -35,25 +35,10 @@ class TransactionAdapter(py_logging.LoggerAdapter):
         return f'[{id}] {msg}', kwargs
 
 
-class UserIdentityAdapter(py_logging.LoggerAdapter):
-    """Add username@host."""
-
-    def process(self, msg, kwargs):
-        return f'{_USERNAME}@{_HOSTNAME} {msg}', kwargs
-
-
 class SlackHandler(py_logging.Handler):
 
     def format(self, record):
-        created_tuple = time.localtime(record.created)
-        prefix = '%s@%s [%02d%02d %02d:%02d:%02d] ' % (
-            _USERNAME,
-            _HOSTNAME,
-            created_tuple.tm_mon,
-            created_tuple.tm_mday,
-            created_tuple.tm_hour,
-            created_tuple.tm_min,
-            created_tuple.tm_sec)
+        prefix = '{}@{} '.format(_USERNAME, _HOSTNAME)
         return prefix + super().format(record)
 
     def emit(self, record):
