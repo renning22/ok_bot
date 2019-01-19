@@ -1,5 +1,4 @@
 import datetime
-import re
 
 import numpy as np
 from absl import logging
@@ -8,22 +7,6 @@ from . import constants
 from . import singleton
 from .util import amount_margin
 from .arbitrage_execution import ArbitrageLeg, ArbitrageTransaction, SHORT, LONG
-
-
-def extract_date(instrument_id):
-    date_str = re.match(r'[A-Z]+-USD-([0-9]+)', instrument_id).group(1)
-    return datetime.datetime.strptime(date_str, '%y%m%d')
-
-
-def instrument_period(instrument_date):
-    now = datetime.datetime.now().replace(
-        hour=0, minute=0, second=0, microsecond=0)
-    delta = instrument_date - now
-    if delta.days < 7:
-        return 'this_week'
-    if delta.days < 14:
-        return 'next_week'
-    return 'quarter'
 
 
 class Trader:
@@ -39,10 +22,10 @@ class Trader:
         self.waiting_for_execution = False  # used for debugging
 
     def aribitrage_gap_threshold(self, long_instrument_id, short_instrument_id):
-        long_instrument_period = instrument_period(
-            extract_date(long_instrument_id))
-        short_instrument_period = instrument_period(
-            extract_date(short_instrument_id))
+        long_instrument_period = singleton.schema.instrument_period(
+            long_instrument_id)
+        short_instrument_period = singleton.schema.instrument_period(
+            short_instrument_id)
         if (long_instrument_period, short_instrument_period) in \
                 constants.OPEN_THRESHOLDS:
             return constants.OPEN_THRESHOLDS[
@@ -54,10 +37,10 @@ class Trader:
 
     def close_aribitrage_gap_threshold(self, long_instrument_id,
                                        short_instrument_id):
-        long_instrument_period = instrument_period(
-            extract_date(long_instrument_id))
-        short_instrument_period = instrument_period(
-            extract_date(short_instrument_id))
+        long_instrument_period = singleton.schema.instrument_period(
+            long_instrument_id)
+        short_instrument_period = singleton.schema.instrument_period(
+            short_instrument_id)
         if (long_instrument_period, short_instrument_period) in \
                 constants.CLOSE_THRESHOLDS:
             return constants.CLOSE_THRESHOLDS[
@@ -212,13 +195,15 @@ if __name__ == '__main__':
             f'trigger arbitrage({trans_id}) on {slow_leg} and {fast_leg},'
             f' close threshold: {close_threshold}')
 
-
     def main(_):
         singleton.initialize_objects('ETH')
+        singleton.trader.min_time_window = np.timedelta64(3, 's')
         singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
+        for instrument_id in singleton.schema.all_instrument_ids:
+            print(f'{instrument_id} period: '
+                  f'{singleton.schema.instrument_period(instrument_id)}')
         singleton.start_loop()
 
 
     from absl import app
-
     app.run(main)

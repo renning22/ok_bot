@@ -1,40 +1,19 @@
-import functools
 import pprint
 
 import eventlet
 from absl import app, logging
 
-requests = eventlet.import_patched('requests')
-
-OK_TICKER_ADDRESS = 'http://www.okex.com/api/futures/v3/instruments/ticker'
-
-
-def _instrument_contains_currency(instrument_id, currency):
-    """E.g. BTC-USD-190329"""
-    t = instrument_id.split('-')
-    return len(t) == 3 and t[0] == currency
-
-
-def _request_all_instrument_ids(currency):
-    response = requests.get(OK_TICKER_ADDRESS)
-    if response.status_code == 200:
-        all_ids = [asset['instrument_id'] for asset in response.json()
-                   if _instrument_contains_currency(asset['instrument_id'],
-                                                    currency)]
-    else:
-        logging.fatal('http error on request all instrument ids')
-
-    if not all_ids:
-        raise Exception(
-            f'Wrong currency? no trading market found for "{currency}"')
-
-    return sorted(all_ids)
+from . import singleton
 
 
 class Schema:
     def __init__(self, currency):
         self.currency = currency
-        self._all_instrument_ids = _request_all_instrument_ids(currency)
+        self._all_instrument_ids = \
+            singleton.rest_api.all_instrument_ids(currency)
+        self._instrument_periods = dict(
+            zip(self._all_instrument_ids,
+                ['this_week', 'next_week', 'quarter']))
         self._markets_cartesian_product = self._init_markets_cartesian_product()
         self._all_necessary_source_columns = self._init_all_necessary_source_columns()
 
@@ -57,6 +36,10 @@ class Schema:
     @property
     def all_necessary_source_columns(self):
         return self._all_necessary_source_columns
+
+    def instrument_period(self, instrument_id):
+        # Crash if instrument_id not in self._instrument_periods
+        return self._instrument_periods[instrument_id]
 
     def _init_markets_cartesian_product(self):
         """In format ASK_MARKET*BID_MARKET.
