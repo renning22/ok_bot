@@ -1,4 +1,5 @@
 import collections
+import uuid
 
 import eventlet
 from absl import app, logging
@@ -9,6 +10,7 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .future import Future
+from .logger import create_transaction_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
 
@@ -32,6 +34,7 @@ class WaitingPriceConverge:
                             f'fast leg: {self._fast_leg.side}')
         self._ask_stack = None
         self._bid_stack = None
+        self.logger = transaction.logger
 
     def __enter__(self):
         singleton.book_listener.subscribe(
@@ -73,10 +76,8 @@ class WaitingPriceConverge:
             lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
-        logging.log_every_n_seconds(
-            logging.INFO,
+        self.logger.info(
             '%s:%s current_gap:%.3f, max_gap: %.3f, available_amount: %d',
-            20,
             self._ask_stack_instrument,
             self._bid_stack_instrument,
             self._ask_stack[0][0] - self._bid_stack[0][0],
@@ -89,14 +90,14 @@ class WaitingPriceConverge:
 
 class ArbitrageTransaction:
     def __init__(self,
-                 arbitrage_id,
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
-        self.id = arbitrage_id
+        self.id = uuid.uuid4()
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
+        self.logger = create_transaction_logger(self.id)
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
@@ -126,46 +127,46 @@ class ArbitrageTransaction:
                                                  is_market_order=True)
 
     def process(self):
-        logging.info('starting arbitrage transaction on '
-                     f'slow:{self.slow_leg} and fast{self.fast_leg}')
+        self.logger.info('starting arbitrage transaction on '
+                         f'slow:{self.slow_leg} and fast{self.fast_leg}')
 
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            logging.info(f'slow leg {self.slow_leg} is not '
-                         f'successful({slow_leg_order_status}), '
-                         'will abort the rest of this transaction')
+            self.logger.info(f'slow leg {self.slow_leg} is not '
+                             f'successful({slow_leg_order_status}), '
+                             'will abort the rest of this transaction')
             return
-        logging.info(f'{self.slow_leg} is successful, '
-                     f'will open position for fast leg')
+        self.logger.info(f'{self.slow_leg} is successful, '
+                         f'will open position for fast leg')
 
         fast_leg_order_status = self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            logging.info(f'fast leg {self.slow_leg} is not '
-                         f'successful({fast_leg_order_status}), '
-                         'will close slow leg position before aborting the rest'
-                         ' of this transaction')
+            self.logger.info(f'fast leg {self.slow_leg} is not '
+                             f'successful({fast_leg_order_status}), '
+                             'will close slow leg position before aborting the '
+                             'rest of this transaction')
             self.close_position(self.slow_leg)
             return
 
-        logging.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
-                     f'for converge for'
-                     f' {PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
+        self.logger.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
+                         f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
+                         f'seconds')
 
         with WaitingPriceConverge(self) as converge_future:
             converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
             if converge is None:
                 # timeout, close the position
-                logging.info('Prices failed to converge in time, closing '
-                             'both legs')
+                self.logger.info('Prices failed to converge in time, closing '
+                                 'both legs')
             else:
-                logging.info(f'Prices converged with enough margin({converge}),'
-                             f' closing both legs')
+                self.logger.info(f'Prices converged with enough '
+                                 f'margin({converge}), closing both legs')
             self.close_position(self.fast_leg)
             self.close_position(self.slow_leg)
 
@@ -177,7 +178,6 @@ def _testing(_):
         week_instrument = singleton.schema.all_instrument_ids[0]
         quarter_instrument = singleton.schema.all_instrument_ids[-1]
         transaction = ArbitrageTransaction(
-            'test-transaction',
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                   side=LONG,
                                   volume=1,
@@ -197,4 +197,5 @@ def _testing(_):
 
 
 if __name__ == '__main__':
+    from . import define_cli_flags
     app.run(_testing)
