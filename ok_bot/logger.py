@@ -67,6 +67,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    from . import define_cli_flags
-    define_cli_flags.define_flags()
     app.run(_testing)
