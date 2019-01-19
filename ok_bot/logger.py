@@ -39,6 +39,7 @@ class SlackHandler(py_logging.Handler):
 
 
 def create_transaction_logger(id):
+    id = str(id)
     logger = logging.get_absl_logger().getChild(id)
     fh = py_logging.FileHandler(f'transaction/{id}.log')
     logger.addHandler(fh)
