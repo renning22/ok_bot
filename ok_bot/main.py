@@ -1,15 +1,14 @@
-import os
-
 from absl import flags, logging
 
-from . import define_cli_flags, singleton
+from . import singleton
+from . import define_cli_flags
 from .logger import init_global_logger
-from .slack import SlackLoggingHandler
+
 
 
 def main(_):
+    define_cli_flags.define_flags()
     init_global_logger()
-
     symbol = flags.FLAGS.symbol
     logging.info('starting program with %s', symbol)
 
