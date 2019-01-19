@@ -15,24 +15,17 @@ os.makedirs('log', exist_ok=True)
 os.makedirs('transaction', exist_ok=True)
 
 
-class RelativeTimeAdapter(py_logging.LoggerAdapter):
-    """Add relative creation time in seconds."""
+class TransactionAdapter(py_logging.LoggerAdapter):
+    """Add transaction id/relative time."""
 
     def __init__(self, *argv, **kwargs):
         super().__init__(*argv, **kwargs)
         self._created_time = time.time()
 
     def process(self, msg, kwargs):
-        relative_time = time.time() - self._created_time
-        return f'[+{relative_time:12.8f}s] {msg}', kwargs
-
-
-class TransactionAdapter(py_logging.LoggerAdapter):
-    """Add transaction id."""
-
-    def process(self, msg, kwargs):
         id = self.extra['id']
-        return f'[{id}] {msg}', kwargs
+        relative_time = time.time() - self._created_time
+        return f'[{id}] [+{relative_time:12.8f}s] : {msg}', kwargs
 
 
 class SlackHandler(py_logging.Handler):
@@ -46,12 +39,12 @@ class SlackHandler(py_logging.Handler):
 
 
 def create_transaction_logger(id):
-    logger = py_logging.getLogger(f'absl.{id}')
+    logger = logging.get_absl_logger().getChild(id)
     fh = py_logging.FileHandler(f'transaction/{id}.log')
     logger.addHandler(fh)
     if flags.FLAGS.log_transaction_to_slack:
         logger.addHandler(SlackHandler('INFO'))
-    return RelativeTimeAdapter(TransactionAdapter(logger, {'id': id}), {})
+    return TransactionAdapter(logger, {'id': id})
 
 
 def init_global_logger():

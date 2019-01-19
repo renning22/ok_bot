@@ -34,7 +34,6 @@ class WaitingPriceConverge:
                             f'fast leg: {self._fast_leg.side}')
         self._ask_stack = None
         self._bid_stack = None
-
         self.logger = transaction.logger
 
     def __enter__(self):
@@ -98,7 +97,6 @@ class ArbitrageTransaction:
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
-
         self.logger = create_transaction_logger(self.id)
 
     def open_position(self, leg, timeout_in_sec):
