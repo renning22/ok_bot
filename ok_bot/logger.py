@@ -39,6 +39,7 @@ class SlackHandler(py_logging.Handler):
 
 
 def create_transaction_logger(id):
+    id = str(id)
     logger = logging.get_absl_logger().getChild(id)
     fh = py_logging.FileHandler(f'transaction/{id}.log')
     logger.addHandler(fh)
@@ -66,6 +67,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    from . import define_cli_flags
-    define_cli_flags.define_flags()
     app.run(_testing)
