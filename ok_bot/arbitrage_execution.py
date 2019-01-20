@@ -190,7 +190,7 @@ def _testing(_):
         )
         transaction.process()
 
-    singleton.initialize_objects('ETH')
+    singleton.initialize_objects_monkey_patch('ETH')
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_test_aribitrage)
     singleton.green_pool.waitall()

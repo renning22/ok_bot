@@ -1,13 +1,5 @@
 import eventlet
 
-from . import book_listener as book_listener_module
-from . import order_listener as order_listener_module
-from . import rest_api_v3 as rest_api_v3_module
-from . import websocket_api as websocket_api_module
-from . import schema as schema_module
-from .order_book import OrderBook
-from .trader import Trader
-
 green_pool = None
 rest_api = None
 book_listener = None
@@ -19,6 +11,14 @@ websocket = None
 
 
 def initialize_objects(currency):
+    from . import book_listener as book_listener_module
+    from . import order_listener as order_listener_module
+    from . import rest_api_v3 as rest_api_v3_module
+    from . import schema as schema_module
+    from . import websocket_api as websocket_api_module
+    from .order_book import OrderBook
+    from .trader import Trader
+
     global green_pool
     global rest_api
     global book_listener
@@ -40,6 +40,14 @@ def initialize_objects(currency):
         schema=schema,
         book_listener=book_listener,
         order_listener=order_listener)
+
+
+# For unit testing
+def initialize_objects_monkey_patch(currency):
+    from unittest.mock import patch
+    from .mock import MockTrader
+    with patch('ok_bot.trader.Trader', new=MockTrader):
+        initialize_objects(currency)
 
 
 def start_loop():

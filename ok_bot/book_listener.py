@@ -55,25 +55,7 @@ class BookListener:
 
 
 def _testing(_):
-    class MockTrader:
-        def tick_received(self,
-                          instrument_id,
-                          ask_prices,
-                          ask_vols,
-                          bid_prices,
-                          bid_vols,
-                          timestamp):
-            logging.info('mock trader got new tick: %s, best ask: %.3f@%d,'
-                         'best bid: %.3f@%d',
-                         instrument_id,
-                         ask_prices[0], ask_vols[0],
-                         bid_prices[0], bid_vols[0])
-
-    trader = MockTrader()
-    singleton.initialize_objects('ETH')
-    singleton.book_listener.subscribe(
-        singleton.schema.all_instrument_ids[0],
-        trader)
+    singleton.initialize_objects_monkey_patch('ETH')
     singleton.websocket.start_read_loop()
     singleton.green_pool.waitall()
 

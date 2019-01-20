@@ -146,11 +146,12 @@ def _testing_thread(instrument_id):
 
 
 def _testing(_):
-    singleton.initialize_objects(currency='ETH')
+    singleton.initialize_objects_monkey_patch(currency='ETH')
     singleton.websocket._book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()
-    singleton.green_pool.spawn_n(_testing_thread,
-                                 instrument_id=singleton.schema.all_instrument_ids[0])
+    singleton.green_pool.spawn_n(
+        _testing_thread,
+        instrument_id=singleton.schema.all_instrument_ids[0])
     singleton.green_pool.waitall()
 
 
