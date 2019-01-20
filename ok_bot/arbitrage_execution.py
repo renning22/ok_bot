@@ -114,21 +114,27 @@ class ArbitrageTransaction:
             return order_executor.open_short_position()
 
     def close_position(self, leg):
+        assert leg.side in [LONG, SHORT]
+        order_executor = OrderExecutor(
+            leg.instrument_id,
+            leg.volume,
+            price=-1,
+            timeout_sec=None,
+            is_market_order=True,
+            logger=self.logger)
         if leg.side == LONG:
-            singleton.rest_api.close_long_order(leg.instrument_id,
-                                                amount=1,
-                                                price=-1,
-                                                is_market_order=True)
+            order_executor.close_long_order()
         else:
-            singleton.rest_api.close_short_order(leg.instrument_id,
-                                                 amount=1,
-                                                 price=-1,
-                                                 is_market_order=True)
+            order_executor.close_short_order()
 
     def process(self):
-        self.logger.info('starting arbitrage transaction on '
-                         f'slow:{self.slow_leg} and fast{self.fast_leg}')
+        self.logger.info('=== arbitrage transaction started ===')
+        self.logger.info(f'slow leg: {self.slow_leg}')
+        self.logger.info(f'fast leg: {self.fast_leg}')
+        self._process()
+        self.logger.info('=== arbitrage transaction ended ===')
 
+    def _process(self):
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
@@ -136,7 +142,7 @@ class ArbitrageTransaction:
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             self.logger.info(f'slow leg {self.slow_leg} was not '
                              f'successful({slow_leg_order_status}), '
-                             'will abort the rest of this transaction')
+                             'transaction is terminated.')
             return
         self.logger.info(f'{self.slow_leg} was successful, '
                          f'will open position for fast leg')
@@ -146,11 +152,14 @@ class ArbitrageTransaction:
         ).get()
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            self.logger.info(f'fast leg {self.slow_leg} was not '
-                             f'successful({fast_leg_order_status}), '
+            self.logger.info(f'failed to open fast leg {self.fast_leg} '
+                             f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
             self.close_position(self.slow_leg)
+            self.logger.info(
+                f'slow leg {self.slow_leg} position has been closed '
+                f'successfully')
             return
 
         self.logger.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
@@ -161,10 +170,10 @@ class ArbitrageTransaction:
             converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
             if converge is None:
                 # timeout, close the position
-                self.logger.info('Prices failed to converge in time, closing '
+                self.logger.info('prices failed to converge in time, closing '
                                  'both legs')
             else:
-                self.logger.info(f'Prices converged with enough '
+                self.logger.info(f'prices converged with enough '
                                  f'margin({converge}), closing both legs')
             self.close_position(self.fast_leg)
             self.close_position(self.slow_leg)
@@ -178,13 +187,13 @@ def _testing(_):
         quarter_instrument = singleton.schema.all_instrument_ids[-1]
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
-                                  side=LONG,
-                                  volume=1,
-                                  price=100.0),
-            fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                                   side=SHORT,
                                   volume=1,
-                                  price=160.0),
+                                  price=115.0),
+            fast_leg=ArbitrageLeg(instrument_id=week_instrument,
+                                  side=LONG,
+                                  volume=1,
+                                  price=80.0),
             close_price_gap_threshold=1,
         )
         transaction.process()

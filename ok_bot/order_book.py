@@ -1,5 +1,4 @@
 import datetime
-import pprint
 
 import numpy as np
 import pandas as pd
@@ -104,10 +103,10 @@ class OrderBook:
                                                       bid_prices,
                                                       bid_vols)
 
-        if set(self._schema.all_necessary_source_columns) == set(self.last_record.keys()):
-            logging.info('have all the necessary prices in every market, ramping up finished:\n%s',
-                         pprint.pformat(self.last_record))
-            # Finished ramp-up
+        if set(self._schema.all_necessary_source_columns) == \
+                set(self.last_record.keys()):
+            logging.info('have all the necessary prices in every market, '
+                         'ramping up finished')
             self.update_book = self._update_book__regular
 
     def _update_book__regular(self,

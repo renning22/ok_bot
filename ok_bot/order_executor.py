@@ -44,11 +44,11 @@ class OrderAwaiter:
 
     def order_pending(self, order_id):
         assert self._order_id == order_id
-        self._logger.info('order_pending: %s', order_id)
+        self._logger.info('websocket event: order_pending %s', order_id)
 
     def order_cancelled(self, order_id):
         assert self._order_id == order_id
-        self._logger.info('order_cancelled: %s', order_id)
+        self._logger.info('websocket event: order_cancelled %s', order_id)
         self._future.set(ORDER_AWAIT_STATUS__CANCELLED)
 
     def order_fulfilled(self,
@@ -59,7 +59,7 @@ class OrderAwaiter:
                         price,
                         price_avg):
         assert self._order_id == order_id
-        self._logger.info('order_fulfilled: %s', order_id)
+        self._logger.info('websocket event: order_fulfilled %s', order_id)
         self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
 
     def order_partially_filled(self,
@@ -68,15 +68,17 @@ class OrderAwaiter:
                                filled_qty,
                                price_avg):
         assert self._order_id == order_id
-        self._logger.info('order_partially_filled: %s', order_id)
+        self._logger.info(
+            'websocket event: order_partially_filled %s', order_id)
 
 
 class OrderExecutor:
-    def __init__(self, instrument_id, amount, price, timeout_sec, logger=None):
+    def __init__(self, instrument_id, amount, price, timeout_sec, is_market_order=False, logger=None):
         self._instrument_id = instrument_id
         self._amount = amount
         self._price = price
         self._timeout_sec = timeout_sec
+        self._is_market_order = is_market_order
         self._logger = logger if logger else logging
 
     def open_long_position(self):
@@ -87,6 +89,14 @@ class OrderExecutor:
         """Returns Future[OpenPositionStatus]"""
         return self._open_position(singleton.rest_api.open_short_order)
 
+    def close_long_order(self):
+        """Returns Future[OpenPositionStatus]"""
+        return self._open_position(singleton.rest_api.close_long_order)
+
+    def close_short_order(self):
+        """Returns Future[OpenPositionStatus]"""
+        return self._open_position(singleton.rest_api.close_short_order)
+
     def _open_position(self, rest_request_functor):
         """Returns Future[OpenPositionStatus]"""
         future = Future()
@@ -96,17 +106,23 @@ class OrderExecutor:
 
     def _async_place_order_and_await(self, rest_request_functor, future):
         # TODO: add timeout_sec for rest api wait() as well.
-        order_id = singleton.green_pool.spawn(rest_request_functor,
-                                              self._instrument_id,
-                                              self._amount,
-                                              self._price
-                                              ).wait()
+        # TODO: passing logger down to rest_api_v3 for lower granularity error
+        #       mesasge in transaction log.
+        order_id = singleton.green_pool.spawn(
+            rest_request_functor,
+            self._instrument_id,
+            self._amount,
+            self._price,
+            is_market_order=self._is_market_order
+        ).wait()
+
         if order_id is None:
-            self._logger.error('failure from rest api')
+            self._logger.error('failed when requesting open order via http')
             future.set(OPEN_POSITION_STATUS__REST_API)
             return
         self._logger.info(
-            f'Order {order_id} created for {self._instrument_id}')
+            f'new order {order_id} was created successfully via '
+            f'http ({self._instrument_id})')
 
         with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
             status = await_status_future.get(self._timeout_sec)
@@ -117,8 +133,8 @@ class OrderExecutor:
                                              self._instrument_id,
                                              order_id)
                 self._logger.info(
-                    f'{order_id} for {self._instrument_id} failed to fulfill '
-                    'in time and was canceled')
+                    f'pending order {order_id} ({self._instrument_id}) '
+                    'failed to fulfill in time and was canceled')
                 future.set(OPEN_POSITION_STATUS__TIMEOUT)
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 future.set(OPEN_POSITION_STATUS__CANCELLED)
