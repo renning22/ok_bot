@@ -105,6 +105,7 @@ class OrderExecutor:
         return future
 
     def _async_place_order_and_await(self, rest_request_functor, future):
+        logging.info('#### _async_place_order_and_await (never reached) ####')
         # TODO: add timeout_sec for rest api wait() as well.
         # TODO: passing logger down to rest_api_v3 for lower granularity error
         #       mesasge in transaction log.
@@ -162,7 +163,7 @@ def _testing_thread(instrument_id):
     executor = OrderExecutor(instrument_id,
                              amount=1,
                              price=100.0,
-                             timeout_sec=10,
+                             timeout_sec=20,
                              is_market_order=False,
                              logger=logging)
     order_status_future = executor.open_long_position()
@@ -174,7 +175,7 @@ def _testing_thread(instrument_id):
 
 def _testing(_):
     singleton.initialize_objects_with_mock_trader(currency='ETH')
-    # singleton.websocket._book_listener = None  # test heartbeat in websocket_api
+    singleton.websocket._book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(
         _testing_thread,
