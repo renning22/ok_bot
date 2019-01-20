@@ -43,7 +43,7 @@ def initialize_objects(currency):
 
 
 # For unit testing
-def initialize_objects_monkey_patch(currency):
+def initialize_objects_with_mock_trader(currency):
     from unittest.mock import patch
     from .mock import MockTrader
     with patch('ok_bot.trader.Trader', new=MockTrader):

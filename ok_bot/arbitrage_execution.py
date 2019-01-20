@@ -106,6 +106,7 @@ class ArbitrageTransaction:
             leg.volume,
             leg.price,
             timeout_in_sec,
+            is_market_order=False,
             logger=self.logger)
         if leg.side == LONG:
             return order_executor.open_long_position()
@@ -190,7 +191,7 @@ def _testing(_):
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                   side=SHORT,
                                   volume=1,
-                                  price=113.0),
+                                  price=120.0),
             fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                                   side=LONG,
                                   volume=1,
@@ -199,7 +200,7 @@ def _testing(_):
         )
         transaction.process()
 
-    singleton.initialize_objects_monkey_patch('ETH')
+    singleton.initialize_objects_with_mock_trader('ETH')
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_test_aribitrage)
     singleton.green_pool.waitall()
