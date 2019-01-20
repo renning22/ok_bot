@@ -110,7 +110,6 @@ class ArbitrageTransaction:
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
-            # short order
             return order_executor.open_short_position()
 
     def close_position(self, leg):
@@ -123,9 +122,9 @@ class ArbitrageTransaction:
             is_market_order=True,
             logger=self.logger)
         if leg.side == LONG:
-            order_executor.close_long_order()
+            return order_executor.close_long_order()
         else:
-            order_executor.close_short_order()
+            return order_executor.close_short_order()
 
     def process(self):
         self.logger.info('=== arbitrage transaction started ===')
@@ -156,7 +155,7 @@ class ArbitrageTransaction:
                              f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
-            self.close_position(self.slow_leg)
+            self.close_position(self.slow_leg).get()
             self.logger.info(
                 f'slow leg {self.slow_leg} position has been closed '
                 f'successfully')
@@ -175,8 +174,10 @@ class ArbitrageTransaction:
             else:
                 self.logger.info(f'prices converged with enough '
                                  f'margin({converge}), closing both legs')
-            self.close_position(self.fast_leg)
-            self.close_position(self.slow_leg)
+            fast_order = self.close_position(self.fast_leg)
+            slow_order = self.close_position(self.slow_leg)
+            fast_order.get()
+            slow_order.get()
 
 
 def _testing(_):
@@ -189,7 +190,7 @@ def _testing(_):
             slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                   side=SHORT,
                                   volume=1,
-                                  price=115.0),
+                                  price=113.0),
             fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                                   side=LONG,
                                   volume=1,
