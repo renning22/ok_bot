@@ -61,7 +61,9 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self, green_pool, schema, book_listener=None, order_listener=None):
+    def __init__(self, green_pool, schema,
+                 book_listener=None,
+                 order_listener=None):
         self._green_pool = green_pool
         self._schema = schema
         self._book_listener = book_listener
@@ -130,7 +132,7 @@ class WebsocketApi:
         # 3，期待一个文字字符串'pong'作为回应。如果在 N秒内未收到，请发出错误或重新连接。
         #
         # 出现网络问题会自动断开连接
-        res_bin = self._recv(timeout_sec=2)
+        res_bin = self._recv(timeout_sec=20)
         if res_bin is None:
             logging.info('Sending heartbeat message')
             self._ws.send('ping')
@@ -303,5 +305,32 @@ def _testing(_):
     singleton.green_pool.waitall()
 
 
+def _testing_non_blocking(_):
+    from . import singleton
+    from datetime import datetime
+
+    def ping(url):
+        while True:
+            start = datetime.now()
+            r = requests.get(url)
+            end = datetime.now()
+            elapse = end - start
+            print(f'{url} GET response: {r.status_code}, start: {start}, '
+                  f'end: {end}'
+                  f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
+            eventlet.sleep(5)
+
+    singleton.initialize_objects('ETH')
+    api = singleton.websocket
+    green_pool = singleton.green_pool
+
+    api._book_listener = None
+    green_pool.spawn_n(ping, 'http://www.google.com')
+    green_pool.spawn_n(ping, 'http://www.baidu.com')
+    green_pool.spawn_n(ping, 'http://www.okex.com')
+    api.start_read_loop()
+    green_pool.waitall()
+
+
 if __name__ == '__main__':
-    app.run(_testing)
+    app.run(_testing_non_blocking)
