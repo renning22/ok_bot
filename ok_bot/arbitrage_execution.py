@@ -102,7 +102,11 @@ class ArbitrageTransaction:
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
-            leg.instrument_id, leg.volume, leg.price, timeout_in_sec)
+            leg.instrument_id,
+            leg.volume,
+            leg.price,
+            timeout_in_sec,
+            logger=self.logger)
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
@@ -130,11 +134,11 @@ class ArbitrageTransaction:
         ).get()
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            self.logger.info(f'slow leg {self.slow_leg} is not '
+            self.logger.info(f'slow leg {self.slow_leg} was not '
                              f'successful({slow_leg_order_status}), '
                              'will abort the rest of this transaction')
             return
-        self.logger.info(f'{self.slow_leg} is successful, '
+        self.logger.info(f'{self.slow_leg} was successful, '
                          f'will open position for fast leg')
 
         fast_leg_order_status = self.open_position(
@@ -142,7 +146,7 @@ class ArbitrageTransaction:
         ).get()
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            self.logger.info(f'fast leg {self.slow_leg} is not '
+            self.logger.info(f'fast leg {self.slow_leg} was not '
                              f'successful({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
