@@ -101,18 +101,13 @@ class ArbitrageTransaction:
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
-        order_executor = OrderExecutor()
+        order_executor = OrderExecutor(
+            leg.instrument_id, leg.volume, leg.price, timeout_in_sec)
         if leg.side == LONG:
-            return order_executor.open_long_position(leg.instrument_id,
-                                                     leg.volume,
-                                                     leg.price,
-                                                     timeout_in_sec)
+            return order_executor.open_long_position()
         else:
             # short order
-            return order_executor.open_short_position(leg.instrument_id,
-                                                      leg.volume,
-                                                      leg.price,
-                                                      timeout_in_sec)
+            return order_executor.open_short_position()
 
     def close_position(self, leg):
         if leg.side == LONG:

@@ -1,41 +1,41 @@
 import eventlet
 
-green_pool = None
-rest_api = None
 book_listener = None
-order_listener = None
+green_pool = None
 order_book = None
-trader = None
+order_listener = None
+rest_api = None
 schema = None
+trader = None
 websocket = None
 
 
 def initialize_objects(currency):
-    from . import book_listener as book_listener_module
-    from . import order_listener as order_listener_module
-    from . import rest_api_v3 as rest_api_v3_module
-    from . import schema as schema_module
-    from . import websocket_api as websocket_api_module
+    from .book_listener import BookListener
     from .order_book import OrderBook
+    from .order_listener import OrderListener
+    from .rest_api_v3 import RestApiV3
+    from .schema import Schema
     from .trader import Trader
+    from .websocket_api import WebsocketApi
 
-    global green_pool
-    global rest_api
     global book_listener
-    global order_listener
+    global green_pool
     global order_book
-    global trader
+    global order_listener
+    global rest_api
     global schema
+    global trader
     global websocket
 
     green_pool = eventlet.GreenPool()
-    rest_api = rest_api_v3_module.RestApiV3()
-    book_listener = book_listener_module.BookListener()
-    order_listener = order_listener_module.OrderListener()
-    schema = schema_module.Schema(currency)
+    rest_api = RestApiV3()
+    book_listener = BookListener()
+    order_listener = OrderListener()
+    schema = Schema(currency)
     trader = Trader()
     order_book = OrderBook()
-    websocket = websocket_api_module.WebsocketApi(
+    websocket = WebsocketApi(
         green_pool=green_pool,
         schema=schema,
         book_listener=book_listener,

@@ -1,3 +1,5 @@
+import pprint
+
 from absl import logging
 
 
@@ -53,3 +55,8 @@ class MockOrderBook:
     def update_book(self, market, data):
         logging.info(
             'MockOrderBook.update_book:\n %s\n %s', market, data)
+
+
+class MockBookListener:
+    def received_futures_depth5(self, *argv):
+        logging.info('MockBookListener:\n%s', pprint.pformat(argv))
