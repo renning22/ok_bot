@@ -4,10 +4,10 @@ import re
 import eventlet
 from absl import logging
 
+from ok_bot.patched_io_modules import requests
+
 from .api_v3.okex_sdk.futures_api import FutureAPI
 from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
-
-requests = eventlet.import_patched('requests')
 
 
 class RestApiV3:

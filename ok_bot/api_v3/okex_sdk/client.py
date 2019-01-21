@@ -1,9 +1,9 @@
 import json
-from . import consts as c, utils, exceptions
-import eventlet
 
+from ok_bot.patched_io_modules import requests
 
-requests = eventlet.import_patched('requests')
+from . import consts as c
+from . import exceptions, utils
 
 
 class Client(object):
@@ -14,7 +14,6 @@ class Client(object):
         self.API_SECRET_KEY = api_seceret_key
         self.PASSPHRASE = passphrase
         self.use_server_time = use_server_time
-
 
     def _request(self, method, request_path, params, cursor=False):
 
@@ -29,8 +28,10 @@ class Client(object):
             timestamp = self._get_timestamp()
         body = json.dumps(params) if method == c.POST else ""
 
-        sign = utils.sign(utils.pre_hash(timestamp, method, request_path, str(body)), self.API_SECRET_KEY)
-        header = utils.get_header(self.API_KEY, sign, timestamp, self.PASSPHRASE)
+        sign = utils.sign(utils.pre_hash(timestamp, method,
+                                         request_path, str(body)), self.API_SECRET_KEY)
+        header = utils.get_header(
+            self.API_KEY, sign, timestamp, self.PASSPHRASE)
         # send request
         response = None
         if method == c.GET:
@@ -56,7 +57,8 @@ class Client(object):
             else:
                 return response.json()
         except ValueError:
-            raise exceptions.OkexRequestException('Invalid Response: %s' % response.text)
+            raise exceptions.OkexRequestException(
+                'Invalid Response: %s' % response.text)
 
     def _request_without_params(self, method, request_path):
         return self._request(method, request_path, {})
@@ -71,7 +73,3 @@ class Client(object):
             return response.json()['iso']
         else:
             return ""
-
-
-
-
