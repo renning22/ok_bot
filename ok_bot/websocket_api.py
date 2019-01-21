@@ -62,13 +62,15 @@ class WebsocketApi:
     def __init__(self, green_pool, schema, book_listener=None, order_listener=None):
         self._green_pool = green_pool
         self._schema = schema
-        self._book_listener = book_listener
-        self._order_listener = order_listener
+        self.book_listener = book_listener
+        self.order_listener = order_listener
         self._currency = schema.currency
         self._ws = None
         self._subscribed_channels = None
         self._acked_channels = set()
         self.ready = Future()
+        self.heartbeat_ping = 0  # keeping track of number of heartbeat sent
+        self.heartbeat_pong = 0  # keeping track of number of heartbeat received
 
     def _recv(self, timeout_sec):
         green_thread = self._green_pool.spawn(self._ws.recv)
@@ -102,9 +104,9 @@ class WebsocketApi:
 
     def _subscribe_all_interested(self):
         interested_channels = []
-        if self._book_listener is not None:
+        if self.book_listener is not None:
             interested_channels.append('futures/depth5')
-        if self._order_listener is not None:
+        if self.order_listener is not None:
             interested_channels.append('futures/order')
 
         self._subscribed_channels = set(
@@ -132,11 +134,13 @@ class WebsocketApi:
         if res_bin is None:
             logging.info('Sending heartbeat message')
             self._ws.send('ping')
+            self.heartbeat_ping += 1
             return
 
         res_text = _inflate(res_bin).decode()
         if res_text == 'pong':
             logging.info('Received heartbeat message')
+            self.heartbeat_pong += 1
             return
 
         res = json.loads(res_text)
@@ -194,7 +198,7 @@ class WebsocketApi:
              instrument_id	String	合约ID BTC-USD-170310
              [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
         """
-        self._book_listener.received_futures_depth5(
+        self.book_listener.received_futures_depth5(
             asks, bids, instrument_id, timestamp)
 
     def _received_futures_order(self,
@@ -224,7 +228,7 @@ class WebsocketApi:
             instrument_id_val	String	合约面值
             leverage	String	杠杆倍数 value:10/20 默认10
         """
-        self._order_listener.received_futures_order(
+        self.order_listener.received_futures_order(
             int(leverage),
             int(size),
             int(filled_qty),
@@ -288,12 +292,13 @@ class WebsocketApi:
         self._green_pool.spawn_n(self._read_loop_impl)
 
 
+
 def _testing(_):
     from . import singleton
     from .mock import MockBookListener
 
     singleton.initialize_objects_with_mock_trader('ETH')
-    singleton.websocket._book_listener = MockBookListener()
+    singleton.websocket.book_listener = MockBookListener()
     singleton.websocket.start_read_loop()
     singleton.green_pool.waitall()
 
