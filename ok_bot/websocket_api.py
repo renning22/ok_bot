@@ -1,4 +1,4 @@
-# V3 websocket API.
+"""Websocket API V3"""
 import base64
 import hmac
 import json
@@ -14,9 +14,7 @@ import greenlet
 
 from . import api_v3_key_reader, decorator
 from .future import Future
-
-requests = eventlet.import_patched('requests')
-websocket = eventlet.import_patched('websocket')
+from .patched_io_modules import requests, websocket
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
 OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'

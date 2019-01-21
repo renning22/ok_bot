@@ -1,10 +1,7 @@
-import eventlet
 from absl import flags
 
-# Global eventlet monkey patch
-# Fixes bug: https://github.com/renning22/ok_bot/issues/45
-websocket = eventlet.import_patched('websocket')
-requests = eventlet.import_patched('requests')
+# Make sure patched_io_modules is being imported before everything.
+from . import patched_io_modules
 
 flags.DEFINE_string(
     'symbol', 'ETH', 'symbol for crypto-currency in under case.')
