@@ -123,7 +123,7 @@ class OrderExecutor:
             return
         self._logger.info(
             f'new order {order_id} ({self._instrument_id}) was created '
-            f'successfully via http call {rest_request_functor}')
+            f'via {rest_request_functor.__name__}')
 
         with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
             status = await_status_future.get(self._timeout_sec)

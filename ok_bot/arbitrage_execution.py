@@ -129,6 +129,7 @@ class ArbitrageTransaction:
 
     def process(self):
         self.logger.info('=== arbitrage transaction started ===')
+        self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         self._process()
@@ -140,9 +141,9 @@ class ArbitrageTransaction:
         ).get()
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            self.logger.info(f'slow leg {self.slow_leg} was not '
-                             f'successful({slow_leg_order_status}), '
-                             'transaction is terminated.')
+            self.logger.info(
+                f'failed to open slow leg {self.slow_leg} '
+                f'({slow_leg_order_status})')
             return
         self.logger.info(f'{self.slow_leg} was successful, '
                          f'will open position for fast leg')
@@ -158,8 +159,7 @@ class ArbitrageTransaction:
                              'rest of this transaction')
             self.close_position(self.slow_leg).get()
             self.logger.info(
-                f'slow leg {self.slow_leg} position has been closed '
-                f'successfully')
+                f'slow leg position {self.slow_leg} has been closed')
             return
 
         self.logger.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
