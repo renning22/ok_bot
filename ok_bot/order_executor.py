@@ -105,7 +105,6 @@ class OrderExecutor:
         return future
 
     def _async_place_order_and_await(self, rest_request_functor, future):
-        logging.info('#### _async_place_order_and_await (never reached) ####')
         # TODO: add timeout_sec for rest api wait() as well.
         # TODO: passing logger down to rest_api_v3 for lower granularity error
         #       mesasge in transaction log.
