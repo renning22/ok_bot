@@ -292,12 +292,9 @@ class WebsocketApi:
 
 def _testing(_):
     from . import singleton
+    from .mock import MockBookListener
 
-    class MockBookListener:
-        def received_futures_depth5(self, *argv):
-            logging.info('MockBookListener:\n%s', pprint.pformat(argv))
-
-    singleton.initialize_objects('ETH')
+    singleton.initialize_objects_with_mock_trader('ETH')
     singleton.websocket._book_listener = MockBookListener()
     singleton.websocket.start_read_loop()
     singleton.green_pool.waitall()

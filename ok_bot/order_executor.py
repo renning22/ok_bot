@@ -30,9 +30,10 @@ ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
 class OrderAwaiter:
-    def __init__(self, order_id):
+    def __init__(self, order_id, logger):
         self._order_id = order_id
         self._future = Future()
+        self._logger = logger
 
     def __enter__(self):
         singleton.order_listener.subscribe(self._order_id, self)
@@ -43,11 +44,11 @@ class OrderAwaiter:
 
     def order_pending(self, order_id):
         assert self._order_id == order_id
-        logging.info('order_pending: %s', order_id)
+        self._logger.info('websocket event: order_pending %s', order_id)
 
     def order_cancelled(self, order_id):
         assert self._order_id == order_id
-        logging.info('order_cancelled: %s', order_id)
+        self._logger.info('websocket event: order_cancelled %s', order_id)
         self._future.set(ORDER_AWAIT_STATUS__CANCELLED)
 
     def order_fulfilled(self,
@@ -58,7 +59,7 @@ class OrderAwaiter:
                         price,
                         price_avg):
         assert self._order_id == order_id
-        logging.info('order_fulfilled: %s', order_id)
+        self._logger.info('websocket event: order_fulfilled %s', order_id)
         self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
 
     def order_partially_filled(self,
@@ -67,68 +68,90 @@ class OrderAwaiter:
                                filled_qty,
                                price_avg):
         assert self._order_id == order_id
-        logging.info('order_partially_filled: %s', order_id)
+        self._logger.info(
+            'websocket event: order_partially_filled %s', order_id)
 
 
 class OrderExecutor:
-    def open_long_position(self, instrument_id, amount, price, timeout_sec):
-        """Returns Future[OpenPositionStatus]"""
-        return self._open_position(
-            instrument_id,
-            partial(singleton.rest_api.open_long_order,
-                    instrument_id,
-                    amount,
-                    price),
-            timeout_sec)
+    def __init__(self, instrument_id, amount, price, timeout_sec, is_market_order, logger):
+        self._instrument_id = instrument_id
+        self._amount = amount
+        self._price = price
+        self._timeout_sec = timeout_sec
+        self._is_market_order = is_market_order
+        self._logger = logger
 
-    def open_short_position(self, instrument_id, amount, price, timeout_sec):
+    def open_long_position(self):
         """Returns Future[OpenPositionStatus]"""
-        return self._open_position(
-            instrument_id,
-            partial(singleton.rest_api.open_short_order,
-                    instrument_id,
-                    amount,
-                    price),
-            timeout_sec)
+        return self._place_order(singleton.rest_api.open_long_order)
 
-    def _open_position(self, instrument_id, rest_request_functor, timeout_sec):
+    def open_short_position(self):
+        """Returns Future[OpenPositionStatus]"""
+        return self._place_order(singleton.rest_api.open_short_order)
+
+    def close_long_order(self):
+        """Returns Future[OpenPositionStatus]"""
+        return self._place_order(singleton.rest_api.close_long_order)
+
+    def close_short_order(self):
+        """Returns Future[OpenPositionStatus]"""
+        return self._place_order(singleton.rest_api.close_short_order)
+
+    def _place_order(self, rest_request_functor):
         """Returns Future[OpenPositionStatus]"""
         future = Future()
-        singleton.green_pool.spawn_n(self._async_place_order_and_await,
-                                     instrument_id,
-                                     rest_request_functor,
-                                     timeout_sec,
-                                     future)
+        singleton.green_pool.spawn_n(
+            self._async_place_order_and_await, rest_request_functor, future)
         return future
 
-    def _async_place_order_and_await(self,
-                                     instrument_id,
-                                     rest_request_functor,
-                                     timeout_sec,
-                                     future):
+    def _async_place_order_and_await(self, rest_request_functor, future):
         # TODO: add timeout_sec for rest api wait() as well.
-        order_id = singleton.green_pool.spawn(rest_request_functor).wait()
+        # TODO: passing logger down to rest_api_v3 for lower granularity error
+        #       mesasge in transaction log.
+        order_id = singleton.green_pool.spawn(
+            rest_request_functor,
+            self._instrument_id,
+            self._amount,
+            self._price,
+            is_market_order=self._is_market_order
+        ).wait()
+
         if order_id is None:
-            logging.error('failure from rest api')
+            self._logger.error('failed when requesting open order via http')
             future.set(OPEN_POSITION_STATUS__REST_API)
             return
-        logging.info(f'Order {order_id} created for {instrument_id}')
+        self._logger.info(
+            f'new order {order_id} ({self._instrument_id}) was created '
+            f'via {rest_request_functor.__name__}')
 
-        with OrderAwaiter(order_id) as await_status_future:
-            status = await_status_future.get(timeout_sec)
+        with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
+            status = await_status_future.get(self._timeout_sec)
             if status is None:
                 # timeout, cancel the pending order
+                # TODO: add retry logic
                 singleton.green_pool.spawn_n(singleton.rest_api.cancel_order,
-                                             instrument_id,
+                                             self._instrument_id,
                                              order_id)
-                logging.info(f'{order_id} for {instrument_id} failed to fulfill in time'
-                             ' and is canceled')
+                self._logger.info(
+                    f'[TIMEOUT] pending order {order_id} '
+                    f'({self._instrument_id}) failed to fulfill in time and '
+                    'was canceled')
                 future.set(OPEN_POSITION_STATUS__TIMEOUT)
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
+                self._logger.info(
+                    f'[CANCELLED] pending order {order_id} '
+                    f'({self._instrument_id}) has been canceled')
                 future.set(OPEN_POSITION_STATUS__CANCELLED)
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
+                self._logger.info(
+                    f'[FULFILLED] pending order {order_id} '
+                    f'({self._instrument_id}) has been fulfilled')
                 future.set(OPEN_POSITION_STATUS__SUCCEEDED)
             else:
+                self._logger.info(
+                    f'[EXCEPTION] pending order {order_id} '
+                    f'({self._instrument_id}) encountered unexpected '
+                    f'ORDER_AWAIT_STATUS {result}')
                 raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
 
@@ -136,9 +159,13 @@ def _testing_thread(instrument_id):
     singleton.websocket.ready.get()
     logging.info('start')
 
-    executor = OrderExecutor()
-    order_status_future = executor.open_long_position(
-        instrument_id, amount=1, price=100.0, timeout_sec=10)
+    executor = OrderExecutor(instrument_id,
+                             amount=1,
+                             price=100.0,
+                             timeout_sec=20,
+                             is_market_order=False,
+                             logger=logging)
+    order_status_future = executor.open_long_position()
 
     logging.info('open_long_position has been called')
     result = order_status_future.get()
@@ -146,11 +173,12 @@ def _testing_thread(instrument_id):
 
 
 def _testing(_):
-    singleton.initialize_objects(currency='ETH')
+    singleton.initialize_objects_with_mock_trader(currency='ETH')
     singleton.websocket._book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()
-    singleton.green_pool.spawn_n(_testing_thread,
-                                 instrument_id=singleton.schema.all_instrument_ids[0])
+    singleton.green_pool.spawn_n(
+        _testing_thread,
+        instrument_id=singleton.schema.all_instrument_ids[0])
     singleton.green_pool.waitall()
 
 

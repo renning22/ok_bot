@@ -23,9 +23,8 @@ class TransactionAdapter(py_logging.LoggerAdapter):
         self._created_time = time.time()
 
     def process(self, msg, kwargs):
-        id = self.extra['id']
         relative_time = time.time() - self._created_time
-        return f'[{id}] [+{relative_time:12.8f}s] : {msg}', kwargs
+        return f'[+{relative_time:8.4f}s] {msg}', kwargs
 
 
 class SlackHandler(py_logging.Handler):
@@ -39,13 +38,12 @@ class SlackHandler(py_logging.Handler):
 
 
 def create_transaction_logger(id):
-    id = str(id)
-    logger = logging.get_absl_logger().getChild(id)
+    logger = logging.get_absl_logger().getChild(str(id))
     fh = py_logging.FileHandler(f'transaction/{id}.log')
     logger.addHandler(fh)
     if flags.FLAGS.log_transaction_to_slack:
         logger.addHandler(SlackHandler('INFO'))
-    return TransactionAdapter(logger, {'id': id})
+    return TransactionAdapter(logger, {})
 
 
 def init_global_logger():
