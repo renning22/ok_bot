@@ -1,19 +1,20 @@
+import pprint
 import unittest
 from datetime import datetime
 
 import eventlet
+from absl import logging
 
 import greenlet
 from ok_bot import patched_io_modules, singleton
 
 _URL = 'http://www.google.com'
-_CRAWL_TIMES = 5
+_CRAWL_TIMES = 10
 _CRAWL_TEST_TIMEOUT_SEC = 15
 
 
 class TestWebsocketNonblocking(unittest.TestCase):
     def test_identical(self):
-        from ok_bot import patched_io_modules
         requests = eventlet.import_patched('requests')
         self.assertIs(requests, patched_io_modules.requests)
 
@@ -42,12 +43,14 @@ class TestWebsocketNonblocking(unittest.TestCase):
         eventlet.greenthread.spawn_after_local(
             _CRAWL_TEST_TIMEOUT_SEC, lambda: wait_thread.kill())
 
-        # kill after crawled 5 times
+        # kill after crawled 10 times
         crawl_thread.link(lambda gt: wait_thread.kill())
 
         begin_time = datetime.now()
         try:
-            crawled_times = crawl_thread.wait()
+            with self.assertLogs(logging.get_absl_logger(), level='INFO') as cm:
+                crawled_times = crawl_thread.wait()
+                print(pprint.pformat(cm.output))
         except greenlet.GreenletExit:
             pass
         end_time = datetime.now()
