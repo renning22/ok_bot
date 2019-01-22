@@ -47,14 +47,20 @@ class TestWebsocketNonblocking(unittest.TestCase):
         crawl_thread.link(lambda gt: wait_thread.kill())
 
         begin_time = datetime.now()
+        log_message = None
         try:
             with self.assertLogs(logging.get_absl_logger(), level='INFO') as cm:
                 crawled_times = crawl_thread.wait()
-                print(pprint.pformat(cm.output))
+                log_message = cm.output
+
         except greenlet.GreenletExit:
             pass
         end_time = datetime.now()
 
+        print(pprint.pformat(log_message))
+        self.assertIn('INFO:absl:Sending heartbeat message', log_message)
+        self.assertIn(
+            'INFO:absl:Received heartbeat message', log_message)
         self.assertLessEqual(
             (end_time - begin_time).seconds,
             _CRAWL_TEST_TIMEOUT_SEC,
