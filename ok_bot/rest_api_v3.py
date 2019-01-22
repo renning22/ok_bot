@@ -41,7 +41,8 @@ class RestApiV3:
         :param price:
         :param is_market_order: place market order if True, price will be ignored for market orders
         :param leverage: 10 or 20
-        :return: Order ID if success, None otherwise
+        :return: Order ID and None if success, None and OKEX error code
+                 otherwise(https://www.okex.com/docs/en/#error-Error_Code)
 
         Note:
         * Market order is supported by API V3 in match_price parameter
@@ -61,12 +62,12 @@ class RestApiV3:
                 amount,
                 match_price=1 if is_market_order else 0,
                 leverage=leverage)
-            return int(resp['order_id']) \
+            return int(resp['order_id']), None \
                 if resp['result'] is True and resp['order_id'] != '-1' \
-                else None
+                else None, -1
         except Exception as ex:
             logging.error(f'Failed to place order: {ex}')
-            return None
+            return None, ex.code
 
     def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
         ret = self.create_order(

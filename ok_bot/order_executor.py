@@ -1,10 +1,9 @@
 from collections import namedtuple
-from functools import partial
 
-import eventlet
 from absl import app, logging
 
 from . import singleton
+from . import constants
 from .future import Future
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
@@ -106,9 +105,7 @@ class OrderExecutor:
 
     def _async_place_order_and_await(self, rest_request_functor, future):
         # TODO: add timeout_sec for rest api wait() as well.
-        # TODO: passing logger down to rest_api_v3 for lower granularity error
-        #       mesasge in transaction log.
-        order_id = singleton.green_pool.spawn(
+        order_id, error_code = singleton.green_pool.spawn(
             rest_request_functor,
             self._instrument_id,
             self._amount,
@@ -117,9 +114,15 @@ class OrderExecutor:
         ).wait()
 
         if order_id is None:
-            self._logger.error('failed when requesting open order via http')
+            self._logger.error(f'Failed to place order via REST API, '
+                               f'error code: {error_code}')
+
+            if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
+                # Margin not enough, cool down
+                singleton.trader.cool_down()
             future.set(OPEN_POSITION_STATUS__REST_API)
             return
+
         self._logger.info(
             f'new order {order_id} ({self._instrument_id}) was created '
             f'via {rest_request_functor.__name__}')
@@ -161,7 +164,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=100.0,
+                             price=900.0,
                              timeout_sec=20,
                              is_market_order=False,
                              logger=logging)
