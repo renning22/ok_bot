@@ -160,7 +160,7 @@ class WebsocketApi:
         # Otherwise it's data message.
         if ('table' not in res) or ('data' not in res):
             raise Exception(
-                f'unrecgonized websocket response:\n{pprint.pformat(res)}')
+                f'unrecognized websocket response:\n{pprint.pformat(res)}')
 
         table = res['table']
         data_list = res['data']

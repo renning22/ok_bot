@@ -1,5 +1,4 @@
-import datetime
-
+import eventlet
 import numpy as np
 from absl import logging
 
@@ -20,6 +19,14 @@ class Trader:
         self.new_tick_received = self.new_tick_received__ramp_up_mode
         self.market_depth = {}
         self.waiting_for_execution = False  # used for debugging
+        self.is_in_cooldown = False
+
+    def cool_down(self):
+        def stop_cool_down():
+            eventlet.sleep(constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND)
+            self.is_in_cooldown = False
+        self.is_in_cooldown = True
+        singleton.green_pool.spawn_n(stop_cool_down)
 
     def aribitrage_gap_threshold(self, long_instrument_id, short_instrument_id):
         long_instrument_period = singleton.schema.instrument_period(
@@ -168,6 +175,12 @@ class Trader:
                     break
             fast_price = slow_price - open_price_gap
 
+        if self.is_in_cooldown:
+            logging.warning(f'Skipping arbitrage between '
+                            f'{slow_instrument_id}({slow_side}) and '
+                            f'{fast_instrument_id}({fast_side}) due to '
+                            f'cool down')
+            return
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(
                 instrument_id=slow_instrument_id,
@@ -196,9 +209,8 @@ if __name__ == '__main__':
         singleton.initialize_objects('ETH')
         singleton.trader.min_time_window = np.timedelta64(3, 's')
         singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
-        for instrument_id in singleton.schema.all_instrument_ids:
-            print(f'{instrument_id} period: '
-                  f'{singleton.schema.instrument_period(instrument_id)}')
+
+
         singleton.start_loop()
 
     from absl import app
