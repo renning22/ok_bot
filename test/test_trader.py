@@ -2,7 +2,6 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 import eventlet
-import greenlet
 from absl import logging
 
 from ok_bot import singleton, constants
@@ -26,20 +25,11 @@ class TestTrader(TestCase):
             logger=logging.get_absl_logger()
         )
         constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
-        singleton.rest_api.open_long_order.return_value = (None, 32016)
+        singleton.rest_api.open_long_order.return_value = \
+            (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
         order_exe.open_long_position().get()
         singleton.websocket.start_read_loop()
-        wait_thread = eventlet.greenthread.spawn(
-            lambda: singleton.green_pool.waitall())
-        eventlet.greenthread.spawn_after_local(
-            5,
-            lambda: wait_thread.kill()
-        )
-        try:
-            wait_thread.wait()
-        except greenlet.GreenletExit:
-            pass
-
+        eventlet.sleep(5)
         self.assertTrue(singleton.trader.is_in_cooldown)
         eventlet.sleep(8)  # wait for cool down to finish
         self.assertFalse(singleton.trader.is_in_cooldown)

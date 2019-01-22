@@ -117,7 +117,8 @@ class OrderExecutor:
             self._logger.error(f'Failed to place order via REST API, '
                                f'error code: {error_code}')
 
-            if error_code == 32016:  # Margin not enough, cool down
+            if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
+                # Margin not enough, cool down
                 singleton.trader.cool_down()
             future.set(OPEN_POSITION_STATUS__REST_API)
             return

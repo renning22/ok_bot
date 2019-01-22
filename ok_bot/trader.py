@@ -176,7 +176,7 @@ class Trader:
             fast_price = slow_price - open_price_gap
 
         if self.is_in_cooldown:
-            logging.warning(f'Skipping arbitrage between '
+            logging.warning(f'[COOL DOWN] Skipping arbitrage between '
                             f'{slow_instrument_id}({slow_side}) and '
                             f'{fast_instrument_id}({fast_side}) due to '
                             f'cool down')
