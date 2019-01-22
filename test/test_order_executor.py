@@ -37,10 +37,12 @@ class TestOrderExecutor(unittest.TestCase):
             print('open_long_position has been called')
             result = order_status_future.get()
             print(f'result: {result}')
-            assert result is order_executor.OPEN_POSITION_STATUS__CANCELLED
+            return result
 
         testing_thread = singleton.green_pool.spawn(_testing_thread)
-        testing_thread.wait()
+        result = testing_thread.wait()
+
+        self.assertIs(result, order_executor.OPEN_POSITION_STATUS__CANCELLED)
 
 
 if __name__ == '__main__':

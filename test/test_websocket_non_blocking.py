@@ -15,7 +15,7 @@ class TestWebsocketNonblocking(unittest.TestCase):
     def test_identical(self):
         from ok_bot import patched_io_modules
         requests = eventlet.import_patched('requests')
-        assert requests is patched_io_modules.requests
+        self.assertIs(requests, patched_io_modules.requests)
 
     def test_non_blocking(self):
         def crawl():
@@ -51,15 +51,18 @@ class TestWebsocketNonblocking(unittest.TestCase):
         except greenlet.GreenletExit:
             pass
         end_time = datetime.now()
-        assert (end_time - begin_time).seconds <= _CRAWL_TEST_TIMEOUT_SEC,\
-            f'begin at {begin_time}, end at {end_time}, should less than 15 ' \
-            f'seconds'
-        assert crawled_times == _CRAWL_TIMES,\
-            f'crawled {crawled_times} expected {_CRAWL_TIMES}'
-        assert singleton.websocket.heartbeat_ping >= 1,\
-            f'{singleton.websocket.heartbeat_ping}'
-        assert singleton.websocket.heartbeat_pong >= 1,\
-            f'{singleton.websocket.heartbeat_pong}'
+
+        self.assertLessEqual(
+            (end_time - begin_time).seconds,
+            _CRAWL_TEST_TIMEOUT_SEC,
+            f'begin at {begin_time}, end at {end_time}, should less than 15 '
+            f'seconds')
+        self.assertEqual(crawled_times, _CRAWL_TIMES,
+                         f'crawled {crawled_times} expected {_CRAWL_TIMES}')
+        self.assertGreaterEqual(singleton.websocket.heartbeat_ping, 1,
+                                f'{singleton.websocket.heartbeat_ping}')
+        self.assertGreaterEqual(singleton.websocket.heartbeat_pong, 1,
+                                f'{singleton.websocket.heartbeat_pong}')
 
 
 if __name__ == '__main__':
