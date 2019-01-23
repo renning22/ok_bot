@@ -77,9 +77,7 @@ class WaitingPriceConverge:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
         self.logger.info(
-            '%s:%s current_gap:%.3f, max_gap: %.3f, available_amount: %d',
-            self._ask_stack_instrument,
-            self._bid_stack_instrument,
+            'current_gap:%.3f, max_gap: %.3f, available_amount: %d',
             self._ask_stack[0][0] - self._bid_stack[0][0],
             self._transaction.close_price_gap_threshold,
             available_amount
@@ -142,10 +140,10 @@ class ArbitrageTransaction:
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             self.logger.info(
-                f'failed to open slow leg {self.slow_leg} '
+                f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
             return
-        self.logger.info(f'{self.slow_leg} was successful, '
+        self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
         fast_leg_order_status = self.open_position(
@@ -153,7 +151,8 @@ class ArbitrageTransaction:
         ).get()
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
-            self.logger.info(f'failed to open fast leg {self.fast_leg} '
+            self.logger.info(f'[FAST FAILED] failed to open fast leg '
+                             f'{self.fast_leg} '
                              f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
@@ -162,7 +161,8 @@ class ArbitrageTransaction:
                 f'slow leg position {self.slow_leg} has been closed')
             return
 
-        self.logger.info(f'fast leg {self.fast_leg} order fulfilled, will wait '
+        self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
+                         f'fulfilled, will wait '
                          f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
                          f'seconds')
 
@@ -170,10 +170,10 @@ class ArbitrageTransaction:
             converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
             if converge is None:
                 # timeout, close the position
-                self.logger.info('prices failed to converge in time, closing '
-                                 'both legs')
+                self.logger.info('[CONVERGE TIMEOUT] prices failed to converge '
+                                 'in time, closing both legs')
             else:
-                self.logger.info(f'prices converged with enough '
+                self.logger.info(f'[CONVERGED] prices converged with enough '
                                  f'margin({converge}), closing both legs')
             fast_order = self.close_position(self.fast_leg)
             slow_order = self.close_position(self.slow_leg)

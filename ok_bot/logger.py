@@ -24,7 +24,7 @@ class TransactionAdapter(py_logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         relative_time = time.time() - self._created_time
-        return f'[+{relative_time:8.4f}s] {msg}', kwargs
+        return f'[+{relative_time:6.2f}s] {msg}', kwargs
 
 
 class SlackHandler(py_logging.Handler):
