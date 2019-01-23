@@ -113,6 +113,9 @@ class RestApiV3:
     def revoke_order(self, instrument_id, order_id):
         return self.future_sdk.revoke_order(instrument_id, order_id)
 
+    def get_order_info(self, order_id, instrument_id):
+        return self.future_sdk.get_order_info(order_id, instrument_id)
+
     def _test(self):
         tickers = [
             'BTC-USD-190104',

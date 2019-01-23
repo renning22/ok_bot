@@ -1,9 +1,9 @@
+import pprint
 from collections import namedtuple
 
 from absl import app, logging
 
-from . import singleton
-from . import constants
+from . import constants, singleton
 from .future import Future
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
@@ -116,7 +116,6 @@ class OrderExecutor:
         if order_id is None:
             self._logger.error(f'Failed to place order via REST API, '
                                f'error code: {error_code}')
-
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
@@ -130,16 +129,12 @@ class OrderExecutor:
         with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
             status = await_status_future.get(self._timeout_sec)
             if status is None:
-                # timeout, cancel the pending order
-                # TODO: add retry logic
-                singleton.green_pool.spawn_n(singleton.rest_api.cancel_order,
-                                             self._instrument_id,
-                                             order_id)
                 self._logger.info(
                     f'[TIMEOUT] pending order {order_id} '
                     f'({self._instrument_id}) failed to fulfill in time and '
                     'was canceled')
                 future.set(OPEN_POSITION_STATUS__TIMEOUT)
+                self._revoke_order(order_id)
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
                     f'[CANCELLED] pending order {order_id} '
@@ -157,6 +152,44 @@ class OrderExecutor:
                     f'ORDER_AWAIT_STATUS {result}')
                 raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
+    def _revoke_order(self, order_id):
+        self._logger.info('[REVOKE_PENDING_ORDER] %s', order_id)
+        ret = singleton.rest_api.revoke_order(
+            self._instrument_id, order_id)
+        if ret.get('result', False) is True:
+            assert int(ret.get('order_id', None)) == order_id
+            return
+        elif int(ret.get('error_code', -1)) ==\
+                constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
+            self._logger.warning('[PENDING_ORDER_NOT_EXIST] %s', order_id)
+            self._arbitrate_order_final_status_via_rest_api(order_id)
+        else:
+            self._logger.error(
+                'unexpected revoking order response:\n%s', pprint.pformat(ret))
+
+    def _arbitrate_order_final_status_via_rest_api(self, order_id):
+        ret = singleton.rest_api.get_order_info(order_id, self._instrument_id)
+        self._logger.info(
+            'postmortem order info from rest api:\n%s', pprint.pformat(ret))
+
+        status = int(ret.get('status', None))
+        if status == constants.ORDER_STATUS_CODE__CANCELLED:
+            self._logger.error(
+                'order has been cancelled externally did not receive websocket '
+                'update')
+        elif status == constants.ORDER_STATUS_CODE__PENDING:
+            self._logger.warning(
+                'order is still pending but failed to revoke')
+        elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
+            self._logger.warning(
+                'order is partially filled and failed to revoke')
+        elif status == constants.ORDER_STATUS_CODE__FULFILLED:
+            self._logger.warning(
+                'order is fulfilled but did not receive websocket updates and '
+                'also failed to revoke')
+        else:
+            self._logger.error('unknown status code: %s', status)
+
 
 def _testing_thread(instrument_id):
     singleton.websocket.ready.get()
@@ -164,15 +197,15 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=900.0,
-                             timeout_sec=20,
+                             price=100.0,
+                             timeout_sec=10,
                              is_market_order=False,
                              logger=logging)
     order_status_future = executor.open_long_position()
 
     logging.info('open_long_position has been called')
     result = order_status_future.get()
-    logging.info('result: %s', result)
+    logging.info('execution result: %s', result)
 
 
 def _testing(_):

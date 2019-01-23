@@ -3,7 +3,7 @@ from collections import defaultdict
 import eventlet
 from absl import app, logging
 
-from . import singleton
+from . import constants, singleton
 
 
 class OrderListener:
@@ -60,26 +60,21 @@ class OrderListener:
                                timestamp,
                                status):
         order_id = int(order_id)
-        # Order Status:
-        #   -1 cancelled
-        #   0: pending
-        #   1: partially filled
-        #   2: fully filled
-        if status == -1:
+        if status == constants.ORDER_STATUS_CODE__CANCELLED:
             self._buffer[order_id].append(
                 lambda trader: trader.order_cancelled(order_id)
             )
-        elif status == 0:
+        elif status == constants.ORDER_STATUS_CODE__PENDING:
             self._buffer[order_id].append(
                 lambda trader: trader.order_pending(order_id),
             )
-        elif status == 1:
+        elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
             self._buffer[order_id].append(
                 lambda trader: trader.order_partially_filled(order_id,
                                                              size,
                                                              filled_qty)
             )
-        elif status == 2:
+        elif status == constants.ORDER_STATUS_CODE__FULFILLED:
             self._buffer[order_id].append(
                 lambda trader: trader.order_fulfilled(order_id,
                                                       size,
