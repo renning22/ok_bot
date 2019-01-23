@@ -71,7 +71,7 @@ class RestApiV3:
             return None, ex.code
 
     def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             1,
@@ -79,10 +79,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def open_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             2,
@@ -90,10 +89,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def close_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             3,
@@ -101,10 +99,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def close_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             4,
@@ -112,7 +109,6 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def revoke_order(self, instrument_id, order_id):
         return self.future_sdk.revoke_order(instrument_id, order_id)
