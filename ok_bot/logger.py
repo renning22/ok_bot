@@ -6,7 +6,7 @@ import time
 import timeit
 
 from absl import app, flags, logging
-from absl.logging import DEBUG, ERROR, FATAL, INFO, WARNING, converter
+from absl.logging import DEBUG, ERROR, FATAL, INFO, WARNING
 
 from . import slack
 
@@ -64,12 +64,12 @@ class TransactionAdapter(py_logging.LoggerAdapter):
             self.log(level, msg, *args)
 
     def log(self, level, msg, *args, **kwargs):
-        if level > converter.ABSL_DEBUG:
-            standard_level = converter.STANDARD_DEBUG - (level - 1)
+        if level > logging.converter.ABSL_DEBUG:
+            standard_level = logging.converter.STANDARD_DEBUG - (level - 1)
         else:
-            if level < converter.ABSL_FATAL:
-                level = converter.ABSL_FATAL
-            standard_level = converter.absl_to_standard(level)
+            if level < logging.converter.ABSL_FATAL:
+                level = logging.converter.ABSL_FATAL
+            standard_level = logging.converter.absl_to_standard(level)
 
         super().log(standard_level, msg, *args, **kwargs)
 
