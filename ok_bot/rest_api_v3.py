@@ -62,15 +62,16 @@ class RestApiV3:
                 amount,
                 match_price=1 if is_market_order else 0,
                 leverage=leverage)
-            return int(resp['order_id']), None \
-                if resp['result'] is True and resp['order_id'] != '-1' \
-                else None, -1
+            if resp['result'] is True and resp['order_id'] != '-1':
+                return int(resp['order_id']), None
+            else:
+                return None, -1
         except Exception as ex:
             logging.error(f'Failed to place order: {ex}')
             return None, ex.code
 
     def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             1,
@@ -78,10 +79,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def open_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             2,
@@ -89,10 +89,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def close_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             3,
@@ -100,10 +99,9 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
     def close_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        ret = self.create_order(
+        return self.create_order(
             custom_order_id,
             instrument_id,
             4,
@@ -111,10 +109,12 @@ class RestApiV3:
             price,
             is_market_order
         )
-        return ret
 
-    def cancel_order(self, instrument_id, order_id):
+    def revoke_order(self, instrument_id, order_id):
         return self.future_sdk.revoke_order(instrument_id, order_id)
+
+    def get_order_info(self, order_id, instrument_id):
+        return self.future_sdk.get_order_info(order_id, instrument_id)
 
     def _test(self):
         tickers = [

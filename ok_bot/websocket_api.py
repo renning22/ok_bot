@@ -10,8 +10,6 @@ import dateutil.parser as dp
 import eventlet
 from absl import app, logging
 
-import greenlet
-
 from . import api_v3_key_reader, decorator
 from .future import Future
 from .patched_io_modules import requests, websocket
@@ -75,15 +73,8 @@ class WebsocketApi:
         self.heartbeat_pong = 0  # keeping track of number of heartbeat received
 
     def _recv(self, timeout_sec):
-        green_thread = self._green_pool.spawn(self._ws.recv)
-        eventlet.greenthread.spawn_after_local(
-            timeout_sec, lambda: green_thread.kill())
-        try:
-            result = green_thread.wait()
-        except greenlet.GreenletExit:
-            # timeout
-            return None
-        return result
+        return eventlet.timeout.with_timeout(
+            timeout_sec, self._ws.recv, timeout_value=None)
 
     def _create_and_login(self):
         self._ws = websocket.create_connection(OK_WEBSOCKET_ADDRESS)
@@ -292,7 +283,6 @@ class WebsocketApi:
 
     def start_read_loop(self):
         self._green_pool.spawn_n(self._read_loop_impl)
-
 
 
 def _testing(_):
