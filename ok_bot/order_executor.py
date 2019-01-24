@@ -162,12 +162,12 @@ class OrderExecutor:
         elif int(ret.get('error_code', -1)) ==\
                 constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
             self._logger.warning('[PENDING_ORDER_NOT_EXIST] %s', order_id)
-            self._arbitrate_order_final_status_via_rest_api(order_id)
+            self._log_order_final_status(order_id)
         else:
             self._logger.error(
                 'unexpected revoking order response:\n%s', pprint.pformat(ret))
 
-    def _arbitrate_order_final_status_via_rest_api(self, order_id):
+    def _log_order_final_status(self, order_id):
         ret = singleton.rest_api.get_order_info(order_id, self._instrument_id)
         self._logger.info(
             'postmortem order info from rest api:\n%s', pprint.pformat(ret))
