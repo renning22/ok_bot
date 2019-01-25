@@ -116,6 +116,13 @@ class RestApiV3:
     def get_order_info(self, order_id, instrument_id):
         return self.future_sdk.get_order_info(order_id, instrument_id)
 
+    def completed_orders(self, instruments):
+        orders = [self.future_sdk.get_order_list(
+            instrument_id=instrument_id,
+            status=7  # fulfilled and canceled
+        ) for instrument_id in instruments]
+        return [t for lst in orders for t in lst['order_info']]
+
     def _test(self):
         tickers = [
             'BTC-USD-190104',
