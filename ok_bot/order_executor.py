@@ -58,7 +58,10 @@ class OrderAwaiter:
                         price,
                         price_avg):
         assert self._order_id == order_id
-        self._logger.info('websocket event: order_fulfilled %s', order_id)
+        self._logger.info(
+            'websocket event: order_fulfilled %s\n'
+            'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
+            order_id, price, price_avg, size, filled_qty, fee)
         self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
 
     def order_partially_filled(self,
@@ -68,7 +71,9 @@ class OrderAwaiter:
                                price_avg):
         assert self._order_id == order_id
         self._logger.info(
-            'websocket event: order_partially_filled %s', order_id)
+            'websocket event: order_partially_filled %s\n'
+            'price_avg: %s, size: %s, filled_qty: %s',
+            order_id, price_avg, size, filled_qty)
 
 
 class OrderExecutor:
