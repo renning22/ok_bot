@@ -27,8 +27,14 @@ python -m ok_bot --logtofile
 ```
 
 #### Also log to slack
+Send full absl to slack
 ```sh
 python -m ok_bot --alsologtoslack
+```
+
+Only log transactions to slack
+```sh
+python -m ok_bot --log_transaction_to_slack
 ```
 
 ### Test

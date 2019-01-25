@@ -153,7 +153,7 @@ class OrderExecutor:
                 raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
     def _revoke_order(self, order_id):
-        self._logger.info('[REVOKE_PENDING_ORDER] %s', order_id)
+        self._logger.info('[REVOKE PENDING ORDER] %s', order_id)
         ret = singleton.rest_api.revoke_order(
             self._instrument_id, order_id)
         if ret.get('result', False) is True:
@@ -161,7 +161,7 @@ class OrderExecutor:
             return
         elif int(ret.get('error_code', -1)) ==\
                 constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
-            self._logger.warning('[PENDING_ORDER_NOT_EXIST] %s', order_id)
+            self._logger.warning('[PENDING ORDER NOT EXIST] %s', order_id)
             self._log_order_final_status(order_id)
         else:
             self._logger.error(

@@ -5,6 +5,7 @@ import socket
 import time
 import timeit
 
+import absl
 from absl import app, flags, logging
 from absl.logging import DEBUG, ERROR, FATAL, INFO, WARNING
 
@@ -64,12 +65,13 @@ class TransactionAdapter(py_logging.LoggerAdapter):
             self.log(level, msg, *args)
 
     def log(self, level, msg, *args, **kwargs):
-        if level > logging.converter.ABSL_DEBUG:
-            standard_level = logging.converter.STANDARD_DEBUG - (level - 1)
+        if level > absl.logging.converter.ABSL_DEBUG:
+            standard_level = absl.logging.converter.STANDARD_DEBUG - \
+                (level - 1)
         else:
-            if level < logging.converter.ABSL_FATAL:
-                level = logging.converter.ABSL_FATAL
-            standard_level = logging.converter.absl_to_standard(level)
+            if level < absl.logging.converter.ABSL_FATAL:
+                level = absl.logging.converter.ABSL_FATAL
+            standard_level = absl.logging.converter.absl_to_standard(level)
 
         super().log(standard_level, msg, *args, **kwargs)
 
