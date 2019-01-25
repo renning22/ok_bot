@@ -76,7 +76,7 @@ class WaitingPriceConverge:
             lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
-        logger.log_every_n_seconds(
+        self.logger.log_every_n_seconds(
             INFO,
             '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
             'available_amount: %d',
