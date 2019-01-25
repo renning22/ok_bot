@@ -10,7 +10,7 @@ import argparse
 
 from .rest_api_v3 import RestApiV3
 
-SLEEP_TIME_IN_SECOND = 5
+SLEEP_TIME_IN_SECOND = 60
 
 
 class OrderCrawler:

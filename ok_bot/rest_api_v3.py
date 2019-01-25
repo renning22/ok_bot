@@ -117,11 +117,28 @@ class RestApiV3:
         return self.future_sdk.get_order_info(order_id, instrument_id)
 
     def completed_orders(self, instruments):
-        orders = [self.future_sdk.get_order_list(
-            instrument_id=instrument_id,
-            status=7  # fulfilled and canceled
-        ) for instrument_id in instruments]
-        return [t for lst in orders for t in lst['order_info']]
+        orders = [self.all_completed_orders_for_instrument(
+            instrument_id=instrument_id)
+            for instrument_id in instruments]
+        return [t for lst in orders for t in lst]
+
+    def all_completed_orders_for_instrument(self, instrument_id):
+        page = 1
+        ret = []
+        while True:
+            logging.debug('Querying order history page %d for %s',
+                          page, instrument_id)
+            resp = self.future_sdk.get_order_list(
+                instrument_id,
+                status=7, # fulfilled and canceled)
+                froms=page,
+                to=page
+            )['order_info']
+            ret.extend(resp)
+            page += 1
+            if len(resp) == 0:
+                break
+        return ret
 
     def _test(self):
         tickers = [
