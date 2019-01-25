@@ -126,12 +126,14 @@ class ArbitrageTransaction:
             return order_executor.close_short_order()
 
     def process(self):
+        singleton.trader.arbitrage_wip = True
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         self._process()
         self.logger.info('=== arbitrage transaction ended ===')
+        singleton.trader.arbitrage_wip = False
 
     def _process(self):
         slow_leg_order_status = self.open_position(
