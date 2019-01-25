@@ -43,11 +43,11 @@ class OrderAwaiter:
 
     def order_pending(self, order_id):
         assert self._order_id == order_id
-        self._logger.info('websocket event: order_pending %s', order_id)
+        self._logger.info('[WEBSOCKET] %s order_pending', order_id)
 
     def order_cancelled(self, order_id):
         assert self._order_id == order_id
-        self._logger.info('websocket event: order_cancelled %s', order_id)
+        self._logger.info('[WEBSOCKET] %s order_cancelled', order_id)
         self._future.set(ORDER_AWAIT_STATUS__CANCELLED)
 
     def order_fulfilled(self,
@@ -59,7 +59,7 @@ class OrderAwaiter:
                         price_avg):
         assert self._order_id == order_id
         self._logger.info(
-            'websocket event: order_fulfilled %s\n'
+            '[WEBSOCKET] %s order_fulfilled\n'
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
             order_id, price, price_avg, size, filled_qty, fee)
         self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
@@ -71,7 +71,7 @@ class OrderAwaiter:
                                price_avg):
         assert self._order_id == order_id
         self._logger.info(
-            'websocket event: order_partially_filled %s\n'
+            '[WEBSOCKET] %s order_partially_filled\n'
             'price_avg: %s, size: %s, filled_qty: %s',
             order_id, price_avg, size, filled_qty)
 
@@ -128,34 +128,35 @@ class OrderExecutor:
             return
 
         self._logger.info(
-            f'new order {order_id} ({self._instrument_id}) was created '
+            f'{order_id} ({self._instrument_id}) order was created '
             f'via {rest_request_functor.__name__}')
 
         with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
             status = await_status_future.get(self._timeout_sec)
             if status is None:
                 self._logger.info(
-                    f'[TIMEOUT] pending order {order_id} '
-                    f'({self._instrument_id}) failed to fulfill in time and '
-                    'was canceled')
+                    f'[TIMEOUT] {order_id} ({self._instrument_id}) '
+                    'pending order failed to fulfill in time and was canceled')
                 future.set(OPEN_POSITION_STATUS__TIMEOUT)
                 self._revoke_order(order_id)
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
-                    f'[CANCELLED] pending order {order_id} '
-                    f'({self._instrument_id}) has been canceled')
+                    f'[CANCELLED] {order_id} ({self._instrument_id}) '
+                    'pending order has been canceled')
                 future.set(OPEN_POSITION_STATUS__CANCELLED)
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
                 self._logger.info(
-                    f'[FULFILLED] pending order {order_id} '
-                    f'({self._instrument_id}) has been fulfilled')
+                    f'[FULFILLED] {order_id} ({self._instrument_id}) '
+                    ' pending order has been fulfilled')
                 future.set(OPEN_POSITION_STATUS__SUCCEEDED)
             else:
                 self._logger.info(
-                    f'[EXCEPTION] pending order {order_id} '
-                    f'({self._instrument_id}) encountered unexpected '
-                    f'ORDER_AWAIT_STATUS {result}')
+                    f'[EXCEPTION] {order_id} ({self._instrument_id}) '
+                    'pending order encountered unexpected ORDER_AWAIT_STATUS '
+                    f'{result}')
                 raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
+
+        self._post_log_order_final_status(order_id)
 
     def _revoke_order(self, order_id):
         self._logger.info('[REVOKE PENDING ORDER] %s', order_id)
@@ -167,31 +168,28 @@ class OrderExecutor:
         elif int(ret.get('error_code', -1)) ==\
                 constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
             self._logger.warning('[PENDING ORDER NOT EXIST] %s', order_id)
-            self._log_order_final_status(order_id)
         else:
             self._logger.error(
                 'unexpected revoking order response:\n%s', pprint.pformat(ret))
 
-    def _log_order_final_status(self, order_id):
+    def _post_log_order_final_status(self, order_id):
         ret = singleton.rest_api.get_order_info(order_id, self._instrument_id)
         self._logger.info(
-            'postmortem order info from rest api:\n%s', pprint.pformat(ret))
+            '[POSTMORTEM] order info from rest api:\n%s', pprint.pformat(ret))
 
         status = int(ret.get('status', None))
         if status == constants.ORDER_STATUS_CODE__CANCELLED:
-            self._logger.error(
-                'order has been cancelled externally did not receive websocket '
-                'update')
+            self._logger.info(
+                '[POSTMORTEM] %s order has been cancelled', order_id)
         elif status == constants.ORDER_STATUS_CODE__PENDING:
-            self._logger.warning(
-                'order is still pending but failed to revoke')
+            self._logger.info(
+                '[POSTMORTEM] %s order is still pending', order_id)
         elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-            self._logger.warning(
-                'order is partially filled and failed to revoke')
+            self._logger.info(
+                '[POSTMORTEM] %s order is partially filled', order_id)
         elif status == constants.ORDER_STATUS_CODE__FULFILLED:
-            self._logger.warning(
-                'order is fulfilled but did not receive websocket updates and '
-                'also failed to revoke')
+            self._logger.info(
+                '[POSTMORTEM] %s order is fulfilled', order_id)
         else:
             self._logger.error('unknown status code: %s', status)
 
@@ -202,7 +200,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=100.0,
+                             price=115.0,
                              timeout_sec=10,
                              is_market_order=False,
                              logger=logging)
