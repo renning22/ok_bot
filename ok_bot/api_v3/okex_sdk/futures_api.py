@@ -71,11 +71,6 @@ class FutureAPI(Client):
         return self._request_with_params(POST, FUTURE_REVOKE_ORDERS+str(instrument_id), params)
 
     # query order list
-    #def get_order_list(self, status, before, after, limit, instrument_id=''):
-    #   params = {'status': status, 'before': before, 'after': after, 'limit': limit, 'instrument_id': instrument_id}
-    #    return self._request_with_params(GET, FUTURE_ORDERS_LIST, params)
-
-    # query order list
     def get_order_list(self, instrument_id, status, froms=None, to=None, limit=None):
         url = '/api/futures/v3/orders/' + instrument_id
         params = {'status': status, 'instrument_id': instrument_id}
