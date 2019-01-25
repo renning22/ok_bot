@@ -164,10 +164,11 @@ class OrderExecutor:
             self._instrument_id, order_id)
         if ret.get('result', False) is True:
             assert int(ret.get('order_id', None)) == order_id
+            self._logger.info('[REVOKE SUCCESSFUL] %s', order_id)
             return
         elif int(ret.get('error_code', -1)) ==\
                 constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
-            self._logger.warning('[PENDING ORDER NOT EXIST] %s', order_id)
+            self._logger.warning('[REVOKE ORDER NOT EXIST] %s', order_id)
         else:
             self._logger.error(
                 'unexpected revoking order response:\n%s', pprint.pformat(ret))
@@ -200,7 +201,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=115.0,
+                             price=115.5,
                              timeout_sec=10,
                              is_market_order=False,
                              logger=logging)
