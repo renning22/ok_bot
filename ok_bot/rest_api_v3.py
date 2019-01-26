@@ -128,6 +128,7 @@ class RestApiV3:
         while True:
             logging.debug('Querying order history page %d for %s',
                           page, instrument_id)
+            eventlet.sleep(1)  # sleep 1 second
             resp = self.future_sdk.get_order_list(
                 instrument_id,
                 status=7, # fulfilled and canceled)
