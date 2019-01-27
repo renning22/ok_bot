@@ -74,7 +74,7 @@ def _update_transaction(transaction_id, stauts):
                 status
             )
             VALUES (?, ?);
-        ''', (str(transaction_id), str(stauts)))
+        ''', (transaction_id, stauts))
 
 
 def async_update_transaction(*argv, **kwargs):

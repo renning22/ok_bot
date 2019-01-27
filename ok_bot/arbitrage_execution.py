@@ -94,7 +94,7 @@ class ArbitrageTransaction:
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
@@ -108,7 +108,8 @@ class ArbitrageTransaction:
             leg.price,
             timeout_in_sec,
             is_market_order=False,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
@@ -122,7 +123,8 @@ class ArbitrageTransaction:
             price=-1,
             timeout_sec=None,
             is_market_order=True,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.close_long_order()
         else:
