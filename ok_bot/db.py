@@ -18,7 +18,6 @@ class DbCursor:
         self.conn = None
 
     def __enter__(self):
-        logging.info('_DB_IN_USE: %s', _DB_IN_USE)
         self.conn = sqlite3.connect(_DB_IN_USE)
         return self.conn.cursor()
 
@@ -27,60 +26,40 @@ class DbCursor:
         self.conn.close()
 
 
-def _use_dev_db():
+def use_dev_db():
     global _DB_IN_USE
     _DB_IN_USE = _DEV_DB
 
-# For testing
 
-
-def _delete_tables():
+def reset_database():
     with DbCursor() as c:
         c.execute('DROP TABLE IF EXISTS runtime_transactions;')
         c.execute('DROP TABLE IF EXISTS runtime_orders;')
+
+    _create_database()
 
 
 def _create_database():
     with DbCursor() as c:
         c.execute('''
             CREATE TABLE runtime_transactions (
-             transaction_id INTEGER PRIMARY KEY,
+             transaction_id TEXT PRIMARY KEY,
              status TEXT,
-             creation_time TEXT DEFAULT (DATETIME('now','localtime')),
              last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
             );
         ''')
         c.execute('''
-            CREATE TRIGGER runtime_transactions_last_update
-                AFTER UPDATE ON runtime_transactions
-            BEGIN
-                UPDATE runtime_transactions SET
-                    last_update_time = DATETIME('now','localtime')
-                WHERE transaction_id = old.transaction_id;
-            END
-        ''')
-        c.execute('''
             CREATE TABLE runtime_orders (
              order_id INTEGER PRIMARY KEY,
-             transaction_id INTEGER,
+             transaction_id TEXT,
              status TEXT,
              size INTEGER,
              filled_qty INTEGER,
              price REAL,
              price_avg REAL,
              timestamp INTEGER,
-             creation_time TEXT DEFAULT (DATETIME('now','localtime')),
              last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
             );
-        ''')
-        c.execute('''
-            CREATE TRIGGER runtime_orders_last_update
-                AFTER UPDATE ON runtime_orders
-            BEGIN
-                UPDATE runtime_orders SET
-                    last_update_time = DATETIME('now','localtime')
-                WHERE order_id = old.order_id;
-            END
         ''')
 
 
@@ -92,7 +71,11 @@ def _update_transaction(transaction_id, stauts):
                 status
             )
             VALUES (?, ?);
-        ''', (int(transaction_id), str(stauts)))
+        ''', (str(transaction_id), str(stauts)))
+
+
+def async_update_transaction(*argv, **kwargs):
+    _executor.submit(_update_transaction, *argv, **kwargs)
 
 
 def _update_order(order_id,
@@ -118,7 +101,7 @@ def _update_order(order_id,
             VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         ''', (
             int(order_id),
-            int(transaction_id),
+            str(transaction_id),
             str(status),
             int(size),
             int(filled_qty),
@@ -128,20 +111,19 @@ def _update_order(order_id,
         ))
 
 
-def async_update_transaction(*argv, **kwargs):
-    _executor.submit(_update_transaction, *argv, **kwargs)
-
-
 def async_update_order(*argv, **kwargs):
     _executor.submit(_update_order, *argv, **kwargs)
 
 
 def _testing(_):
-    _use_dev_db()
-    _delete_tables()
-    _create_database()
-    async_update_transaction(123, 'unknown')
-    async_update_order(456, 123, 'unknown', 2, 1, 3000, 2900, 1548497845)
+    use_dev_db()
+    reset_database()
+    async_update_transaction('transaction-id-123', 'unknown')
+    import time
+    time.sleep(2)
+    async_update_transaction('transaction-id-123', 'ended')
+    async_update_order(456, 'transaction-id-123', 'unknown',
+                       2, 1, 3000, 2900, 1548497845)
     _executor.shutdown(wait=True)
 
 
