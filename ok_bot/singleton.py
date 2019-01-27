@@ -32,6 +32,8 @@ def initialize_objects(currency):
     global websocket
 
     db = ProdDb()
+    db.create_tables_if_not_exist()
+
     green_pool = eventlet.GreenPool()
     rest_api = RestApiV3()
     book_listener = BookListener()

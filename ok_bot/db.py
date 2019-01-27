@@ -81,30 +81,33 @@ class _BaseDb:
         self._cursor_creator = partial(_DbCursor, self._db_path)
 
     def create_tables_if_not_exist(self):
-        with self._cursor_creator() as c:
-            c.execute('''
+        try:
+            with self._cursor_creator() as c:
+                c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_transactions (
-                 transaction_id TEXT PRIMARY KEY,
-                 status TEXT,
-                 last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
+                    transaction_id TEXT PRIMARY KEY,
+                    status TEXT,
+                    last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
                 );
-            ''')
-            c.execute('''
+                ''')
+                c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_orders (
-                 order_id TEXT PRIMARY KEY,
-                 transaction_id TEXT,
-                 comment TEXT,
-                 status TEXT,
-                 size INTEGER,
-                 filled_qty INTEGER,
-                 price TEXT,
-                 price_avg TEXT,
-                 fee TEXT,
-                 type INTEGER,
-                 timestamp TEXT,
-                 last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
+                    order_id TEXT PRIMARY KEY,
+                    transaction_id TEXT,
+                    comment TEXT,
+                    status TEXT,
+                    size INTEGER,
+                    filled_qty INTEGER,
+                    price TEXT,
+                    price_avg TEXT,
+                    fee TEXT,
+                    type INTEGER,
+                    timestamp TEXT,
+                    last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
                 );
-            ''')
+                ''')
+        except:
+            logging.error('exception in _update_order', exc_info=True)
 
     def async_update_transaction(self, **kwargs):
         """Force to use kwargs explicitly."""
@@ -138,8 +141,6 @@ class DevDb(_BaseDb):
         with self._cursor_creator() as c:
             c.execute('DROP TABLE IF EXISTS runtime_transactions;')
             c.execute('DROP TABLE IF EXISTS runtime_orders;')
-
-        self.create_tables_if_not_exist()
 
 
 def _testing(_):
