@@ -45,23 +45,24 @@ class OrderCrawler:
                 contract_val,
                 leverage            
             )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (:order_id, :instrument_id, :size, :timestamp, :filled_qty,
+            :fee, :price, :price_avg, :status, :type, :contract_val, :leverage)
         '''
         cursor = self.db_conn.cursor()
-        cursor.execute(sql, (
-            int(order['order_id']),
-            order['instrument_id'],
-            int(order['size']),
-            order['timestamp'],
-            int(order['filled_qty']),
-            order['fee'],
-            float(order['price']),
-            float(order['price_avg']),
-            int(order['status']),
-            int(order['type']),
-            int(order['contract_val']),
-            int(order['leverage']),
-        ))
+        cursor.execute(sql, {
+            'order_id': int(order['order_id']),
+            'instrument_id': order['instrument_id'],
+            'size': int(order['size']),
+            'timestamp': order['timestamp'],
+            'filled_qty': int(order['filled_qty']),
+            'fee': order['fee'],
+            'price': float(order['price']),
+            'price_avg': float(order['price_avg']),
+            'status': int(order['status']),
+            'type': int(order['type']),
+            'contract_val': int(order['contract_val']),
+            'leverage': int(order['leverage']),
+        })
         self.db_conn.commit()
 
 
