@@ -116,6 +116,28 @@ class RestApiV3:
     def get_order_info(self, order_id, instrument_id):
         return self.future_sdk.get_order_info(order_id, instrument_id)
 
+    def all_ledgers(self, currency):
+        """
+        :param currency: BTC | ETH, etc
+        :return: All bills for the currency, API of
+                 GET /api/futures/v3/accounts/<currency>/ledger)
+        """
+        page = 1
+        ret = []
+        while True:
+            logging.debug('Querying bill history page %d for %s',
+                          page, currency)
+            eventlet.sleep(1)  # Sleep for one second
+            resp = self.future_sdk.get_ledger(currency,
+                                              page_from=page,
+                                              page_to=page,
+                                              limit=100)
+            if len(resp) == 0:
+                break
+            ret.extend(resp)
+            page += 1
+        return ret
+
     def completed_orders(self, instruments):
         orders = [self.all_completed_orders_for_instrument(
             instrument_id=instrument_id)
@@ -133,7 +155,8 @@ class RestApiV3:
                 instrument_id,
                 status=7, # fulfilled and canceled)
                 froms=page,
-                to=page
+                to=page,
+                limit=100
             )['order_info']
             ret.extend(resp)
             page += 1
