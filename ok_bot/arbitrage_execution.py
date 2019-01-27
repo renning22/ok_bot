@@ -4,7 +4,7 @@ import uuid
 import eventlet
 from absl import app, logging
 
-from . import db, singleton
+from . import singleton
 from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
@@ -131,7 +131,7 @@ class ArbitrageTransaction:
             return order_executor.close_short_order()
 
     def process(self):
-        db.async_update_transaction(self.id, 'started')
+        singleton.db.async_update_transaction(self.id, 'started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
@@ -140,7 +140,7 @@ class ArbitrageTransaction:
         self.logger.info('=== arbitrage transaction ended ===')
 
     def _process(self):
-        db.async_update_transaction(self.id, 'opening_slow_leg')
+        singleton.db.async_update_transaction(self.id, 'opening_slow_leg')
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
@@ -149,12 +149,13 @@ class ArbitrageTransaction:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
-            db.async_update_transaction(self.id, 'ended_slow_leg_failed')
+            singleton.db.async_update_transaction(
+                self.id, 'ended_slow_leg_failed')
             return
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
-        db.async_update_transaction(self.id, 'opening_fast_leg')
+        singleton.db.async_update_transaction(self.id, 'opening_fast_leg')
         fast_leg_order_status = self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
@@ -165,7 +166,8 @@ class ArbitrageTransaction:
                              f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
-            db.async_update_transaction(self.id, 'ended_fast_leg_failed')
+            singleton.db.async_update_transaction(
+                self.id, 'ended_fast_leg_failed')
             self.close_position(self.slow_leg).get()
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
@@ -175,7 +177,7 @@ class ArbitrageTransaction:
                          f'fulfilled, will wait '
                          f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
                          f'seconds')
-        db.async_update_transaction(self.id, 'waiting_converge')
+        singleton.db.async_update_transaction(self.id, 'waiting_converge')
 
         with WaitingPriceConverge(self) as converge_future:
             converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
@@ -190,13 +192,10 @@ class ArbitrageTransaction:
             slow_order = self.close_position(self.slow_leg)
             fast_order.get()
             slow_order.get()
-            db.async_update_transaction(self.id, 'ended_normally')
+            singleton.db.async_update_transaction(self.id, 'ended_normally')
 
 
 def _testing(_):
-    db.use_dev_db()
-    db.reset_database()
-
     def _test_aribitrage():
         singleton.websocket.ready.get()
         logging.info('WebSocket subscription finished')
@@ -215,7 +214,7 @@ def _testing(_):
         )
         transaction.process()
 
-    singleton.initialize_objects_with_mock_trader('ETH')
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_test_aribitrage)
     singleton.green_pool.waitall()

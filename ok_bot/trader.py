@@ -209,8 +209,6 @@ if __name__ == '__main__':
         singleton.initialize_objects('ETH')
         singleton.trader.min_time_window = np.timedelta64(3, 's')
         singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
-
-
         singleton.start_loop()
 
     from absl import app

@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from absl import app, logging
 
-from . import constants, db, singleton
+from . import constants, singleton
 from .future import Future
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
@@ -64,7 +64,7 @@ class OrderAwaiter:
             '[WEBSOCKET] %s order_fulfilled\n'
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
             order_id, price, price_avg, size, filled_qty, fee)
-        db.async_update_order(
+        singleton.db.async_update_order(
             order_id=order_id,
             transaction_id=self._transaction_id,
             comment='websocket_fulfilled',
@@ -152,7 +152,7 @@ class OrderExecutor:
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
             f'via {rest_request_functor.__name__}')
-        db.async_update_order(
+        singleton.db.async_update_order(
             order_id=order_id,
             transaction_id=self._transaction_id,
             comment='request_sent',
@@ -233,7 +233,7 @@ class OrderExecutor:
             self._logger.error('unknown status code: %s', status)
 
         assert str(order_id) == ret.get('order_id')
-        db.async_update_order(
+        singleton.db.async_update_order(
             order_id=ret.get('order_id'),
             transaction_id=self._transaction_id,
             comment='final',
@@ -267,10 +267,7 @@ def _testing_thread(instrument_id):
 
 
 def _testing(_):
-    db.use_dev_db()
-    db.reset_database()
-
-    singleton.initialize_objects_with_mock_trader(currency='ETH')
+    singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(
