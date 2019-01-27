@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from absl import app, logging
 
-from . import constants, singleton
+from . import constants, db, singleton
 from .future import Future
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
@@ -29,10 +29,11 @@ ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
 class OrderAwaiter:
-    def __init__(self, order_id, logger):
+    def __init__(self, order_id, logger, transaction_id=None):
         self._order_id = order_id
         self._future = Future()
         self._logger = logger
+        self._transaction_id = transaction_id
 
     def __enter__(self):
         singleton.order_listener.subscribe(self._order_id, self)
@@ -57,12 +58,25 @@ class OrderAwaiter:
                         fee,
                         price,
                         price_avg):
+        self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
         assert self._order_id == order_id
         self._logger.info(
             '[WEBSOCKET] %s order_fulfilled\n'
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
             order_id, price, price_avg, size, filled_qty, fee)
-        self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
+        db.async_update_order(
+            order_id=order_id,
+            transaction_id=self._transaction_id,
+            comment='websocket_fulfilled',
+            status=constants.ORDER_STATUS_CODE__FULFILLED,
+            size=size,
+            filled_qty=filled_qty,
+            price=price,
+            price_avg=price_avg,
+            fee=fee,
+            type=None,
+            timestamp=None
+        )
 
     def order_partially_filled(self,
                                order_id,
@@ -77,13 +91,21 @@ class OrderAwaiter:
 
 
 class OrderExecutor:
-    def __init__(self, instrument_id, amount, price, timeout_sec, is_market_order, logger):
+    def __init__(self,
+                 instrument_id,
+                 amount,
+                 price,
+                 timeout_sec,
+                 is_market_order,
+                 logger,
+                 transaction_id=None):
         self._instrument_id = instrument_id
         self._amount = amount
         self._price = price
         self._timeout_sec = timeout_sec
         self._is_market_order = is_market_order
         self._logger = logger
+        self._transaction_id = transaction_id
 
     def open_long_position(self):
         """Returns Future[OpenPositionStatus]"""
@@ -130,8 +152,24 @@ class OrderExecutor:
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
             f'via {rest_request_functor.__name__}')
+        db.async_update_order(
+            order_id=order_id,
+            transaction_id=self._transaction_id,
+            comment='request_sent',
+            status=None,
+            size=self._amount,
+            filled_qty=None,
+            price=self._price,
+            price_avg=None,
+            fee=None,
+            type=None,
+            timestamp=None
+        )
 
-        with OrderAwaiter(order_id, logger=self._logger) as await_status_future:
+        with OrderAwaiter(
+                order_id,
+                logger=self._logger,
+                transaction_id=self._transaction_id) as await_status_future:
             status = await_status_future.get(self._timeout_sec)
             if status is None:
                 self._logger.info(
@@ -194,6 +232,21 @@ class OrderExecutor:
         else:
             self._logger.error('unknown status code: %s', status)
 
+        assert str(order_id) == ret.get('order_id')
+        db.async_update_order(
+            order_id=ret.get('order_id'),
+            transaction_id=self._transaction_id,
+            comment='final',
+            status=ret.get('status'),
+            size=ret.get('size'),
+            filled_qty=ret.get('filled_qty'),
+            price=ret.get('price'),
+            price_avg=ret.get('price_avg'),
+            fee=ret.get('fee'),
+            type=ret.get('type'),
+            timestamp=ret.get('timestamp')
+        )
+
 
 def _testing_thread(instrument_id):
     singleton.websocket.ready.get()
@@ -201,10 +254,11 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=115.5,
+                             price=106.5,
                              timeout_sec=10,
                              is_market_order=False,
-                             logger=logging)
+                             logger=logging,
+                             transaction_id='fake_transaction_id')
     order_status_future = executor.open_long_position()
 
     logging.info('open_long_position has been called')
@@ -213,6 +267,9 @@ def _testing_thread(instrument_id):
 
 
 def _testing(_):
+    db.use_dev_db()
+    db.reset_database()
+
     singleton.initialize_objects_with_mock_trader(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     singleton.websocket.start_read_loop()

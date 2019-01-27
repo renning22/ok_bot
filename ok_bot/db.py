@@ -50,14 +50,17 @@ def _create_database():
         ''')
         c.execute('''
             CREATE TABLE runtime_orders (
-             order_id INTEGER PRIMARY KEY,
+             order_id TEXT PRIMARY KEY,
              transaction_id TEXT,
+             comment TEXT,
              status TEXT,
              size INTEGER,
              filled_qty INTEGER,
-             price REAL,
-             price_avg REAL,
-             timestamp INTEGER,
+             price TEXT,
+             price_avg TEXT,
+             fee TEXT,
+             type INTEGER,
+             timestamp TEXT,
              last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
             );
         ''')
@@ -80,34 +83,43 @@ def async_update_transaction(*argv, **kwargs):
 
 def _update_order(order_id,
                   transaction_id,
+                  comment,
                   status,
                   size,
                   filled_qty,
                   price,
                   price_avg,
+                  fee,
+                  type,
                   timestamp):
     with DbCursor() as c:
         c.execute('''
             INSERT OR REPLACE INTO runtime_orders(
                 order_id,
                 transaction_id,
+                comment,
                 status,
                 size,
                 filled_qty,
                 price,
                 price_avg,
+                fee,
+                type,
                 timestamp
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         ''', (
-            int(order_id),
-            str(transaction_id),
-            str(status),
-            int(size),
-            int(filled_qty),
-            float(price),
-            float(price_avg),
-            int(timestamp)
+            order_id,
+            transaction_id,
+            comment,
+            status,
+            size,
+            filled_qty,
+            price,
+            price_avg,
+            fee,
+            type,
+            timestamp
         ))
 
 
@@ -118,12 +130,18 @@ def async_update_order(*argv, **kwargs):
 def _testing(_):
     use_dev_db()
     reset_database()
-    async_update_transaction('transaction-id-123', 'unknown')
-    import time
-    time.sleep(2)
     async_update_transaction('transaction-id-123', 'ended')
-    async_update_order(456, 'transaction-id-123', 'unknown',
-                       2, 1, 3000, 2900, 1548497845)
+    async_update_order('2217655012660224',
+                       transaction_id=None,
+                       comment='comment',
+                       status=-1,
+                       size=2,
+                       filled_qty=1,
+                       price=3000,
+                       price_avg=None,
+                       fee=0.01,
+                       type=None,
+                       timestamp=None)
     _executor.shutdown(wait=True)
 
 
