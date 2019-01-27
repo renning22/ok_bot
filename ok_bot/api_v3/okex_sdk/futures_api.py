@@ -37,8 +37,15 @@ class FutureAPI(Client):
             return self._request_with_params(POST, FUTURE_SET_LEVERAGE + 'leverage', params)
 
     # query ledger
-    def get_ledger(self, symbol):
-        return self._request_without_params(GET, FUTURE_LEDGER + str(symbol) + '/ledger')
+    def get_ledger(self, currency, page_from=None, page_to=None, limit=None):
+        params = {
+            'currency': currency,
+            'from': page_from,
+            'to': page_to,
+            'limit': limit,
+        }
+        return self._request_with_params(
+            GET, FUTURE_LEDGER + str(currency) + '/ledger', params)
 
     # delete position
     # def revoke_position(self, position_data):
