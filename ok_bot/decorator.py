@@ -6,7 +6,7 @@ def try_catch_loop(f):
         while True:
             try:
                 f(*args, **kwargs)
-            except Exception as ex:
+            except:
                 logging.error('exception in %s', f.__name__, exc_info=True)
 
     return applicator
