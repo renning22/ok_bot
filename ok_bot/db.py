@@ -8,60 +8,56 @@ DEV_DB = 'dev.db'
 PROD_DB = 'prod.db'
 
 
-def _update_transaction(cursor_creator,
-                        transaction_id,
-                        stauts):
-    with cursor_creator() as c:
-        c.execute('''
-            INSERT OR REPLACE INTO runtime_transactions(
-                transaction_id,
-                status
-            )
-            VALUES (?, ?);
-        ''', (transaction_id, stauts))
+def _update_transaction(cursor_creator, **kwargs):
+    try:
+        with cursor_creator() as c:
+            c.execute('''
+                INSERT OR REPLACE INTO runtime_transactions(
+                    transaction_id,
+                    status
+                )
+                VALUES (
+                    :transaction_id,
+                    :status
+                );
+            ''', kwargs)
+    except:
+        logging.error('exception in _update_transaction', exc_info=True)
 
 
-def _update_order(cursor_creator,
-                  order_id,
-                  transaction_id,
-                  comment,
-                  status,
-                  size,
-                  filled_qty,
-                  price,
-                  price_avg,
-                  fee,
-                  type,
-                  timestamp):
-    with cursor_creator() as c:
-        c.execute('''
-            INSERT OR REPLACE INTO runtime_orders(
-                order_id,
-                transaction_id,
-                comment,
-                status,
-                size,
-                filled_qty,
-                price,
-                price_avg,
-                fee,
-                type,
-                timestamp
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        ''', (
-            order_id,
-            transaction_id,
-            comment,
-            status,
-            size,
-            filled_qty,
-            price,
-            price_avg,
-            fee,
-            type,
-            timestamp
-        ))
+def _update_order(cursor_creator, **kwargs):
+    try:
+        with cursor_creator() as c:
+            c.execute('''
+                INSERT OR REPLACE INTO runtime_orders(
+                    order_id,
+                    transaction_id,
+                    comment,
+                    status,
+                    size,
+                    filled_qty,
+                    price,
+                    price_avg,
+                    fee,
+                    type,
+                    timestamp
+                )
+                VALUES (
+                    :order_id,
+                    :transaction_id,
+                    :comment,
+                    :status,
+                    :size,
+                    :filled_qty,
+                    :price,
+                    :price_avg,
+                    :fee,
+                    :type,
+                    :timestamp
+                );
+            ''', kwargs)
+    except:
+        logging.error('exception in _update_order', exc_info=True)
 
 
 class _DbCursor:
@@ -110,17 +106,19 @@ class _BaseDb:
                 );
             ''')
 
-    def async_update_transaction(self, *argv, **kwargs):
+    def async_update_transaction(self, **kwargs):
+        """Force to use kwargs explicitly."""
         self._executor.submit(
             _update_transaction,
             self._cursor_creator,
-            *argv, **kwargs)
+            **kwargs)
 
-    def async_update_order(self, *argv, **kwargs):
+    def async_update_order(self, **kwargs):
+        """Force to use kwargs explicitly."""
         self._executor.submit(
             _update_order,
             self._cursor_creator,
-            *argv, **kwargs)
+            **kwargs)
 
 
 class ProdDb(_BaseDb):
@@ -146,8 +144,9 @@ class DevDb(_BaseDb):
 
 def _testing(_):
     db = DevDb()
-    db.async_update_transaction('transaction-id-123', 'ended')
-    db.async_update_order('2217655012660224',
+    db.async_update_transaction(transaction_id='transaction-id-123',
+                                status='ended')
+    db.async_update_order(order_id='2217655012660224',
                           transaction_id=None,
                           comment='comment',
                           status=-1,
