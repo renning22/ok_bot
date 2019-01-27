@@ -46,7 +46,8 @@ def initialize_objects(currency):
         order_listener=order_listener)
 
 
-# For unit testing, by this way we test could initialize_objects as a whole.
+# For unit testing only.
+# By this way we could test 'initialize_objects' as a whole.
 def initialize_objects_with_mock_trader_and_dev_db(currency):
     from .db import DevDb
     from .mock import MockTrader
