@@ -269,7 +269,7 @@ def _testing_thread(instrument_id):
 
 def _testing(_):
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
-    singleton.websocket.book_listener = None  # test heartbeat in websocket_api
+    # singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     eventlet.spawn_n(
         _testing_thread,
         instrument_id=singleton.schema.all_instrument_ids[0])

@@ -291,14 +291,6 @@ class WebsocketApi:
             while True:
                 await self._receive_and_dispatch()
 
-                # It's very important to call eventlet.sleep here to give a
-                # chance switching back to eventlet's mainloop. Otherwise all
-                # greenlets will be starved.
-                #
-                # Eventlet will then switch back to here after all its
-                # ready-to-run events complete.
-                eventlet.sleep(0)
-
     def start_read_loop(self):
         asyncio.ensure_future(self._read_loop())
 
@@ -307,7 +299,7 @@ def _testing_non_blocking(_):
     from . import singleton
     from datetime import datetime
 
-    def ping(url):
+    async def ping(url):
         while True:
             start = datetime.now()
             r = requests.get(url)
@@ -316,12 +308,12 @@ def _testing_non_blocking(_):
             print(f'{url} GET response: {r.status_code}, start: {start}, '
                   f'end: {end}'
                   f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
-            eventlet.sleep(5)
+            await asyncio.sleep(5)
 
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    eventlet.spawn_n(ping, 'http://www.google.com')
-    eventlet.spawn_n(ping, 'http://www.baidu.com')
-    eventlet.spawn_n(ping, 'http://www.okex.com')
+    asyncio.ensure_future(ping('http://www.google.com'))
+    asyncio.ensure_future(ping('http://www.baidu.com'))
+    asyncio.ensure_future(ping('http://www.okex.com'))
 
     singleton.start_loop()
 
