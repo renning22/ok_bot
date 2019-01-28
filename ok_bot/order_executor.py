@@ -1,6 +1,7 @@
 import pprint
 from collections import namedtuple
 
+import eventlet
 from absl import app, logging
 
 from . import constants, singleton
@@ -254,7 +255,7 @@ def _testing_thread(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=106.5,
+                             price=95.0,
                              timeout_sec=10,
                              is_market_order=False,
                              logger=logging,
@@ -269,11 +270,10 @@ def _testing_thread(instrument_id):
 def _testing(_):
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
-    singleton.websocket.start_read_loop()
-    singleton.green_pool.spawn_n(
+    eventlet.spawn_n(
         _testing_thread,
         instrument_id=singleton.schema.all_instrument_ids[0])
-    singleton.green_pool.waitall()
+    singleton.start_loop()
 
 
 if __name__ == '__main__':
