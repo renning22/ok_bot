@@ -134,13 +134,14 @@ class DevDb(_BaseDb):
 
     def __init__(self):
         super().__init__(db_path=DEV_DB)
-        self.reset_database()
+        self._reset_database()
 
-    def reset_database(self):
+    def _reset_database(self):
         """Never have the reset method on ProdDb."""
         with self._cursor_creator() as c:
             c.execute('DROP TABLE IF EXISTS runtime_transactions;')
             c.execute('DROP TABLE IF EXISTS runtime_orders;')
+        self.create_tables_if_not_exist()
 
 
 def _testing(_):

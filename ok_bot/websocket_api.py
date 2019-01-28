@@ -123,7 +123,7 @@ class WebsocketApi:
         # 3，期待一个文字字符串'pong'作为回应。如果在 N秒内未收到，请发出错误或重新连接。
         #
         # 出现网络问题会自动断开连接
-        res_bin = self._recv(timeout_sec=20)
+        res_bin = self._recv(timeout_sec=10)
         if res_bin is None:
             logging.info('Sending heartbeat message')
             self._ws.send('ping')
