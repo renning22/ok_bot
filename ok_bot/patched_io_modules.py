@@ -14,12 +14,8 @@ import sys
 import eventlet
 
 # Double-check these modules have not been imported yet.
-assert 'websocket' not in sys.modules
 assert 'requests' not in sys.modules
 
-websocket = eventlet.import_patched('websocket')
 requests = eventlet.import_patched('requests')
 
-# Double-check they have been patched.
-assert websocket.recv.__globals__['socket'] is eventlet.green.socket
-assert websocket._socket.recv.__globals__['socket'] is eventlet.green.socket
+# TODO: Double-check they have been patched.
