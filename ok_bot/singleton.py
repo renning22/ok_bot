@@ -1,6 +1,7 @@
 import eventlet
 
 book_listener = None
+db = None
 green_pool = None
 order_book = None
 order_listener = None
@@ -12,6 +13,7 @@ websocket = None
 
 def initialize_objects(currency):
     from .book_listener import BookListener
+    from .db import ProdDb
     from .order_book import OrderBook
     from .order_listener import OrderListener
     from .rest_api_v3 import RestApiV3
@@ -20,6 +22,7 @@ def initialize_objects(currency):
     from .websocket_api import WebsocketApi
 
     global book_listener
+    global db
     global green_pool
     global order_book
     global order_listener
@@ -27,6 +30,9 @@ def initialize_objects(currency):
     global schema
     global trader
     global websocket
+
+    db = ProdDb()
+    db.create_tables_if_not_exist()
 
     green_pool = eventlet.GreenPool()
     rest_api = RestApiV3()
@@ -42,11 +48,14 @@ def initialize_objects(currency):
         order_listener=order_listener)
 
 
-# For unit testing
-def initialize_objects_with_mock_trader(currency):
-    from unittest.mock import patch
+# For unit testing only.
+# By this way we could test 'initialize_objects' as a whole.
+def initialize_objects_with_mock_trader_and_dev_db(currency):
+    from .db import DevDb
     from .mock import MockTrader
-    with patch('ok_bot.trader.Trader', new=MockTrader):
+    from unittest.mock import patch
+    with patch('ok_bot.trader.Trader', new=MockTrader),\
+            patch('ok_bot.db.ProdDb', new=DevDb):
         initialize_objects(currency)
 
 

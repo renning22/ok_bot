@@ -6,6 +6,7 @@ pass_phrase_v3
 stderr
 log/
 transaction/
+*.db
 
 # IDE project file
 .idea/

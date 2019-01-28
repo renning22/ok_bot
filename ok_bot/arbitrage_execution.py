@@ -94,11 +94,15 @@ class ArbitrageTransaction:
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
         self.logger = create_transaction_logger(str(self.id))
+
+        self._db_transaction_status_updater = (
+            lambda status: singleton.db.async_update_transaction(
+                transaction_id=self.id, status=status))
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
@@ -108,7 +112,8 @@ class ArbitrageTransaction:
             leg.price,
             timeout_in_sec,
             is_market_order=False,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
@@ -122,13 +127,15 @@ class ArbitrageTransaction:
             price=-1,
             timeout_sec=None,
             is_market_order=True,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.close_long_order()
         else:
             return order_executor.close_short_order()
 
     def process(self):
+        self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
@@ -137,6 +144,7 @@ class ArbitrageTransaction:
         self.logger.info('=== arbitrage transaction ended ===')
 
     def _process(self):
+        self._db_transaction_status_updater('opening_slow_leg')
         slow_leg_order_status = self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
@@ -145,10 +153,12 @@ class ArbitrageTransaction:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
+            self._db_transaction_status_updater('ended_slow_leg_failed')
             return
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
+        self._db_transaction_status_updater('opening_fast_leg')
         fast_leg_order_status = self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         ).get()
@@ -159,6 +169,7 @@ class ArbitrageTransaction:
                              f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
+            self._db_transaction_status_updater('ended_fast_leg_failed')
             self.close_position(self.slow_leg).get()
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
@@ -168,6 +179,7 @@ class ArbitrageTransaction:
                          f'fulfilled, will wait '
                          f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
                          f'seconds')
+        self._db_transaction_status_updater('waiting_converge')
 
         with WaitingPriceConverge(self) as converge_future:
             converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
@@ -182,6 +194,7 @@ class ArbitrageTransaction:
             slow_order = self.close_position(self.slow_leg)
             fast_order.get()
             slow_order.get()
+            self._db_transaction_status_updater('ended_normally')
 
 
 def _testing(_):
@@ -203,7 +216,7 @@ def _testing(_):
         )
         transaction.process()
 
-    singleton.initialize_objects_with_mock_trader('ETH')
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     singleton.websocket.start_read_loop()
     singleton.green_pool.spawn_n(_test_aribitrage)
     singleton.green_pool.waitall()

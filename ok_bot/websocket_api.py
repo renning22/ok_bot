@@ -289,7 +289,7 @@ def _testing(_):
     from . import singleton
     from .mock import MockBookListener
 
-    singleton.initialize_objects_with_mock_trader('ETH')
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     singleton.websocket.book_listener = MockBookListener()
     singleton.websocket.start_read_loop()
     singleton.green_pool.waitall()
