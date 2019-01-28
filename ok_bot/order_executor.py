@@ -232,7 +232,7 @@ class OrderExecutor:
         else:
             self._logger.error('unknown status code: %s', status)
 
-        assert str(order_id) == ret.get('order_id')
+        assert int(order_id) == int(ret.get('order_id'))
         singleton.db.async_update_order(
             order_id=ret.get('order_id'),
             transaction_id=self._transaction_id,

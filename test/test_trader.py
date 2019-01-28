@@ -4,16 +4,15 @@ from unittest.mock import MagicMock
 import eventlet
 from absl import logging
 
-from ok_bot import singleton, constants
+from ok_bot import constants, singleton
 from ok_bot.order_executor import OrderExecutor
 
 
 class TestTrader(TestCase):
     def setUp(self):
+        logging.get_absl_logger().setLevel(logging.DEBUG)
         singleton.initialize_objects('ETH')
         singleton.rest_api = MagicMock()
-
-        logging.get_absl_logger().setLevel(logging.DEBUG)
 
     def test_cool_down(self):
         order_exe = OrderExecutor(
