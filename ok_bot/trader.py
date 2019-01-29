@@ -199,7 +199,7 @@ class Trader:
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.
-        asyncio.create_task(transaction.process)
+        asyncio.create_task(transaction.process())
 
 
 if __name__ == '__main__':
