@@ -213,7 +213,7 @@ async def _test_coroutine():
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
                               volume=1,
-                              price=120.0),
+                              price=100.0),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
                               volume=1,
