@@ -1,6 +1,5 @@
 import pprint
 
-import eventlet
 from absl import app, logging
 
 from . import singleton

@@ -1,10 +1,7 @@
 import asyncio
 
-import eventlet
-
 book_listener = None
 db = None
-green_pool = None
 loop = None
 order_book = None
 order_listener = None
@@ -26,7 +23,6 @@ def initialize_objects(currency):
 
     global book_listener
     global db
-    global green_pool
     global loop
     global order_book
     global order_listener
@@ -39,8 +35,6 @@ def initialize_objects(currency):
 
     db = ProdDb()
     db.create_tables_if_not_exist()
-
-    green_pool = eventlet.GreenPool()
 
     rest_api = RestApiV3()
     book_listener = BookListener()

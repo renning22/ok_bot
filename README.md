@@ -6,7 +6,7 @@ https://www.anaconda.com/download/
 ### Pip dependencies
 ```sh
 conda install python=3.6.7
-pip install absl-py ccxt slackclient websockets eventlet pandas
+pip install absl-py ccxt slackclient websockets pandas
 ```
 
 ### Clone

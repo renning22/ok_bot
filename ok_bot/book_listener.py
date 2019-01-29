@@ -1,7 +1,6 @@
 from collections import defaultdict
 from decimal import Decimal
 
-import eventlet
 from absl import app, logging
 
 from . import singleton
