@@ -197,7 +197,9 @@ class Trader:
             ),
             close_price_gap_threshold=close_price_gap
         )
-        singleton.green_pool.spawn_n(transaction.process)
+        # Run transaction asynchronously. Main tick_received loop doesn't have
+        # to await on it.
+        asyncio.create_task(transaction.process)
 
 
 if __name__ == '__main__':

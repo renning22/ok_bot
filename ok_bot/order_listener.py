@@ -123,11 +123,14 @@ class MockTrader:
 
 
 async def _testing_coroutine(instrument_id):
-    await asyncio.sleep(5)
+    await singleton.websocket.ready
     order_id, error_code = await singleton.rest_api.open_long_order(
         instrument_id, amount=1, price=50)
     logging.info('order has been placed order_id: %s', order_id)
+
+    # Leave time to manually cancel order from website.
     await asyncio.sleep(5)
+
     trader = MockTrader()
     singleton.order_listener.subscribe(order_id, trader)
 

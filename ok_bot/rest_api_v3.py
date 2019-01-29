@@ -29,7 +29,7 @@ class RestApiV3:
         print(f'{instrument_id} finished at {datetime.now()}')
         return json.dumps(data)
 
-    def _all_instrument_ids(self, currency):
+    def get_all_instrument_ids_blocking(self, currency):
         instruments = self.future_sdk.get_ticker()
         ret = []
         for instrument in instruments:
@@ -38,10 +38,6 @@ class RestApiV3:
                         instrument['instrument_id']).group(1) == currency:
                 ret.append(instrument['instrument_id'])
         return sorted(ret)
-
-    def all_instrument_ids(self, currency):
-        return singleton.loop.run_in_executor(
-            self._executor, self._all_instrument_ids, currency)
 
     def create_order(self, client_oid, instrument_id, order_type, amount, price, is_market_order=False, leverage=10):
         """
@@ -146,7 +142,7 @@ class RestApiV3:
 
 async def _testing_coroutine(i, api):
     logging.info('start %s', i)
-    r = await api.all_instrument_ids('ETH')
+    r = await api.get_all_instrument_ids_blocking('ETH')
     logging.info('end %s = %s', i, r)
 
 

@@ -8,8 +8,8 @@ from . import singleton
 class Schema:
     def __init__(self, currency):
         self.currency = currency
-        self._all_instrument_ids = singleton.rest_api._all_instrument_ids(
-            currency)
+        self._all_instrument_ids = (
+            singleton.rest_api.get_all_instrument_ids_blocking(currency))
         self._instrument_periods = dict(
             zip(self._all_instrument_ids,
                 ['this_week', 'next_week', 'quarter']))
@@ -77,6 +77,8 @@ class Schema:
 
 
 def _testing(_):
+    from .rest_api_v3 import RestApiV3
+    singleton.rest_api = RestApiV3()
     schema = Schema('BTC')
     logging.info('\n%s', pprint.pformat(schema.all_instrument_ids))
     logging.info('\n%s', pprint.pformat(schema.markets_cartesian_product))
