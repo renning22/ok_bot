@@ -60,6 +60,14 @@ def initialize_objects_with_mock_trader_and_dev_db(currency):
         initialize_objects(currency)
 
 
+def initialize_objects_with_dev_db(currency):
+    from .db import DevDb
+    from unittest.mock import patch
+
+    with patch('ok_bot.db.ProdDb', new=DevDb):
+        initialize_objects(currency)
+
+
 def start_loop():
     websocket.start_read_loop()
     loop.run_forever()
