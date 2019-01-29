@@ -9,8 +9,8 @@ from . import singleton
 class Schema:
     def __init__(self, currency):
         self.currency = currency
-        self._all_instrument_ids = \
-            singleton.rest_api.all_instrument_ids(currency)
+        self._all_instrument_ids = singleton.rest_api._all_instrument_ids(
+            currency)
         self._instrument_periods = dict(
             zip(self._all_instrument_ids,
                 ['this_week', 'next_week', 'quarter']))

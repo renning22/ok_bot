@@ -1,8 +1,5 @@
 from absl import flags
 
-# Make sure patched_io_modules is being imported before everything.
-from . import patched_io_modules
-
 flags.DEFINE_string(
     'symbol', 'ETH', 'symbol for crypto-currency in under case.')
 flags.DEFINE_boolean(

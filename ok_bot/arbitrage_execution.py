@@ -9,7 +9,6 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from .future import Future
 from .logger import create_transaction_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin

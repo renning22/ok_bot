@@ -9,13 +9,11 @@ import zlib
 from decimal import Decimal
 
 import dateutil.parser as dp
-import eventlet
+import requests
 import websockets
 from absl import app, logging
 
-from . import api_v3_key_reader, decorator
-from .future import Future
-from .patched_io_modules import requests
+from . import api_v3_key_reader, decorator, singleton
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
 OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
@@ -71,7 +69,7 @@ class WebsocketApi:
         self._conn = None
         self._subscribed_channels = None
         self._acked_channels = set()
-        self.ready = Future()
+        self.ready = singleton.loop.create_future()
         self.heartbeat_ping = 0  # keeping track of number of heartbeat sent
         self.heartbeat_pong = 0  # keeping track of number of heartbeat received
 
@@ -154,7 +152,7 @@ class WebsocketApi:
             logging.info('Confirmed "%s" is subscribed', res['channel'])
             if self._acked_channels == self._subscribed_channels:
                 logging.info('All channel subscriptions got ACK')
-                self.ready.set(True)
+                self.ready.set_result(True)
             return
 
         # Otherwise it's data message.
@@ -300,6 +298,7 @@ def _testing_non_blocking(_):
     from datetime import datetime
 
     async def ping(url):
+        await singleton.websocket.ready
         while True:
             start = datetime.now()
             r = requests.get(url)

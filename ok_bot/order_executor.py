@@ -1,11 +1,11 @@
+import asyncio
+import concurrent
 import pprint
 from collections import namedtuple
 
-import eventlet
 from absl import app, logging
 
 from . import constants, singleton
-from .future import Future
 
 OpenPositionStatus = namedtuple('OpenPositionStatus',
                                 ['result',  # boolean, successful or not.
@@ -30,18 +30,28 @@ ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
 class OrderAwaiter:
-    def __init__(self, order_id, logger, transaction_id=None):
+    def __init__(self, order_id, logger, timeout_sec, transaction_id=None):
         self._order_id = order_id
-        self._future = Future()
+        self._future = singleton.loop.create_future()
         self._logger = logger
+        self._timeout_sec = timeout_sec
         self._transaction_id = transaction_id
 
-    def __enter__(self):
+    async def __aenter__(self):
         singleton.order_listener.subscribe(self._order_id, self)
-        return self._future
+        try:
+            res = await asyncio.wait_for(
+                self._future, timeout=self._timeout_sec)
+        except concurrent.futures.TimeoutError:
+            return None
+        else:
+            return self._future
 
-    def __exit__(self, type, value, traceback):
+    async def __aexit__(self, type, value, traceback):
         singleton.order_listener.unsubscribe(self._order_id, self)
+
+        if type is not None:
+            self._logger.error('exception within OrderAwaiter', exc_info=True)
 
     def order_pending(self, order_id):
         assert self._order_id == order_id
@@ -50,7 +60,7 @@ class OrderAwaiter:
     def order_cancelled(self, order_id):
         assert self._order_id == order_id
         self._logger.info('[WEBSOCKET] %s order_cancelled', order_id)
-        self._future.set(ORDER_AWAIT_STATUS__CANCELLED)
+        self._future.set_result(ORDER_AWAIT_STATUS__CANCELLED)
 
     def order_fulfilled(self,
                         order_id,
@@ -59,7 +69,7 @@ class OrderAwaiter:
                         fee,
                         price,
                         price_avg):
-        self._future.set(ORDER_AWAIT_STATUS__FULFILLED)
+        self._future.set_result(ORDER_AWAIT_STATUS__FULFILLED)
         assert self._order_id == order_id
         self._logger.info(
             '[WEBSOCKET] %s order_fulfilled\n'
@@ -125,21 +135,16 @@ class OrderExecutor:
         return self._place_order(singleton.rest_api.close_short_order)
 
     def _place_order(self, rest_request_functor):
-        """Returns Future[OpenPositionStatus]"""
-        future = Future()
-        singleton.green_pool.spawn_n(
-            self._async_place_order_and_await, rest_request_functor, future)
-        return future
+        return self._async_place_order_and_await(rest_request_functor)
 
-    def _async_place_order_and_await(self, rest_request_functor, future):
+    async def _async_place_order_and_await(self, rest_request_functor):
         # TODO: add timeout_sec for rest api wait() as well.
-        order_id, error_code = singleton.green_pool.spawn(
-            rest_request_functor,
+        order_id, error_code = await rest_request_functor(
             self._instrument_id,
             self._amount,
             self._price,
             is_market_order=self._is_market_order
-        ).wait()
+        )
 
         if order_id is None:
             self._logger.error(f'Failed to place order via REST API, '
@@ -147,8 +152,7 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            future.set(OPEN_POSITION_STATUS__REST_API)
-            return
+            return OPEN_POSITION_STATUS__REST_API
 
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
@@ -167,27 +171,33 @@ class OrderExecutor:
             timestamp=None
         )
 
-        with OrderAwaiter(
-                order_id,
+        position_status = None
+        async with OrderAwaiter(
+                order_id=order_id,
                 logger=self._logger,
-                transaction_id=self._transaction_id) as await_status_future:
-            status = await_status_future.get(self._timeout_sec)
+                timeout_sec=self._timeout_sec,
+                transaction_id=self._transaction_id) as status:
             if status is None:
                 self._logger.info(
                     f'[TIMEOUT] {order_id} ({self._instrument_id}) '
                     'pending order failed to fulfill in time and was canceled')
-                future.set(OPEN_POSITION_STATUS__TIMEOUT)
-                self._revoke_order(order_id)
+                asyncio.create_task(
+                    self._revoke_order_and_post_log_final_status(order_id))
+                return OPEN_POSITION_STATUS__TIMEOUT
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
                     f'[CANCELLED] {order_id} ({self._instrument_id}) '
                     'pending order has been canceled')
-                future.set(OPEN_POSITION_STATUS__CANCELLED)
+                asyncio.create_task(
+                    self._post_log_order_final_status(order_id))
+                return OPEN_POSITION_STATUS__CANCELLED
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
                 self._logger.info(
                     f'[FULFILLED] {order_id} ({self._instrument_id}) '
                     ' pending order has been fulfilled')
-                future.set(OPEN_POSITION_STATUS__SUCCEEDED)
+                asyncio.create_task(
+                    self._post_log_order_final_status(order_id))
+                return OPEN_POSITION_STATUS__SUCCEEDED
             else:
                 self._logger.info(
                     f'[EXCEPTION] {order_id} ({self._instrument_id}) '
@@ -195,11 +205,9 @@ class OrderExecutor:
                     f'{result}')
                 raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
-        self._post_log_order_final_status(order_id)
-
-    def _revoke_order(self, order_id):
+    async def _revoke_order(self, order_id):
         self._logger.info('[REVOKE PENDING ORDER] %s', order_id)
-        ret = singleton.rest_api.revoke_order(
+        ret = await singleton.rest_api.revoke_order(
             self._instrument_id, order_id)
         if ret.get('result', False) is True:
             assert int(ret.get('order_id', None)) == order_id
@@ -212,8 +220,13 @@ class OrderExecutor:
             self._logger.error(
                 'unexpected revoking order response:\n%s', pprint.pformat(ret))
 
-    def _post_log_order_final_status(self, order_id):
-        ret = singleton.rest_api.get_order_info(order_id, self._instrument_id)
+    async def _revoke_order_and_post_log_final_status(self, order_id):
+        await self._revoke_order(order_id)
+        await self._post_log_order_final_status(order_id)
+
+    async def _post_log_order_final_status(self, order_id):
+        ret = await singleton.rest_api.get_order_info(
+            order_id, self._instrument_id)
         self._logger.info(
             '[POSTMORTEM] order info from rest api:\n%s', pprint.pformat(ret))
 
@@ -249,8 +262,8 @@ class OrderExecutor:
         )
 
 
-def _testing_thread(instrument_id):
-    singleton.websocket.ready.get()
+async def _testing_coroutine(instrument_id):
+    await singleton.websocket.ready
     logging.info('start')
 
     executor = OrderExecutor(instrument_id,
@@ -260,19 +273,17 @@ def _testing_thread(instrument_id):
                              is_market_order=False,
                              logger=logging,
                              transaction_id='fake_transaction_id')
-    order_status_future = executor.open_long_position()
 
     logging.info('open_long_position has been called')
-    result = order_status_future.get()
-    logging.info('execution result: %s', result)
+    order_status = await executor.open_long_position()
+    logging.info('execution result: %s', order_status)
 
 
 def _testing(_):
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
-    # singleton.websocket.book_listener = None  # test heartbeat in websocket_api
-    eventlet.spawn_n(
-        _testing_thread,
-        instrument_id=singleton.schema.all_instrument_ids[0])
+    singleton.websocket.book_listener = None  # test heartbeat in websocket_api
+    asyncio.ensure_future(_testing_coroutine(
+        instrument_id=singleton.schema.all_instrument_ids[0]))
     singleton.start_loop()
 
 
