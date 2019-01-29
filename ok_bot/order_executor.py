@@ -45,7 +45,7 @@ class OrderAwaiter:
         except concurrent.futures.TimeoutError:
             return None
         else:
-            return self._future
+            return res
 
     async def __aexit__(self, type, value, traceback):
         singleton.order_listener.unsubscribe(self._order_id, self)
