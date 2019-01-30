@@ -1,6 +1,17 @@
 from absl import app, logging
 
 
+def async_try_catch_loop(f):
+    async def applicator(*args, **kwargs):
+        while True:
+            try:
+                await f(*args, **kwargs)
+            except:
+                logging.error('exception in %s', f.__name__, exc_info=True)
+
+    return applicator
+
+
 def try_catch_loop(f):
     def applicator(*args, **kwargs):
         while True:

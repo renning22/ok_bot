@@ -1,4 +1,5 @@
-import eventlet
+import asyncio
+
 import numpy as np
 from absl import logging
 
@@ -22,11 +23,11 @@ class Trader:
         self.is_in_cooldown = False
 
     def cool_down(self):
-        def stop_cool_down():
-            eventlet.sleep(constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND)
+        async def stop_cool_down():
+            await asyncio.sleep(constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND)
             self.is_in_cooldown = False
         self.is_in_cooldown = True
-        singleton.green_pool.spawn_n(stop_cool_down)
+        asyncio.create_task(stop_cool_down())
 
     def aribitrage_gap_threshold(self, long_instrument_id, short_instrument_id):
         long_instrument_period = singleton.schema.instrument_period(
@@ -196,7 +197,9 @@ class Trader:
             ),
             close_price_gap_threshold=close_price_gap
         )
-        singleton.green_pool.spawn_n(transaction.process)
+        # Run transaction asynchronously. Main tick_received loop doesn't have
+        # to await on it.
+        asyncio.create_task(transaction.process())
 
 
 if __name__ == '__main__':

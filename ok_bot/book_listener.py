@@ -1,7 +1,6 @@
 from collections import defaultdict
 from decimal import Decimal
 
-import eventlet
 from absl import app, logging
 
 from . import singleton
@@ -52,13 +51,3 @@ class BookListener:
                                     bid_prices,
                                     bid_vols,
                                     timestamp)
-
-
-def _testing(_):
-    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    singleton.websocket.start_read_loop()
-    singleton.green_pool.waitall()
-
-
-if __name__ == '__main__':
-    app.run(_testing)

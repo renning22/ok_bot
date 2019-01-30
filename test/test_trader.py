@@ -1,37 +1,47 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-import eventlet
 from absl import logging
 
 from ok_bot import constants, singleton
 from ok_bot.order_executor import OrderExecutor
 
 
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+
+
 class TestTrader(TestCase):
     def setUp(self):
         logging.get_absl_logger().setLevel(logging.DEBUG)
-        singleton.initialize_objects('ETH')
-        singleton.rest_api = MagicMock()
+        singleton.initialize_objects_with_dev_db('ETH')
+        singleton.rest_api = AsyncMock()
 
     def test_cool_down(self):
-        order_exe = OrderExecutor(
-            singleton.schema.all_instrument_ids[0],
-            amount=1,
-            price=10000,
-            timeout_sec=10,
-            is_market_order=False,
-            logger=logging.get_absl_logger()
-        )
-        constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
-        singleton.rest_api.open_long_order.return_value = \
-            (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
-        order_exe.open_long_position().get()
-        singleton.websocket.start_read_loop()
-        eventlet.sleep(5)
-        self.assertTrue(singleton.trader.is_in_cooldown)
-        eventlet.sleep(8)  # wait for cool down to finish
-        self.assertFalse(singleton.trader.is_in_cooldown)
+        async def _testing_coroutine(test_class):
+            order_exe = OrderExecutor(
+                singleton.schema.all_instrument_ids[0],
+                amount=1,
+                price=10000,
+                timeout_sec=10,
+                is_market_order=False,
+                logger=logging.get_absl_logger()
+            )
+            constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
+            singleton.rest_api.open_long_order.return_value = \
+                (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
+            result = await order_exe.open_long_position()
+            logging.info('open_long_position result: %s', result)
+            logging.info('start sleeping')
+            await asyncio.sleep(5)
+            test_class.assertTrue(singleton.trader.is_in_cooldown)
+            logging.info('start another sleeping')
+            await asyncio.sleep(8)  # wait for cool down to finish
+            test_class.assertFalse(singleton.trader.is_in_cooldown)
+
+        singleton.loop.run_until_complete(_testing_coroutine(self))
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
+import asyncio
 from collections import defaultdict
 
-import eventlet
 from absl import app, logging
 
 from . import constants, singleton
@@ -122,28 +122,27 @@ class MockTrader:
         logging.info('order_partially_filled: %s', order_id)
 
 
-def _testing_thread(instrument_id):
-    eventlet.sleep(5)
-    order_id = singleton.rest_api.open_long_order(
+async def _testing_coroutine(instrument_id):
+    await singleton.websocket.ready
+    order_id, error_code = await singleton.rest_api.open_long_order(
         instrument_id, amount=1, price=50)
     logging.info('order has been placed order_id: %s', order_id)
 
-    eventlet.sleep(5)
+    # Leave time to manually cancel order from website.
+    await asyncio.sleep(5)
 
     trader = MockTrader()
     singleton.order_listener.subscribe(order_id, trader)
 
 
 def _testing(_):
-    singleton.initialize_objects('ETH')
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     logging.info('instruments: %s',
                  singleton.schema.all_instrument_ids)
     instrument_id = singleton.schema.all_instrument_ids[0]
-    singleton.websocket.start_read_loop()
-
-    singleton.green_pool.spawn_n(_testing_thread,
-                                 instrument_id=instrument_id)
-    singleton.green_pool.waitall()
+    asyncio.ensure_future(_testing_coroutine(
+        instrument_id=instrument_id))
+    singleton.start_loop()
 
 
 if __name__ == '__main__':

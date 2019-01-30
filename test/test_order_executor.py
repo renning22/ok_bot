@@ -1,7 +1,7 @@
+import asyncio
 import unittest
 from unittest.mock import MagicMock
 
-import eventlet
 from absl import logging
 
 from ok_bot import constants, db, order_executor, singleton
@@ -11,13 +11,18 @@ _SIZE = 1
 _PRICE = 100.0
 
 
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+
+
 class MockOrderListerner_cancelAfterSubscribe:
     def __init__(self):
         self.last_subscribed_order_id = None
 
     def subscribe(self, order_id, subscriber):
         self.last_subscribed_order_id = order_id
-        eventlet.greenthread.spawn_after_local(
+        singleton.loop.call_later(
             1, lambda: subscriber.order_cancelled(order_id))
 
     def unsubscribe(self, order_id, subscriber):
@@ -29,8 +34,7 @@ class TestOrderExecutor(unittest.TestCase):
     def setUp(self):
         logging.get_absl_logger().setLevel(logging.DEBUG)
         singleton.db = db.DevDb()
-        singleton.green_pool = eventlet.GreenPool()
-        singleton.rest_api = MagicMock()
+        singleton.rest_api = AsyncMock()
         singleton.rest_api.open_long_order.__name__ = 'fake_open_long_order'
         singleton.rest_api.open_long_order.return_value = (
             _FAKE_ORDER_ID, None)
@@ -48,8 +52,7 @@ class TestOrderExecutor(unittest.TestCase):
         singleton.order_listener = MockOrderListerner_cancelAfterSubscribe()
 
     def test_order_cancelled(self):
-
-        def _testing_thread():
+        async def _testing_coroutine(test_class):
             executor = order_executor.OrderExecutor(
                 instrument_id='instrument_id',
                 amount=_SIZE,
@@ -57,18 +60,18 @@ class TestOrderExecutor(unittest.TestCase):
                 timeout_sec=20,
                 is_market_order=False,
                 logger=logging)
-            order_status_future = executor.open_long_position()
-            logging.info('open_long_position has been called')
-            result = order_status_future.get()
-            logging.info('result: %s', result)
-            return result
 
-        testing_thread = singleton.green_pool.spawn(_testing_thread)
-        result = testing_thread.wait()
+            logging.info('open_long_position has been called')
+            order_status = await executor.open_long_position()
+            logging.info('result: %s', order_status)
+            test_class.assertIs(
+                order_status, order_executor.OPEN_POSITION_STATUS__CANCELLED)
+
+        singleton.loop = asyncio.get_event_loop()
+        singleton.loop.run_until_complete(_testing_coroutine(self))
 
         self.assertEqual(
             singleton.order_listener.last_subscribed_order_id, _FAKE_ORDER_ID)
-        self.assertIs(result, order_executor.OPEN_POSITION_STATUS__CANCELLED)
 
 
 if __name__ == '__main__':
