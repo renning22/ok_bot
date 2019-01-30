@@ -1,8 +1,8 @@
 import asyncio
-from unittest import TestCase
 from unittest.mock import MagicMock
 
 from absl import logging
+from absl.testing import absltest
 
 from ok_bot import constants, singleton
 from ok_bot.order_executor import OrderExecutor
@@ -13,9 +13,8 @@ class AsyncMock(MagicMock):
         return super().__call__(*args, **kwargs)
 
 
-class TestTrader(TestCase):
+class TestTrader(absltest.TestCase):
     def setUp(self):
-        logging.get_absl_logger().setLevel(logging.DEBUG)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
@@ -45,4 +44,4 @@ class TestTrader(TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    absltest.main()

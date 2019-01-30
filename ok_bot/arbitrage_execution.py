@@ -14,8 +14,9 @@ from .logger import create_transaction_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
 
-ArbitrageLeg = collections.namedtuple('ArbitrageLeg',
-                                      ['instrument_id', 'side', 'volume', 'price'])
+ArbitrageLeg = collections.namedtuple(
+    'ArbitrageLeg',
+    ['instrument_id', 'side', 'volume', 'price'])
 
 
 class WaitingPriceConverge:
@@ -63,6 +64,9 @@ class WaitingPriceConverge:
                       timestamp):
         assert instrument_id in [self._ask_stack_instrument,
                                  self._bid_stack_instrument]
+
+        if self._future.done():
+            return
 
         if instrument_id == self._bid_stack_instrument:
             self._bid_stack = list(zip(bid_prices, bid_vols))
@@ -114,10 +118,10 @@ class ArbitrageTransaction:
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
-            leg.instrument_id,
-            leg.volume,
-            leg.price,
-            timeout_in_sec,
+            instrument_id=leg.instrument_id,
+            amount=leg.volume,
+            price=leg.price,
+            timeout_sec=timeout_in_sec,
             is_market_order=False,
             logger=self.logger,
             transaction_id=self.id)
@@ -129,8 +133,8 @@ class ArbitrageTransaction:
     def close_position(self, leg):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
-            leg.instrument_id,
-            leg.volume,
+            instrument_id=leg.instrument_id,
+            amount=leg.volume,
             price=-1,
             timeout_sec=None,
             is_market_order=True,
@@ -147,8 +151,9 @@ class ArbitrageTransaction:
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
-        await self._process()
+        result = await self._process()
         self.logger.info('=== arbitrage transaction ended ===')
+        return result
 
     async def _process(self):
         self._db_transaction_status_updater('opening_slow_leg')
@@ -161,7 +166,7 @@ class ArbitrageTransaction:
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
             self._db_transaction_status_updater('ended_slow_leg_failed')
-            return
+            return False
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
@@ -180,7 +185,7 @@ class ArbitrageTransaction:
             await self.close_position(self.slow_leg)
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
-            return
+            return False
 
         self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
                          f'fulfilled, will wait '
@@ -202,6 +207,8 @@ class ArbitrageTransaction:
             slow_order = self.close_position(self.slow_leg)
             await asyncio.gather(fast_order, slow_order)
             self._db_transaction_status_updater('ended_normally')
+
+        return True
 
 
 async def _test_coroutine():
