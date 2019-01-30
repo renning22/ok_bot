@@ -1,8 +1,8 @@
 import asyncio
-import unittest
 from unittest.mock import MagicMock
 
 from absl import logging
+from absl.testing import absltest
 
 from ok_bot import constants, db, order_executor, singleton
 
@@ -16,7 +16,7 @@ class AsyncMock(MagicMock):
         return super().__call__(*args, **kwargs)
 
 
-class MockOrderListerner_cancelAfterSubscribe:
+class MockOrderListerner_cancelImmediately:
     def __init__(self):
         self.last_subscribed_order_id = None
 
@@ -29,10 +29,9 @@ class MockOrderListerner_cancelAfterSubscribe:
         pass
 
 
-class TestOrderExecutor(unittest.TestCase):
+class TestOrderExecutor(absltest.TestCase):
 
     def setUp(self):
-        logging.get_absl_logger().setLevel(logging.DEBUG)
         singleton.db = db.DevDb()
         singleton.rest_api = AsyncMock()
         singleton.rest_api.open_long_order.__name__ = 'fake_open_long_order'
@@ -49,7 +48,7 @@ class TestOrderExecutor(unittest.TestCase):
             'type': 1,
             'timestamp': '2019-01-27 15:38:24',
         }
-        singleton.order_listener = MockOrderListerner_cancelAfterSubscribe()
+        singleton.order_listener = MockOrderListerner_cancelImmediately()
 
     def test_order_cancelled(self):
         async def _testing_coroutine(test_class):
@@ -75,4 +74,4 @@ class TestOrderExecutor(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    absltest.main()

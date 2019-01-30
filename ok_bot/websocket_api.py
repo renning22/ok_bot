@@ -152,7 +152,8 @@ class WebsocketApi:
             logging.info('Confirmed "%s" is subscribed', res['channel'])
             if self._acked_channels == self._subscribed_channels:
                 logging.info('All channel subscriptions got ACK')
-                self.ready.set_result(True)
+                if not self.ready.done():
+                    self.ready.set_result(True)
             return
 
         # Otherwise it's data message.

@@ -59,8 +59,10 @@ class OrderAwaiter:
 
     def order_cancelled(self, order_id):
         assert self._order_id == order_id
-        self._logger.info('[WEBSOCKET] %s order_cancelled', order_id)
+        if self._future.done():
+            return
         self._future.set_result(ORDER_AWAIT_STATUS__CANCELLED)
+        self._logger.info('[WEBSOCKET] %s order_cancelled', order_id)
 
     def order_fulfilled(self,
                         order_id,
@@ -69,6 +71,8 @@ class OrderAwaiter:
                         fee,
                         price,
                         price_avg):
+        if self._future.done():
+            return
         self._future.set_result(ORDER_AWAIT_STATUS__FULFILLED)
         assert self._order_id == order_id
         self._logger.info(

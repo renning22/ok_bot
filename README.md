@@ -37,10 +37,22 @@ Only log transactions to slack
 python -m ok_bot --log_transaction_to_slack
 ```
 
-### Test
+### Unit Test
+Run all unit tests
 ```sh
-python -m unittest
+python -m test
 ```
+
+Run individual test class
+```sh
+python -m test.test_arbitrage_execution
+```
+
+Run all unit tests and dump the report to XML.
+```sh
+python -m test -xml_output_file='1.xml'
+```
+The report can be sent to Jenkins later.
 
 ### More
 * [Data](https://drive.google.com/open?id=1KwQDKQq31hzxEDAllOaH9rVQP7PL2eM_)

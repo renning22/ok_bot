@@ -1,11 +1,11 @@
 import asyncio
 import pprint
-import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 import requests
 from absl import logging
+from absl.testing import absltest
 
 from ok_bot import singleton
 
@@ -14,10 +14,7 @@ _CRAWL_TIMES = 10
 _CRAWL_TEST_TIMEOUT_SEC = 15
 
 
-class TestWebsocketNonblocking(unittest.TestCase):
-    def setUp(self):
-        logging.get_absl_logger().setLevel(logging.DEBUG)
-
+class TestWebsocketNonblocking(absltest.TestCase):
     def test_non_blocking(self):
         async def crawl_job():
             crawled_times = 0
@@ -63,4 +60,4 @@ class TestWebsocketNonblocking(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    absltest.main()
