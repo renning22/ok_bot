@@ -75,7 +75,7 @@ class TestArbitrageExecution(absltest.TestCase):
         mock_order_executor.close_short_order.return_value = (
             OPEN_POSITION_STATUS__SUCCEEDED)
 
-        async def _testing_coroutine(test_class):
+        async def _testing_coroutine():
             week_instrument = 'ETH-USD-190201'
             quarter_instrument = 'ETH-USD-190329'
             transaction = ArbitrageTransaction(
@@ -127,7 +127,7 @@ class TestArbitrageExecution(absltest.TestCase):
                 call().close_short_order(),
             ])
 
-        singleton.loop.run_until_complete(_testing_coroutine(self))
+        singleton.loop.run_until_complete(_testing_coroutine())
 
 
 if __name__ == '__main__':
