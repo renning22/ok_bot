@@ -114,6 +114,10 @@ class ArbitrageTransaction:
         self._db_transaction_status_updater = (
             lambda status: singleton.db.async_update_transaction(
                 transaction_id=self.id, status=status))
+        self.slow_leg_open_result = None
+        self.fast_leg_open_result = None
+        self.slow_leg_close_result = None
+        self.fast_leg_close_result = None
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
@@ -145,45 +149,67 @@ class ArbitrageTransaction:
         else:
             return order_executor.close_short_order()
 
+    async def _wait_all_post_order_info_and_aduit_profit(self):
+        if self.slow_leg_open_result:
+            await self.slow_leg_open_result.has_post_order_info_collection_done
+        if self.fast_leg_open_result:
+            await self.fast_leg_open_result.has_post_order_info_collection_done
+        if self.slow_leg_close_result:
+            await self.slow_leg_close_result.has_post_order_info_collection_done
+        if self.fast_leg_close_result:
+            await self.fast_leg_close_result.has_post_order_info_collection_done
+
+        self.logger.info('[AUDIT] slow_leg_open_result: %s',
+                         self.slow_leg_open_result)
+        self.logger.info('[AUDIT] fast_leg_open_result: %s',
+                         self.fast_leg_open_result)
+        self.logger.info('[AUDIT] slow_leg_close_result: %s',
+                         self.slow_leg_close_result)
+        self.logger.info('[AUDIT] fast_leg_close_result: %s',
+                         self.fast_leg_close_result)
+
     async def process(self):
         self._db_transaction_status_updater('started')
         self.logger.info(f'=== arbitrage transaction started [{self.id}]===')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         result = await self._process()
+        await self._wait_all_post_order_info_and_aduit_profit()
         self.logger.info(f'=== arbitrage transaction ended [{self.id}] ===')
         return result
 
     async def _process(self):
         self._db_transaction_status_updater('opening_slow_leg')
-        slow_leg_order_result = await self.open_position(
+        self.slow_leg_open_result = await self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if not slow_leg_order_result:
+        if not self.slow_leg_open_result:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
-                f'({slow_leg_order_status})')
+                f'({self.slow_leg_open_result})')
             self._db_transaction_status_updater('ended_slow_leg_failed')
             return False
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
         self._db_transaction_status_updater('opening_fast_leg')
-        fast_leg_order_result = await self.open_position(
+        self.fast_leg_open_result = await self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if not fast_leg_order_result:
+        if not self.fast_leg_open_result:
             self.logger.info(f'[FAST FAILED] failed to open fast leg '
                              f'{self.fast_leg} '
-                             f'({fast_leg_order_status}), '
+                             f'({self.fast_leg_open_result}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
             self._db_transaction_status_updater('ended_fast_leg_failed')
-            await self.close_position(self.slow_leg)
+            self.slow_leg_close_result = await self.close_position(
+                self.slow_leg)
             self.logger.info(
-                f'slow leg position {self.slow_leg} has been closed')
+                f'slow leg position {self.slow_leg} has been closed '
+                f'{self.slow_leg_close_result}')
             return False
 
         self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
@@ -204,7 +230,8 @@ class ArbitrageTransaction:
                                  f'margin({converge}), closing both legs')
             fast_order = self.close_position(self.fast_leg)
             slow_order = self.close_position(self.slow_leg)
-            await asyncio.gather(fast_order, slow_order)
+            self.fast_leg_close_result, self.slow_leg_close_result = (
+                await asyncio.gather(fast_order, slow_order))
             self._db_transaction_status_updater('ended_normally')
 
         return True

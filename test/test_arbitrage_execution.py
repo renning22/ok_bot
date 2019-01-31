@@ -88,6 +88,15 @@ class TestArbitrageExecution(absltest.TestCase):
 
         successful_execution_result = OrderExecutionResult(
             ORDER_EXECUTION_STATUS__SUCCEEDED)
+        successful_execution_result.order_id = 12345
+        successful_execution_result.filled_qty = 1
+        successful_execution_result.fee = 0.001
+        successful_execution_result.price_avg = 100
+        successful_execution_result.has_post_order_info_collection_done = (
+            asyncio.Future())
+        successful_execution_result.has_post_order_info_collection_done.set_result(
+            True)
+
         mock_order_executor.open_long_position.return_value = (
             successful_execution_result)
         mock_order_executor.open_short_position.return_value = (
