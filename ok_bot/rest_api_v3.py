@@ -139,6 +139,53 @@ class RestApiV3:
             order_id,
             instrument_id)
 
+    def all_ledgers(self, currency):
+        """
+        :param currency: BTC | ETH, etc
+        :return: All bills for the currency, API of
+                 GET /api/futures/v3/accounts/<currency>/ledger)
+        """
+        page = 1
+        ret = []
+        while True:
+            logging.debug('Querying bill history page %d for %s',
+                          page, currency)
+            eventlet.sleep(1)  # Sleep for one second
+            resp = self.future_sdk.get_ledger(currency,
+                                              page_from=page,
+                                              page_to=page,
+                                              limit=100)
+            if len(resp) == 0:
+                break
+            ret.extend(resp)
+            page += 1
+        return ret
+
+    def completed_orders(self, instruments):
+        orders = [self.all_completed_orders_for_instrument(
+            instrument_id=instrument_id)
+            for instrument_id in instruments]
+        return [t for lst in orders for t in lst]
+
+    def all_completed_orders_for_instrument(self, instrument_id):
+        page = 1
+        ret = []
+        while True:
+            logging.debug('Querying order history page %d for %s',
+                          page, instrument_id)
+            eventlet.sleep(1)  # sleep 1 second
+            resp = self.future_sdk.get_order_list(
+                instrument_id,
+                status=7, # fulfilled and canceled)
+                froms=page,
+                to=page,
+                limit=100
+            )['order_info']
+            ret.extend(resp)
+            page += 1
+            if len(resp) == 0:
+                break
+        return ret
 
 async def _testing_coroutine(i, api):
     logging.info('start %s', i)

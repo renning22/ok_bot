@@ -21,6 +21,7 @@ class Trader:
         self.market_depth = {}
         self.waiting_for_execution = False  # used for debugging
         self.is_in_cooldown = False
+        self.arbitrage_wip = False
 
     def cool_down(self):
         async def stop_cool_down():
@@ -95,6 +96,10 @@ class Trader:
         the gap average will break the threshold, which is the arbitrage
         triggering condition.
         """
+        if self.arbitrage_wip:
+            logging.warning('skip process_pair because there\'s on '
+                            'going arbitrage')
+            return
         history_gap = self.order_book.historical_mean_spread(product)
         current_spread = self.order_book.current_spread(product)
         deviation = current_spread - history_gap

@@ -3,6 +3,9 @@ secret.txt
 api_key_v3
 secret_key_v3
 pass_phrase_v3
+*.db
+*.db-shm
+*.db-wal
 stderr
 log/
 transaction/
