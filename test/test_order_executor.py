@@ -33,6 +33,7 @@ class TestOrderExecutor(absltest.TestCase):
 
     def setUp(self):
         singleton.db = db.DevDb()
+        singleton.db.create_tables_if_not_exist()
         singleton.rest_api = AsyncMock()
         singleton.rest_api.open_long_order.__name__ = 'fake_open_long_order'
         singleton.rest_api.open_long_order.return_value = (

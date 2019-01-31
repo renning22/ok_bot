@@ -92,7 +92,7 @@ class _BaseDb:
                 ''')
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_orders (
-                    order_id TEXT PRIMARY KEY,
+                    order_id INTEGER PRIMARY KEY,
                     transaction_id TEXT,
                     comment TEXT,
                     status TEXT,

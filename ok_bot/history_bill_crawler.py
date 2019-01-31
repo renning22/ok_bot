@@ -8,7 +8,6 @@ import sqlite3
 from absl import logging
 import argparse
 
-
 from .rest_api_v3 import RestApiV3
 
 SLEEP_TIME_IN_SECOND = 60 * 12  # 12 hours

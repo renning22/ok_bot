@@ -54,6 +54,13 @@ python -m test -xml_output_file='1.xml'
 ```
 The report can be sent to Jenkins later.
 
+### Accounting checks
+Read logs from existing arbitrage transactions and compare with OKEX reports. 
+Generate reports. Check consistency and generate reports.
+```sh
+python -m ok_bot.accounting --db=prod_dump.db --start='2019-01-31' --end='2020'
+```
+
 ### More
 * [Data](https://drive.google.com/open?id=1KwQDKQq31hzxEDAllOaH9rVQP7PL2eM_)
 * [Meeting notes](https://paper.dropbox.com/doc/OK-Arbitrage-Meeting-Note--ASKaOlHQlfZ3PulilxnQfsNwAQ-qRg4c0Oou3OAp4c2eC8Vh)
