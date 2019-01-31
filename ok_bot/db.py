@@ -21,7 +21,7 @@ def _update_transaction(cursor_creator, **kwargs):
                     :status
                 );
             ''', kwargs)
-    except:
+    except sqlite3.OperationalError:
         logging.error('exception in _update_transaction', exc_info=True)
 
 
@@ -56,7 +56,7 @@ def _update_order(cursor_creator, **kwargs):
                     :timestamp
                 );
             ''', kwargs)
-    except:
+    except sqlite3.OperationalError:
         logging.error('exception in _update_order', exc_info=True)
 
 
@@ -106,7 +106,7 @@ class _BaseDb:
                     last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
                 );
                 ''')
-        except:
+        except sqlite3.OperationalError:
             logging.error('exception in _update_order', exc_info=True)
 
     def async_update_transaction(self, **kwargs):
@@ -122,6 +122,9 @@ class _BaseDb:
             _update_order,
             self._cursor_creator,
             **kwargs)
+
+    def shutdown(self, wait=True):
+        return self._executor.shutdown(wait=True)
 
 
 class ProdDb(_BaseDb):
@@ -159,7 +162,7 @@ def _testing(_):
                           fee=0.01,
                           type=None,
                           timestamp=None)
-    db._executor.shutdown(wait=True)
+    db.shutdown(wait=True)
 
 
 if __name__ == '__main__':

@@ -10,8 +10,8 @@ from ok_bot.arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
 from ok_bot.constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from ok_bot.order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
-                                   OrderExecutor)
+from ok_bot.order_executor import (ORDER_EXECUTION_STATUS__SUCCEEDED,
+                                   OrderExecutionResult, OrderExecutor)
 
 _FAKE_MARKET_PRICE = 100.0
 _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
@@ -25,6 +25,21 @@ class AsyncMock(MagicMock):
 class MockBookListerner_constantPriceGenerator:
     def __init__(self):
         self._subscribers = {}
+        self._running = None
+        self._broadcast_loop = None
+
+    def start_broadcast_loop(self):
+        assert self._broadcast_loop is None
+        self._running = True
+        self._broadcast_loop = asyncio.create_task(
+            self._kick_off_broadcast_loop())
+
+    async def shutdown_broadcast_loop(self):
+        assert self._broadcast_loop is not None
+        self._running = False
+        logging.info('shutting down broadcast_loop.')
+        await self._broadcast_loop
+        logging.info('broadcast_loop has been shut down.')
 
     def subscribe(self, instrument_id, subscriber):
         self._subscribers[instrument_id] = (
@@ -37,13 +52,12 @@ class MockBookListerner_constantPriceGenerator:
                 timestamp=int(time.time())
             )
         )
-        asyncio.create_task(self._try_kick_off_broadcast_loop())
 
     def unsubscribe(self, instrument_id, subscriber):
         del self._subscribers[instrument_id]
 
-    async def _try_kick_off_broadcast_loop(self):
-        while len(self._subscribers):
+    async def _kick_off_broadcast_loop(self):
+        while self._running:
             for subscriber, callback in self._subscribers.items():
                 logging.info('sending tick_received to %s', subscriber)
                 callback()
@@ -63,19 +77,29 @@ class TestArbitrageExecution(absltest.TestCase):
         singleton.trader = None
         singleton.websocket = None
 
+    def tearDown(self):
+        singleton.loop.run_until_complete(
+            singleton.book_listener.shutdown_broadcast_loop())
+        singleton.db.shutdown(wait=True)
+
     def test_arbitrage_converged(self, MockOrderExecutor, mock_uuid4):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
+
+        successful_execution_result = OrderExecutionResult(
+            ORDER_EXECUTION_STATUS__SUCCEEDED)
         mock_order_executor.open_long_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            successful_execution_result)
         mock_order_executor.open_short_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            successful_execution_result)
         mock_order_executor.close_long_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            successful_execution_result)
         mock_order_executor.close_short_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            successful_execution_result)
 
         async def _testing_coroutine():
+            singleton.book_listener.start_broadcast_loop()
+
             week_instrument = 'ETH-USD-190201'
             quarter_instrument = 'ETH-USD-190329'
             transaction = ArbitrageTransaction(

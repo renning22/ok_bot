@@ -11,7 +11,7 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .logger import create_transaction_logger
-from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
+from .order_executor import OrderExecutor
 from .util import amount_margin
 
 ArbitrageLeg = collections.namedtuple(
@@ -110,7 +110,7 @@ class ArbitrageTransaction:
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
-        self.logger = create_transaction_logger(str(self.id))
+        self.logger = create_transaction_logger(self.id)
         self._db_transaction_status_updater = (
             lambda status: singleton.db.async_update_transaction(
                 transaction_id=self.id, status=status))
@@ -147,21 +147,20 @@ class ArbitrageTransaction:
 
     async def process(self):
         self._db_transaction_status_updater('started')
-        self.logger.info('=== arbitrage transaction started ===')
-        self.logger.info(f'id: {self.id}')
+        self.logger.info(f'=== arbitrage transaction started [{self.id}]===')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         result = await self._process()
-        self.logger.info('=== arbitrage transaction ended ===')
+        self.logger.info(f'=== arbitrage transaction ended [{self.id}] ===')
         return result
 
     async def _process(self):
         self._db_transaction_status_updater('opening_slow_leg')
-        slow_leg_order_status = await self.open_position(
+        slow_leg_order_result = await self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
+        if not slow_leg_order_result:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
@@ -171,11 +170,11 @@ class ArbitrageTransaction:
                          f'will open position for fast leg')
 
         self._db_transaction_status_updater('opening_fast_leg')
-        fast_leg_order_status = await self.open_position(
+        fast_leg_order_result = await self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
+        if not fast_leg_order_result:
             self.logger.info(f'[FAST FAILED] failed to open fast leg '
                              f'{self.fast_leg} '
                              f'({fast_leg_order_status}), '

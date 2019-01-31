@@ -18,6 +18,9 @@ class TestTrader(absltest.TestCase):
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
+    def tearDown(self):
+        singleton.db.shutdown(wait=True)
+
     def test_cool_down(self):
         async def _testing_coroutine(test_class):
             order_exe = OrderExecutor(
@@ -26,7 +29,7 @@ class TestTrader(absltest.TestCase):
                 price=10000,
                 timeout_sec=10,
                 is_market_order=False,
-                logger=logging.get_absl_logger()
+                logger=logging
             )
             constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
             singleton.rest_api.open_long_order.return_value = \

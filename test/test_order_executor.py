@@ -32,6 +32,7 @@ class MockOrderListerner_cancelImmediately:
 class TestOrderExecutor(absltest.TestCase):
 
     def setUp(self):
+        singleton.loop = asyncio.get_event_loop()
         singleton.db = db.DevDb()
         singleton.rest_api = AsyncMock()
         singleton.rest_api.open_long_order.__name__ = 'fake_open_long_order'
@@ -50,8 +51,11 @@ class TestOrderExecutor(absltest.TestCase):
         }
         singleton.order_listener = MockOrderListerner_cancelImmediately()
 
+    def tearDown(self):
+        singleton.db.shutdown(wait=True)
+
     def test_order_cancelled(self):
-        async def _testing_coroutine(test_class):
+        async def _testing_coroutine(test_object):
             executor = order_executor.OrderExecutor(
                 instrument_id='instrument_id',
                 amount=_SIZE,
@@ -61,12 +65,12 @@ class TestOrderExecutor(absltest.TestCase):
                 logger=logging)
 
             logging.info('open_long_position has been called')
-            order_status = await executor.open_long_position()
-            logging.info('result: %s', order_status)
-            test_class.assertIs(
-                order_status, order_executor.OPEN_POSITION_STATUS__CANCELLED)
+            order_result = await executor.open_long_position()
+            logging.info('result: %s', order_result)
+            test_object.assertIs(
+                order_result.status,
+                order_executor.ORDER_EXECUTION_STATUS__CANCELLED)
 
-        singleton.loop = asyncio.get_event_loop()
         singleton.loop.run_until_complete(_testing_coroutine(self))
 
         self.assertEqual(

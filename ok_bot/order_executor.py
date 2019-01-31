@@ -7,22 +7,26 @@ from absl import app, logging
 
 from . import constants, singleton
 
-OpenPositionStatus = namedtuple('OpenPositionStatus',
-                                ['result',  # boolean, successful or not.
-                                 # detailed error message if failed.
-                                 'message',
-                                 ])
+ORDER_EXECUTION_STATUS__SUCCEEDED = 'order fulfilled'
+ORDER_EXECUTION_STATUS__UNKNOWN = 'unknown'
+ORDER_EXECUTION_STATUS__REST_API = 'rest api http error'
+ORDER_EXECUTION_STATUS__TIMEOUT = 'failed to fulfill in time'
+ORDER_EXECUTION_STATUS__CANCELLED = 'order cancelled'
 
-OPEN_POSITION_STATUS__SUCCEEDED = OpenPositionStatus(
-    result=True, message='order fulfilled')
-OPEN_POSITION_STATUS__UNKNOWN = OpenPositionStatus(
-    result=False, message='unknown')
-OPEN_POSITION_STATUS__REST_API = OpenPositionStatus(
-    result=False, message='rest api http error')
-OPEN_POSITION_STATUS__TIMEOUT = OpenPositionStatus(
-    result=False, message='failed to fulfill in time')
-OPEN_POSITION_STATUS__CANCELLED = OpenPositionStatus(
-    result=False, message='order cancelled')
+
+class OrderExecutionResult:
+    def __init__(self, status=ORDER_EXECUTION_STATUS__UNKNOWN):
+        self.status = status
+
+    def set_status(self, status):
+        self.status = status
+        return self
+
+    def __bool__(self):
+        return self.status == ORDER_EXECUTION_STATUS__SUCCEEDED
+
+    def __str__(self):
+        return str(self.status)
 
 
 ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
@@ -121,6 +125,7 @@ class OrderExecutor:
         self._is_market_order = is_market_order
         self._logger = logger
         self._transaction_id = transaction_id
+        self._result = OrderExecutionResult()
 
     def open_long_position(self):
         """Returns Future[OpenPositionStatus]"""
@@ -156,7 +161,7 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return OPEN_POSITION_STATUS__REST_API
+            return self._result.set_status(ORDER_EXECUTION_STATUS__REST_API)
 
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
@@ -187,21 +192,21 @@ class OrderExecutor:
                     'pending order failed to fulfill in time and was canceled')
                 asyncio.create_task(
                     self._revoke_order_and_post_log_final_status(order_id))
-                return OPEN_POSITION_STATUS__TIMEOUT
+                return self._result.set_status(ORDER_EXECUTION_STATUS__TIMEOUT)
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
                     f'[CANCELLED] {order_id} ({self._instrument_id}) '
                     'pending order has been canceled')
                 asyncio.create_task(
                     self._post_log_order_final_status(order_id))
-                return OPEN_POSITION_STATUS__CANCELLED
+                return self._result.set_status(ORDER_EXECUTION_STATUS__CANCELLED)
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
                 self._logger.info(
                     f'[FULFILLED] {order_id} ({self._instrument_id}) '
                     ' pending order has been fulfilled')
                 asyncio.create_task(
                     self._post_log_order_final_status(order_id))
-                return OPEN_POSITION_STATUS__SUCCEEDED
+                return self._result.set_status(ORDER_EXECUTION_STATUS__SUCCEEDED)
             else:
                 self._logger.info(
                     f'[EXCEPTION] {order_id} ({self._instrument_id}) '
@@ -272,15 +277,15 @@ async def _testing_coroutine(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=103.8,
+                             price=100.0,
                              timeout_sec=10,
                              is_market_order=False,
                              logger=logging,
                              transaction_id='fake_transaction_id')
 
     logging.info('open_long_position has been called')
-    order_status = await executor.open_long_position()
-    logging.info('execution result: %s', order_status)
+    execution_result = await executor.open_long_position()
+    logging.info('execution result: %s', execution_result)
 
 
 def _testing(_):

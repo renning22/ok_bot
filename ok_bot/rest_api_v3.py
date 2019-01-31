@@ -177,7 +177,7 @@ class RestApiV3:
             time.sleep(1)  # sleep 1 second
             resp = self.future_sdk.get_order_list(
                 instrument_id,
-                status=7, # fulfilled and canceled)
+                status=7,  # fulfilled and canceled)
                 froms=page,
                 to=page,
                 limit=100
@@ -187,6 +187,7 @@ class RestApiV3:
             if len(resp) == 0:
                 break
         return ret
+
 
 async def _testing_coroutine(i, api):
     logging.info('start %s', i)
