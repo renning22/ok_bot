@@ -1,7 +1,8 @@
+import asyncio
 import collections
+import concurrent
 import uuid
 
-import eventlet
 from absl import app, logging
 
 from . import singleton
@@ -9,18 +10,19 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from .future import Future
 from .logger import create_transaction_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
 
-ArbitrageLeg = collections.namedtuple('ArbitrageLeg',
-                                      ['instrument_id', 'side', 'volume', 'price'])
+ArbitrageLeg = collections.namedtuple(
+    'ArbitrageLeg',
+    ['instrument_id', 'side', 'volume', 'price'])
 
 
 class WaitingPriceConverge:
-    def __init__(self, transaction):
+    def __init__(self, transaction, timeout_sec):
         self._transaction = transaction
+        self._timeout_sec = timeout_sec
         self._slow_leg = transaction.slow_leg
         self._fast_leg = transaction.fast_leg
         if self._slow_leg.side == SHORT and self._fast_leg.side == LONG:
@@ -35,16 +37,23 @@ class WaitingPriceConverge:
         self._ask_stack = None
         self._bid_stack = None
         self.logger = transaction.logger
+        self._future = singleton.loop.create_future()
 
-    def __enter__(self):
+    async def __aenter__(self):
         singleton.book_listener.subscribe(
             self._transaction.slow_leg.instrument_id, self)
         singleton.book_listener.subscribe(
             self._transaction.fast_leg.instrument_id, self)
-        self._future = Future()
-        return self._future
 
-    def __exit__(self, type, value, traceback):
+        try:
+            res = await asyncio.wait_for(
+                self._future, timeout=self._timeout_sec)
+        except concurrent.futures.TimeoutError:
+            return None
+        else:
+            return res
+
+    async def __aexit__(self, type, value, traceback):
         singleton.book_listener.unsubscribe(
             self._transaction.slow_leg.instrument_id, self)
         singleton.book_listener.unsubscribe(
@@ -56,6 +65,9 @@ class WaitingPriceConverge:
         assert instrument_id in [self._ask_stack_instrument,
                                  self._bid_stack_instrument]
 
+        if self._future.done():
+            return
+
         if instrument_id == self._bid_stack_instrument:
             self._bid_stack = list(zip(bid_prices, bid_vols))
         else:
@@ -64,7 +76,7 @@ class WaitingPriceConverge:
 
         should_close, amount_margin = self._should_close_arbitrage()
         if should_close:
-            self._future.set(amount_margin)
+            self._future.set_result(amount_margin)
 
     def _should_close_arbitrage(self):
         if self._ask_stack is None or self._bid_stack is None:
@@ -76,8 +88,11 @@ class WaitingPriceConverge:
             lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold)
 
-        self.logger.info(
-            'current_gap:%.3f, max_gap: %.3f, available_amount: %d',
+        self.logger.log_every_n_seconds(
+            logging.INFO,
+            '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
+            'available_amount: %d',
+            2,
             self._ask_stack[0][0] - self._bid_stack[0][0],
             self._transaction.close_price_gap_threshold,
             available_amount
@@ -91,21 +106,25 @@ class ArbitrageTransaction:
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
         self.logger = create_transaction_logger(str(self.id))
+        self._db_transaction_status_updater = (
+            lambda status: singleton.db.async_update_transaction(
+                transaction_id=self.id, status=status))
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
-            leg.instrument_id,
-            leg.volume,
-            leg.price,
-            timeout_in_sec,
+            instrument_id=leg.instrument_id,
+            amount=leg.volume,
+            price=leg.price,
+            timeout_sec=timeout_in_sec,
             is_market_order=False,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
@@ -114,43 +133,47 @@ class ArbitrageTransaction:
     def close_position(self, leg):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
-            leg.instrument_id,
-            leg.volume,
+            instrument_id=leg.instrument_id,
+            amount=leg.volume,
             price=-1,
             timeout_sec=None,
             is_market_order=True,
-            logger=self.logger)
+            logger=self.logger,
+            transaction_id=self.id)
         if leg.side == LONG:
             return order_executor.close_long_order()
         else:
             return order_executor.close_short_order()
 
-    def process(self):
-        singleton.trader.arbitrage_wip = True
+    async def process(self):
+        self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
-        self._process()
+        result = await self._process()
         self.logger.info('=== arbitrage transaction ended ===')
-        singleton.trader.arbitrage_wip = False
+        return result
 
-    def _process(self):
-        slow_leg_order_status = self.open_position(
+    async def _process(self):
+        self._db_transaction_status_updater('opening_slow_leg')
+        slow_leg_order_status = await self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
-        ).get()
+        )
 
         if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
                 f'({slow_leg_order_status})')
-            return
+            self._db_transaction_status_updater('ended_slow_leg_failed')
+            return False
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
-        fast_leg_order_status = self.open_position(
+        self._db_transaction_status_updater('opening_fast_leg')
+        fast_leg_order_status = await self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
-        ).get()
+        )
 
         if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
             self.logger.info(f'[FAST FAILED] failed to open fast leg '
@@ -158,18 +181,21 @@ class ArbitrageTransaction:
                              f'({fast_leg_order_status}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
-            self.close_position(self.slow_leg).get()
+            self._db_transaction_status_updater('ended_fast_leg_failed')
+            await self.close_position(self.slow_leg)
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
-            return
+            return False
 
         self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
                          f'fulfilled, will wait '
                          f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
                          f'seconds')
+        self._db_transaction_status_updater('waiting_converge')
 
-        with WaitingPriceConverge(self) as converge_future:
-            converge = converge_future.get(PRICE_CONVERGE_TIMEOUT_IN_SECOND)
+        async with WaitingPriceConverge(
+                transaction=self,
+                timeout_sec=PRICE_CONVERGE_TIMEOUT_IN_SECOND) as converge:
             if converge is None:
                 # timeout, close the position
                 self.logger.info('[CONVERGE TIMEOUT] prices failed to converge '
@@ -179,33 +205,35 @@ class ArbitrageTransaction:
                                  f'margin({converge}), closing both legs')
             fast_order = self.close_position(self.fast_leg)
             slow_order = self.close_position(self.slow_leg)
-            fast_order.get()
-            slow_order.get()
+            await asyncio.gather(fast_order, slow_order)
+            self._db_transaction_status_updater('ended_normally')
+
+        return True
+
+
+async def _test_coroutine():
+    await singleton.websocket.ready
+    logging.info('WebSocket subscription finished')
+    week_instrument = singleton.schema.all_instrument_ids[0]
+    quarter_instrument = singleton.schema.all_instrument_ids[-1]
+    transaction = ArbitrageTransaction(
+        slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
+                              side=SHORT,
+                              volume=1,
+                              price=100.0),
+        fast_leg=ArbitrageLeg(instrument_id=week_instrument,
+                              side=LONG,
+                              volume=1,
+                              price=80.0),
+        close_price_gap_threshold=1,
+    )
+    await transaction.process()
 
 
 def _testing(_):
-    def _test_aribitrage():
-        singleton.websocket.ready.get()
-        logging.info('WebSocket subscription finished')
-        week_instrument = singleton.schema.all_instrument_ids[0]
-        quarter_instrument = singleton.schema.all_instrument_ids[-1]
-        transaction = ArbitrageTransaction(
-            slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
-                                  side=SHORT,
-                                  volume=1,
-                                  price=120.0),
-            fast_leg=ArbitrageLeg(instrument_id=week_instrument,
-                                  side=LONG,
-                                  volume=1,
-                                  price=80.0),
-            close_price_gap_threshold=1,
-        )
-        transaction.process()
-
-    singleton.initialize_objects_with_mock_trader('ETH')
-    singleton.websocket.start_read_loop()
-    singleton.green_pool.spawn_n(_test_aribitrage)
-    singleton.green_pool.waitall()
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
+    asyncio.ensure_future(_test_coroutine())
+    singleton.start_loop()
 
 
 if __name__ == '__main__':

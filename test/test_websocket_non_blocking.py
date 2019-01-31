@@ -1,78 +1,63 @@
+import asyncio
 import pprint
-import unittest
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-import eventlet
+import requests
 from absl import logging
+from absl.testing import absltest
 
-import greenlet
-from ok_bot import patched_io_modules, singleton
+from ok_bot import singleton
 
 _URL = 'http://www.google.com'
 _CRAWL_TIMES = 10
 _CRAWL_TEST_TIMEOUT_SEC = 15
 
 
-class TestWebsocketNonblocking(unittest.TestCase):
-    def test_identical(self):
-        requests = eventlet.import_patched('requests')
-        self.assertIs(requests, patched_io_modules.requests)
-
+class TestWebsocketNonblocking(absltest.TestCase):
     def test_non_blocking(self):
-        def crawl():
+        async def crawl_job():
             crawled_times = 0
-            requests = eventlet.import_patched('requests')
             for _ in range(_CRAWL_TIMES):
-                resp = requests.get(_URL)
-                print(f'get {resp.status_code} from {_URL}')
-                eventlet.sleep(1)
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    resp = await singleton.loop.run_in_executor(
+                        executor, requests.get, _URL)
+                logging.info('get %s from %s', resp.status_code, _URL)
+                await asyncio.sleep(1)
                 crawled_times += 1
-            print('all crawl finished')
+            logging.info('all crawl finished')
             return crawled_times
 
-        singleton.initialize_objects('ETH')
+        async def sleeper():
+            await asyncio.sleep(_CRAWL_TEST_TIMEOUT_SEC)
+
+        async def _testing_coroutine(test_class):
+            with self.assertLogs(logging.get_absl_logger(), level='INFO') as cm:
+                t = await asyncio.gather(crawl_job(), sleeper())
+                crawled_times = t[0]
+                log_message = cm.output
+
+            print(pprint.pformat(log_message))
+            test_class.assertIn(
+                'INFO:absl:Sending heartbeat message', log_message)
+            test_class.assertIn(
+                'INFO:absl:Received heartbeat message', log_message)
+            test_class.assertEqual(
+                crawled_times, _CRAWL_TIMES,
+                f'crawled {crawled_times} expected {_CRAWL_TIMES}')
+            test_class.assertGreaterEqual(
+                singleton.websocket.heartbeat_ping, 1,
+                f'{singleton.websocket.heartbeat_ping}')
+            test_class.assertGreaterEqual(
+                singleton.websocket.heartbeat_pong, 1,
+                f'{singleton.websocket.heartbeat_pong}')
+
+        singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         # make sure nothing will return from websocket subscription
         singleton.websocket.book_listener = None
         singleton.websocket.start_read_loop()
-
-        crawl_thread = singleton.green_pool.spawn(crawl)
-        wait_thread = eventlet.greenthread.spawn(
-            lambda: singleton.green_pool.waitall())
-
-        # kill the websocket subscription after 15 seconds
-        eventlet.greenthread.spawn_after_local(
-            _CRAWL_TEST_TIMEOUT_SEC, lambda: wait_thread.kill())
-
-        # kill after crawled 10 times
-        crawl_thread.link(lambda gt: wait_thread.kill())
-
-        begin_time = datetime.now()
-        log_message = None
-        try:
-            with self.assertLogs(logging.get_absl_logger(), level='INFO') as cm:
-                crawled_times = crawl_thread.wait()
-                log_message = cm.output
-
-        except greenlet.GreenletExit:
-            pass
-        end_time = datetime.now()
-
-        print(pprint.pformat(log_message))
-        self.assertIn('INFO:absl:Sending heartbeat message', log_message)
-        self.assertIn(
-            'INFO:absl:Received heartbeat message', log_message)
-        self.assertLessEqual(
-            (end_time - begin_time).seconds,
-            _CRAWL_TEST_TIMEOUT_SEC,
-            f'begin at {begin_time}, end at {end_time}, should less than 15 '
-            f'seconds')
-        self.assertEqual(crawled_times, _CRAWL_TIMES,
-                         f'crawled {crawled_times} expected {_CRAWL_TIMES}')
-        self.assertGreaterEqual(singleton.websocket.heartbeat_ping, 1,
-                                f'{singleton.websocket.heartbeat_ping}')
-        self.assertGreaterEqual(singleton.websocket.heartbeat_pong, 1,
-                                f'{singleton.websocket.heartbeat_pong}')
+        singleton.loop.run_until_complete(_testing_coroutine(self))
 
 
 if __name__ == '__main__':
-    unittest.main()
+    absltest.main()

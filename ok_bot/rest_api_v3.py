@@ -1,11 +1,11 @@
+import asyncio
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 
-import eventlet
-from absl import logging
+from absl import app, logging
 
-from ok_bot.patched_io_modules import requests
-
+from . import singleton
 from .api_v3.okex_sdk.futures_api import FutureAPI
 from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
 
@@ -13,6 +13,13 @@ from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
 class RestApiV3:
     def __init__(self):
         self.future_sdk = FutureAPI(API_KEY, KEY_SECRET, PASS_PHRASE)
+
+        # If max_workers is None or not given, it will default to the number of
+        # processors on the machine, multiplied by 5, assuming that
+        # ThreadPoolExecutor is often used to overlap I/O instead of CPU work
+        # and the number of workers should be higher than the number of workers
+        # for ProcessPoolExecutor.
+        self._executor = ThreadPoolExecutor(max_workers=None)
 
     def ticker(self, instrument_id):
         # use print to show it's non-blocking
@@ -22,7 +29,7 @@ class RestApiV3:
         print(f'{instrument_id} finished at {datetime.now()}')
         return json.dumps(data)
 
-    def all_instrument_ids(self, currency):
+    def get_all_instrument_ids_blocking(self, currency):
         instruments = self.future_sdk.get_ticker()
         ret = []
         for instrument in instruments:
@@ -71,7 +78,9 @@ class RestApiV3:
             return None, ex.code
 
     def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        return self.create_order(
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.create_order,
             custom_order_id,
             instrument_id,
             1,
@@ -81,7 +90,9 @@ class RestApiV3:
         )
 
     def open_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        return self.create_order(
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.create_order,
             custom_order_id,
             instrument_id,
             2,
@@ -91,7 +102,9 @@ class RestApiV3:
         )
 
     def close_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        return self.create_order(
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.create_order,
             custom_order_id,
             instrument_id,
             3,
@@ -101,7 +114,9 @@ class RestApiV3:
         )
 
     def close_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
-        return self.create_order(
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.create_order,
             custom_order_id,
             instrument_id,
             4,
@@ -111,10 +126,18 @@ class RestApiV3:
         )
 
     def revoke_order(self, instrument_id, order_id):
-        return self.future_sdk.revoke_order(instrument_id, order_id)
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.future_sdk.revoke_order,
+            instrument_id,
+            order_id)
 
     def get_order_info(self, order_id, instrument_id):
-        return self.future_sdk.get_order_info(order_id, instrument_id)
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self.future_sdk.get_order_info,
+            order_id,
+            instrument_id)
 
     def all_ledgers(self, currency):
         """
@@ -164,56 +187,18 @@ class RestApiV3:
                 break
         return ret
 
-    def _test(self):
-        tickers = [
-            'BTC-USD-190104',
-            'BTC-USD-190111',
-            'BTC-USD-190329',
-        ]
-        pool = eventlet.GreenPool()
-        for t in pool.imap(self.ticker, tickers):
-            print(t)
+async def _testing_coroutine(i, api):
+    logging.info('start %s', i)
+    r = await api.get_all_instrument_ids_blocking('ETH')
+    logging.info('end %s = %s', i, r)
 
-        def time_web_speed(url):
-            from datetime import datetime
-            print(f'starting {url} at {datetime.now()}')
-            requests.get(url)
-            print(f'{url} finished at {datetime.now()}')
 
-        for url in [
-            'https://www.douban.com',
-            'https://www.airbnb.com',
-            'https://www.baidu.com',
-            'https://www.google.com',
-            'https://www.amazon.com',
-        ]:
-            pool.spawn_n(time_web_speed, url)
-        pool.waitall()
+def _testing(_):
+    singleton.loop = asyncio.get_event_loop()
+    api = RestApiV3()
+    coroutines = [_testing_coroutine(i, api) for i in range(5)]
+    singleton.loop.run_until_complete(asyncio.gather(*coroutines))
 
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-    arg_parser = ArgumentParser(description='Manually make/cancel orders')
-    arg_parser.add_argument('--action', choices=['open_long_order', 'open_short_order',
-                                                 'close_long_order', 'close_short_order',
-                                                 'cancel_order'])
-    arg_parser.add_argument('--price', type=float)
-    arg_parser.add_argument('--volume', type=int)
-    arg_parser.add_argument('--custom-id', type=str)
-    arg_parser.add_argument('--order-id', type=str)
-    arg_parser.add_argument('--instrument-id', type=str,
-                            help='Instrument ID is symbols like BTC-USD-190104')
-    arg_parser.add_argument('--market-order', default=False, action='store_true', dest='market_order',
-                            help='if True, will place market order')
-    args = arg_parser.parse_args()
-    api = RestApiV3()
-
-    func = getattr(api, args.action)
-    if args.action == 'cancel_order':
-        print(f'action:{args.action}, {args.instrument_id} {args.order_id}')
-        print(func(args.instrument_id, args.order_id))
-    else:
-        print(f'action:{args.action}, {args.instrument_id} {args.price}@{args.volume}, {args.custom_id}, '
-              'market_order:{args.market_order}')
-        print(func(args.instrument_id, args.volume,
-                   args.price, args.custom_id, args.market_order))
+    app.run(_testing)

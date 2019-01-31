@@ -1,5 +1,7 @@
 """Websocket API V3"""
+import asyncio
 import base64
+import concurrent
 import hmac
 import json
 import pprint
@@ -7,12 +9,11 @@ import zlib
 from decimal import Decimal
 
 import dateutil.parser as dp
-import eventlet
+import requests
+import websockets
 from absl import app, logging
 
-from . import api_v3_key_reader, decorator
-from .future import Future
-from .patched_io_modules import requests, websocket
+from . import api_v3_key_reader, decorator, singleton
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
 OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
@@ -57,27 +58,30 @@ def _inflate(data):
 
 
 class WebsocketApi:
-    def __init__(self, green_pool, schema,
+    def __init__(self,
+                 schema,
                  book_listener=None,
                  order_listener=None):
-        self._green_pool = green_pool
         self._schema = schema
         self.book_listener = book_listener
         self.order_listener = order_listener
         self._currency = schema.currency
-        self._ws = None
+        self._conn = None
         self._subscribed_channels = None
         self._acked_channels = set()
-        self.ready = Future()
+        self.ready = singleton.loop.create_future()
         self.heartbeat_ping = 0  # keeping track of number of heartbeat sent
         self.heartbeat_pong = 0  # keeping track of number of heartbeat received
 
-    def _recv(self, timeout_sec):
-        return eventlet.timeout.with_timeout(
-            timeout_sec, self._ws.recv, timeout_value=None)
+    async def _recv(self, timeout_sec):
+        try:
+            res = await asyncio.wait_for(self._conn.recv(), timeout=timeout_sec)
+        except concurrent.futures.TimeoutError:
+            return None
+        else:
+            return res
 
-    def _create_and_login(self):
-        self._ws = websocket.create_connection(OK_WEBSOCKET_ADDRESS)
+    async def _create_and_login(self):
         timestamp = str(_get_server_timestamp())
         login_str = _create_login_params(
             str(timestamp),
@@ -85,17 +89,20 @@ class WebsocketApi:
             api_v3_key_reader.PASS_PHRASE,
             api_v3_key_reader.KEY_SECRET)
 
-        self._ws.send(login_str)
+        await self._conn.send(login_str)
 
         # Consume login response.
-        self._ws.recv()
+        login_res = await self._recv(timeout_sec=10)
+        login_res_text = _inflate(login_res).decode()
+        logging.info('websocket login response:\n%s',
+                     pprint.pformat(login_res_text))
 
-    def _subscribe(self, channels):
+    async def _subscribe(self, channels):
         sub_param = {'op': 'subscribe', 'args': list(channels)}
         sub_str = json.dumps(sub_param)
-        self._ws.send(sub_str)
+        await self._conn.send(sub_str)
 
-    def _subscribe_all_interested(self):
+    async def _subscribe_all_interested(self):
         interested_channels = []
         if self.book_listener is not None:
             interested_channels.append('futures/depth5')
@@ -106,9 +113,9 @@ class WebsocketApi:
             [f'{channel}:{id}'
              for id in self._schema.all_instrument_ids
              for channel in interested_channels])
-        self._subscribe(self._subscribed_channels)
+        await self._subscribe(self._subscribed_channels)
 
-    def _receive_and_dispatch(self):
+    async def _receive_and_dispatch(self):
         # 连接限制
         # 连接限制：1次/s
         #
@@ -123,10 +130,10 @@ class WebsocketApi:
         # 3，期待一个文字字符串'pong'作为回应。如果在 N秒内未收到，请发出错误或重新连接。
         #
         # 出现网络问题会自动断开连接
-        res_bin = self._recv(timeout_sec=20)
+        res_bin = await self._recv(timeout_sec=10)
         if res_bin is None:
             logging.info('Sending heartbeat message')
-            self._ws.send('ping')
+            await self._conn.send('ping')
             self.heartbeat_ping += 1
             return
 
@@ -145,7 +152,8 @@ class WebsocketApi:
             logging.info('Confirmed "%s" is subscribed', res['channel'])
             if self._acked_channels == self._subscribed_channels:
                 logging.info('All channel subscriptions got ACK')
-                self.ready.set(True)
+                if not self.ready.done():
+                    self.ready.set_result(True)
             return
 
         # Otherwise it's data message.
@@ -274,32 +282,24 @@ class WebsocketApi:
         logging.info(short_qty)
         logging.info(short_avg_cost)
 
-    @decorator.try_catch_loop
-    def _read_loop_impl(self):
-        self._create_and_login()
-        self._subscribe_all_interested()
-        while True:
-            self._receive_and_dispatch()
+    @decorator.async_try_catch_loop
+    async def _read_loop(self):
+        async with websockets.connect(OK_WEBSOCKET_ADDRESS) as self._conn:
+            await self._create_and_login()
+            await self._subscribe_all_interested()
+            while True:
+                await self._receive_and_dispatch()
 
     def start_read_loop(self):
-        self._green_pool.spawn_n(self._read_loop_impl)
-
-
-def _testing(_):
-    from . import singleton
-    from .mock import MockBookListener
-
-    singleton.initialize_objects_with_mock_trader('ETH')
-    singleton.websocket.book_listener = MockBookListener()
-    singleton.websocket.start_read_loop()
-    singleton.green_pool.waitall()
+        asyncio.ensure_future(self._read_loop())
 
 
 def _testing_non_blocking(_):
     from . import singleton
     from datetime import datetime
 
-    def ping(url):
+    async def ping(url):
+        await singleton.websocket.ready
         while True:
             start = datetime.now()
             r = requests.get(url)
@@ -308,18 +308,14 @@ def _testing_non_blocking(_):
             print(f'{url} GET response: {r.status_code}, start: {start}, '
                   f'end: {end}'
                   f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
-            eventlet.sleep(5)
+            await asyncio.sleep(5)
 
-    singleton.initialize_objects('ETH')
-    api = singleton.websocket
-    green_pool = singleton.green_pool
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
+    asyncio.ensure_future(ping('http://www.google.com'))
+    asyncio.ensure_future(ping('http://www.baidu.com'))
+    asyncio.ensure_future(ping('http://www.okex.com'))
 
-    api._book_listener = None
-    green_pool.spawn_n(ping, 'http://www.google.com')
-    green_pool.spawn_n(ping, 'http://www.baidu.com')
-    green_pool.spawn_n(ping, 'http://www.okex.com')
-    api.start_read_loop()
-    green_pool.waitall()
+    singleton.start_loop()
 
 
 if __name__ == '__main__':

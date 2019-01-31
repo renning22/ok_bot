@@ -1,6 +1,6 @@
 import json
 
-from ok_bot.patched_io_modules import requests
+import requests
 
 from . import consts as c
 from . import exceptions, utils

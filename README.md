@@ -5,8 +5,8 @@ https://www.anaconda.com/download/
 
 ### Pip dependencies
 ```sh
-conda install python=3.6.7
-pip install absl-py ccxt slackclient websockets eventlet pandas
+conda install python=3.7.2
+pip install absl-py ccxt slackclient websockets pandas
 ```
 
 ### Clone
@@ -27,14 +27,32 @@ python -m ok_bot --logtofile
 ```
 
 #### Also log to slack
+Send full absl to slack
 ```sh
 python -m ok_bot --alsologtoslack
 ```
 
-### Test
+Only log transactions to slack
 ```sh
-python -m unittest
+python -m ok_bot --log_transaction_to_slack
 ```
+
+### Unit Test
+Run all unit tests
+```sh
+python -m test
+```
+
+Run individual test class
+```sh
+python -m test.test_arbitrage_execution
+```
+
+Run all unit tests and dump the report to XML.
+```sh
+python -m test -xml_output_file='1.xml'
+```
+The report can be sent to Jenkins later.
 
 ### More
 * [Data](https://drive.google.com/open?id=1KwQDKQq31hzxEDAllOaH9rVQP7PL2eM_)

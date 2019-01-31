@@ -1,7 +1,8 @@
-import eventlet
+import asyncio
 
 book_listener = None
-green_pool = None
+db = None
+loop = None
 order_book = None
 order_listener = None
 rest_api = None
@@ -12,6 +13,7 @@ websocket = None
 
 def initialize_objects(currency):
     from .book_listener import BookListener
+    from .db import ProdDb
     from .order_book import OrderBook
     from .order_listener import OrderListener
     from .rest_api_v3 import RestApiV3
@@ -20,7 +22,8 @@ def initialize_objects(currency):
     from .websocket_api import WebsocketApi
 
     global book_listener
-    global green_pool
+    global db
+    global loop
     global order_book
     global order_listener
     global rest_api
@@ -28,7 +31,11 @@ def initialize_objects(currency):
     global trader
     global websocket
 
-    green_pool = eventlet.GreenPool()
+    loop = asyncio.get_event_loop()
+
+    db = ProdDb()
+    db.create_tables_if_not_exist()
+
     rest_api = RestApiV3()
     book_listener = BookListener()
     order_listener = OrderListener()
@@ -36,20 +43,31 @@ def initialize_objects(currency):
     trader = Trader()
     order_book = OrderBook()
     websocket = WebsocketApi(
-        green_pool=green_pool,
         schema=schema,
         book_listener=book_listener,
         order_listener=order_listener)
 
 
-# For unit testing
-def initialize_objects_with_mock_trader(currency):
-    from unittest.mock import patch
+# For unit testing only.
+# By this way we could test 'initialize_objects' as a whole.
+def initialize_objects_with_mock_trader_and_dev_db(currency):
+    from .db import DevDb
     from .mock import MockTrader
-    with patch('ok_bot.trader.Trader', new=MockTrader):
+    from unittest.mock import patch
+
+    with patch('ok_bot.trader.Trader', new=MockTrader),\
+            patch('ok_bot.db.ProdDb', new=DevDb):
+        initialize_objects(currency)
+
+
+def initialize_objects_with_dev_db(currency):
+    from .db import DevDb
+    from unittest.mock import patch
+
+    with patch('ok_bot.db.ProdDb', new=DevDb):
         initialize_objects(currency)
 
 
 def start_loop():
     websocket.start_read_loop()
-    green_pool.waitall()
+    loop.run_forever()
