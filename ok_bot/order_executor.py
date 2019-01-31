@@ -1,7 +1,7 @@
 import asyncio
 import concurrent
 import pprint
-from collections import namedtuple
+from decimal import Decimal
 
 from absl import app, logging
 
@@ -17,6 +17,12 @@ ORDER_EXECUTION_STATUS__CANCELLED = 'order cancelled'
 class OrderExecutionResult:
     def __init__(self, status=ORDER_EXECUTION_STATUS__UNKNOWN):
         self.status = status
+        self.order_id = None
+        self.filled_qty = None
+        self.fee = None
+        self.price_avg = None
+        self.has_post_order_info_collection_done = (
+            singleton.loop.create_future())
 
     def set_status(self, status):
         self.status = status
@@ -26,7 +32,13 @@ class OrderExecutionResult:
         return self.status == ORDER_EXECUTION_STATUS__SUCCEEDED
 
     def __str__(self):
-        return str(self.status)
+        return (
+            f'OrderExecutionResult("{self.status}", '
+            f'order_id={self.order_id}, filled_qty={self.filled_qty}, '
+            f'fee={self.fee}, price_avg={self.price_avg}, '
+            f'post_collection_done='
+            f'{self.has_post_order_info_collection_done.done()})'
+        )
 
 
 ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
@@ -34,11 +46,12 @@ ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
 class OrderAwaiter:
-    def __init__(self, order_id, logger, timeout_sec, transaction_id=None):
+    def __init__(self, order_id, logger, timeout_sec, order_execution_result, transaction_id=None):
         self._order_id = order_id
         self._future = singleton.loop.create_future()
         self._logger = logger
         self._timeout_sec = timeout_sec
+        self._order_execution_result = order_execution_result
         self._transaction_id = transaction_id
 
     async def __aenter__(self):
@@ -83,6 +96,9 @@ class OrderAwaiter:
             '[WEBSOCKET] %s order_fulfilled\n'
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
             order_id, price, price_avg, size, filled_qty, fee)
+        self._order_execution_result.filled_qty = int(filled_qty)
+        self._order_execution_result.price_avg = Decimal(price)
+        self._order_execution_result.fee = Decimal(fee)
         singleton.db.async_update_order(
             order_id=order_id,
             transaction_id=self._transaction_id,
@@ -166,6 +182,7 @@ class OrderExecutor:
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
             f'via {rest_request_functor.__name__}')
+        self._result.order_id = order_id
         singleton.db.async_update_order(
             order_id=order_id,
             transaction_id=self._transaction_id,
@@ -185,6 +202,7 @@ class OrderExecutor:
                 order_id=order_id,
                 logger=self._logger,
                 timeout_sec=self._timeout_sec,
+                order_execution_result=self._result,
                 transaction_id=self._transaction_id) as status:
             if status is None:
                 self._logger.info(
@@ -256,6 +274,10 @@ class OrderExecutor:
             self._logger.error('unknown status code: %s', status)
 
         assert int(order_id) == int(ret.get('order_id'))
+        self._result.filled_qty = int(ret.get('filled_qty'))
+        self._result.price_avg = Decimal(ret.get('price'))
+        self._result.fee = Decimal(ret.get('fee'))
+        self._result.has_post_order_info_collection_done.set_result(True)
         singleton.db.async_update_order(
             order_id=ret.get('order_id'),
             transaction_id=self._transaction_id,
@@ -285,7 +307,9 @@ async def _testing_coroutine(instrument_id):
 
     logging.info('open_long_position has been called')
     execution_result = await executor.open_long_position()
-    logging.info('execution result: %s', execution_result)
+    logging.info('1) immediate execution result: %s', execution_result)
+    await execution_result.has_post_order_info_collection_done
+    logging.info('2) post execution result: %s', execution_result)
 
 
 def _testing(_):
