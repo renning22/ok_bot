@@ -8,9 +8,10 @@ import sqlite3
 from absl import logging
 import argparse
 
+
 from .rest_api_v3 import RestApiV3
 
-SLEEP_TIME_IN_SECOND = 60
+SLEEP_TIME_IN_SECOND = 60 * 12  # 12 hours
 
 
 class BillCrawler:
@@ -18,7 +19,41 @@ class BillCrawler:
         self.api = RestApiV3()
         self.currency = currency
         self.db_conn = sqlite3.connect(db_file)
-        self.all_instrument_ids = self.api.all_instrument_ids(currency)
+        self.all_instrument_ids = self.api.get_all_instrument_ids_blocking(
+            currency)
+        self.create_tables()
+
+    def create_tables(self):
+        cursor = self.db_conn.cursor()
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS okex_reported_orders(
+            order_id int primary key NOT NULL,
+            instrument_id varchar(16) NOT NULL,
+            size int NOT NULL,
+            timestamp varchar(36) NOT NULL,
+            filled_qty int,
+            fee double,
+            price double,
+            price_avg double,
+            status int,
+            type int,
+            contract_val int,
+            leverage int
+        )
+        ''')
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS okex_reported_bills(
+            ledger_id TEXT primary key,
+            timestamp TEXT,
+            amount REAL,
+            balance INTEGER,
+            currency TEXT,
+            type TEXT,
+            order_id INTEGER DEFAULT NULL,
+            instrument_id TEXT DEFAULT NULL
+        )          
+        ''')
+        self.db_conn.commit()
 
     def crawl_orders(self):
         orders = self.api.completed_orders(self.all_instrument_ids)
