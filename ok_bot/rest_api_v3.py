@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from absl import app, logging
@@ -150,7 +151,7 @@ class RestApiV3:
         while True:
             logging.debug('Querying bill history page %d for %s',
                           page, currency)
-            eventlet.sleep(1)  # Sleep for one second
+            time.sleep(1)  # Sleep for one second
             resp = self.future_sdk.get_ledger(currency,
                                               page_from=page,
                                               page_to=page,
@@ -173,7 +174,7 @@ class RestApiV3:
         while True:
             logging.debug('Querying order history page %d for %s',
                           page, instrument_id)
-            eventlet.sleep(1)  # sleep 1 second
+            time.sleep(1)  # sleep 1 second
             resp = self.future_sdk.get_order_list(
                 instrument_id,
                 status=7, # fulfilled and canceled)
