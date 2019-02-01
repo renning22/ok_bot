@@ -8,9 +8,7 @@ pipeline {
   stages {
     stage('pip_deps') {
       steps {
-        sh '''virtualenv .venv
-source .venv/bin/activate
-pip install absl-py slackclient websockets pandas'''
+        sh 'pip install --user absl-py slackclient websockets pandas'
       }
     }
     stage('run_unit_test') {
