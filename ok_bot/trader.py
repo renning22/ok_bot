@@ -1,4 +1,5 @@
 import asyncio
+from decimal import Decimal
 
 import numpy as np
 from absl import logging
@@ -161,23 +162,25 @@ class Trader:
                           open_price_gap, close_price_gap):
         if slow_side == LONG:
             amount = 0
-            slow_price = float(self.market_depth[slow_instrument_id][0][0][0])
+            slow_price = Decimal(
+                self.market_depth[slow_instrument_id][0][0][0])
             for price, vol in self.market_depth[slow_instrument_id][0]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = float(price)
+                    slow_price = Decimal(price)
                     break
             fast_price = slow_price + open_price_gap
         else:
             assert slow_side == SHORT
             amount = 0
-            slow_price = float(self.market_depth[slow_instrument_id][1][0][0])
+            slow_price = Decimal(
+                self.market_depth[slow_instrument_id][1][0][0])
             for price, vol in self.market_depth[slow_instrument_id][1]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = float(price)
+                    slow_price = Decimal(price)
                     break
             fast_price = slow_price - open_price_gap
 
@@ -214,7 +217,7 @@ if __name__ == '__main__':
             f' close threshold: {close_threshold}')
 
     def main(_):
-        singleton.initialize_objects('ETH')
+        singleton.initialize_objects_with_dev_db('ETH')
         singleton.trader.min_time_window = np.timedelta64(3, 's')
         singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
         singleton.start_loop()
