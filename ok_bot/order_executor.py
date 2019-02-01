@@ -175,7 +175,6 @@ class OrderExecutor:
             timestamp=None
         )
 
-        position_status = None
         async with OrderAwaiter(
                 order_id=order_id,
                 logger=self._logger,

@@ -92,15 +92,15 @@ class _BaseDb:
                 ''')
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_orders (
-                    order_id TEXT PRIMARY KEY,
+                    order_id INTEGER PRIMARY KEY,
                     transaction_id TEXT,
                     comment TEXT,
-                    status TEXT,
+                    status INTEGER,
                     size INTEGER,
                     filled_qty INTEGER,
-                    price TEXT,
-                    price_avg TEXT,
-                    fee TEXT,
+                    price DOUBLE,
+                    price_avg DOUBLE,
+                    fee DOUBLE,
                     type INTEGER,
                     timestamp TEXT,
                     last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
