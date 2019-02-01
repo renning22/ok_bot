@@ -1,15 +1,14 @@
 pipeline {
   agent {
     docker {
-      image 'continuumio/anaconda3'
+      image 'python:3.7.2-alpine3.8'
     }
 
   }
   stages {
     stage('pip_deps') {
       steps {
-        sh '''conda create -n env python=3.7.2
-pip install --user absl-py slackclient websockets pandas'''
+        sh 'pip install absl-py slackclient websockets pandas'
       }
     }
     stage('run_unit_test') {
