@@ -92,7 +92,7 @@ class Accounting:
         """
         SQL = '''
             SELECT *
-            FROM okex_reported_orders
+            FROM reported_orders
             WHERE timestamp >= :start_date
               AND timestamp <= :end_date
         '''

@@ -57,6 +57,9 @@ The report can be sent to Jenkins later.
 ### Accounting checks
 Read logs from existing arbitrage transactions and compare with OKEX reports. 
 Generate reports. Check consistency and generate reports.
+
+Colab notebook: https://colab.research.google.com/drive/1q9i0ItGftw5Mf1lGhKuFSi4Y1hfF0XI4
+
 ```sh
 python -m ok_bot.accounting --db=prod_dump.db --start='2019-01-31' --end='2020'
 ```

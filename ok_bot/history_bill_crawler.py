@@ -5,6 +5,9 @@ This crawler will run outside of the arbitrage program.
 """
 import time
 import sqlite3
+import signal
+import sys
+
 from absl import logging
 import argparse
 
@@ -25,7 +28,7 @@ class BillCrawler:
     def create_tables(self):
         cursor = self.db_conn.cursor()
         cursor.execute('''
-        CREATE TABLE IF NOT EXISTS okex_reported_orders(
+        CREATE TABLE IF NOT EXISTS reported_orders(
             order_id int primary key NOT NULL,
             instrument_id varchar(16) NOT NULL,
             size int NOT NULL,
@@ -41,7 +44,7 @@ class BillCrawler:
         )
         ''')
         cursor.execute('''
-        CREATE TABLE IF NOT EXISTS okex_reported_bills(
+        CREATE TABLE IF NOT EXISTS reported_bills(
             ledger_id TEXT primary key,
             timestamp TEXT,
             amount REAL,
@@ -77,7 +80,7 @@ class BillCrawler:
 
     def insert_order_to_db(self, order):
         sql = '''
-            INSERT OR REPLACE INTO okex_reported_orders(
+            INSERT OR REPLACE INTO reported_orders(
                 order_id,
                 instrument_id,
                 size,
@@ -119,7 +122,7 @@ class BillCrawler:
                 return None
 
         sql = '''
-            INSERT OR REPLACE INTO okex_reported_bills(
+            INSERT OR REPLACE INTO reported_bills(
                 ledger_id,
                 timestamp,
                 amount,
@@ -168,5 +171,8 @@ if __name__ == '__main__':
                       help='Sqlite3 DB file to store the crawled orders',
                       required=True)
     args = args.parse_args()
+
+    signal.signal(signal.SIGINT, lambda sig, frame: sys.exit(0))
+
     crawler = BillCrawler(args.currency, args.db)
     crawler.crawl()
