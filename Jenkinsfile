@@ -8,7 +8,8 @@ pipeline {
   stages {
     stage('pip_deps') {
       steps {
-        sh 'pip install absl-py slackclient websockets pandas'
+        sh '''pip install numpy scipy matplotlib ipython jupyter pandas sympy nose
+pip install absl-py slackclient websockets pandas'''
       }
     }
     stage('run_unit_test') {
