@@ -1,11 +1,11 @@
 pipeline {
-  agent none
+  agent {
+    docker { image 'continuumio/anaconda3' }
+  }
   stages {
-    stage('copy_credentials') {
+    stage('pip_deps') {
       steps {
-        sh '''cp /home/ningr/Documents/ok_bot/api_key_v3 .
-cp /home/ningr/Documents/ok_bot/pass_phrase_v3 .
-cp /home/ningr/Documents/ok_bot/secret_key_v3 .'''
+        sh 'pip install absl-py slackclient websockets pandas'
       }
     }
     stage('run_unit_test') {
