@@ -1,5 +1,8 @@
+import asyncio
 import pprint
+import time
 
+import numpy as np
 from absl import logging
 
 
@@ -60,3 +63,50 @@ class MockOrderBook:
 class MockBookListener:
     def received_futures_depth5(self, *argv):
         logging.info('MockBookListener:\n%s', pprint.pformat(argv))
+
+
+class MockBookListerner_constantPriceGenerator:
+    def __init__(self, price, vol):
+        self._price = price
+        self._vol = vol
+        self._subscribers = {}
+        self._running = None
+        self._broadcast_loop = None
+
+    def start_broadcast_loop(self):
+        assert self._broadcast_loop is None
+        self._running = True
+        self._broadcast_loop = asyncio.create_task(
+            self._kick_off_broadcast_loop())
+
+    async def shutdown_broadcast_loop(self):
+        assert self._broadcast_loop is not None
+        self._running = False
+        logging.info('shutting down broadcast loop')
+        await self._broadcast_loop
+        logging.info('broadcast_loop has been shut down')
+
+    def subscribe(self, instrument_id, subscriber):
+        logging.info('subscribed %s', instrument_id)
+        self._subscribers[instrument_id] = (
+            lambda: subscriber.tick_received(
+                instrument_id=instrument_id,
+                ask_prices=[self._price],
+                ask_vols=[self._vol],
+                bid_prices=[self._price],
+                bid_vols=[self._vol],
+                timestamp=int(time.time())
+            )
+        )
+
+    def unsubscribe(self, instrument_id, subscriber):
+        logging.info('unsubscribe %s', instrument_id)
+        del self._subscribers[instrument_id]
+
+    async def _kick_off_broadcast_loop(self):
+        while self._running:
+            logging.info('_kick_off_broadcast_loops')
+            for subscriber, callback in self._subscribers.items():
+                logging.info('sending tick_received to %s', subscriber)
+                callback()
+            await asyncio.sleep(1)
