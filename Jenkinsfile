@@ -8,7 +8,8 @@ pipeline {
   stages {
     stage('pip_deps') {
       steps {
-        sh 'pip install --user absl-py slackclient websockets pandas'
+        sh '''conda create -n env python=3.7.2
+pip install --user absl-py slackclient websockets pandas'''
       }
     }
     stage('run_unit_test') {
