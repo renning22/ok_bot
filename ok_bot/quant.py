@@ -1,4 +1,6 @@
-from decimal import Decimal
+from decimal import Decimal, getcontext
+
+getcontext().prec = 8
 
 
 class Quant(Decimal):
@@ -16,10 +18,6 @@ class Quant(Decimal):
         return Quant(super().__abs__())
 
     def __repr__(self):
-        return str(self)
-
-    def to_json(self):
-        """Protocol to json.dumps."""
         return str(self)
 
 
