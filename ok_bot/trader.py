@@ -159,14 +159,14 @@ class Trader:
         logging.log_every_n_seconds(
             logging.CRITICAL,
             '\nlong:%s , short:%s'
-            '\ncurrent_price_average: %s'
-            '\nestimate_total_price_diff_after_resiliance: %s'
-            '\nestimate_profit_per_tran_per_dollar: %s'
-            '\nestimate_profit_per_tran_per_contract: %s'
-            '\nestimate_fee_per_tran_per_contract: %s'
-            '\nestimate_net_profit: %s'
-            '\nmin_price_gap: %s'
-            '\nclose_price_gap: %s',
+            '\ncurrent_price_average: %.3f'
+            '\nestimate_total_price_diff_after_resiliance: %.3f'
+            '\nestimate_profit_per_tran_per_dollar: %.3f'
+            '\nestimate_profit_per_tran_per_contract: %.3f'
+            '\nestimate_fee_per_tran_per_contract: %.3f'
+            '\nestimate_net_profit: %.3f'
+            '\nmin_price_gap: %.3f'
+            '\nclose_price_gap: %.3f',
             60,
             long_instrument,
             short_instrument,
