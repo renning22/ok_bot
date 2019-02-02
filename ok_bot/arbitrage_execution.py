@@ -214,13 +214,14 @@ class ArbitrageTransaction:
                 # timeout, close the position
                 self.logger.info('[CONVERGE TIMEOUT] prices failed to converge '
                                  'in time, closing both legs')
+                self._db_transaction_status_updater('ended_converge_timeout')
             else:
                 self.logger.info(f'[CONVERGED] prices converged with enough '
                                  f'margin({converge}), closing both legs')
+                self._db_transaction_status_updater('ended_normally')
             fast_order = self.close_position(self.fast_leg)
             slow_order = self.close_position(self.slow_leg)
             await asyncio.gather(fast_order, slow_order)
-            self._db_transaction_status_updater('ended_normally')
 
         return True
 
