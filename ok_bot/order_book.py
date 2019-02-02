@@ -1,10 +1,11 @@
 import datetime
+import logging
 
 import numpy as np
 import pandas as pd
-import logging
 
 from . import constants, singleton
+from .quant import Quant
 from .schema import Schema
 
 _TIME_WINDOW = np.timedelta64(
@@ -28,10 +29,11 @@ class OrderBook:
         return self.update_book == self._update_book__regular
 
     def historical_mean_spread(self, cross_product):
-        return self.table[cross_product].astype('float64').values[:-1].mean()
+        return Quant(
+            self.table[cross_product].astype('float64').values[:-1].mean())
 
     def current_spread(self, cross_product):
-        return self.table[cross_product].astype('float64').values[-1]
+        return Quant(self.table[cross_product].astype('float64').values[-1])
 
     def price_speed(self, instrument_id, ask_or_bid):
         assert ask_or_bid in ['ask', 'bid']
@@ -39,7 +41,7 @@ class OrderBook:
             instrument_id, ask_or_bid, 'price')
         history = self.table[column].astype('float64').values[:-1].mean()
         current = self.table[column].astype('float64').values[-1]
-        return abs(current - history) / history
+        return Quant(abs(current - history) / history)
 
     def ask_price(self, instrument_id):
         return self.last_record[Schema.make_column_name(instrument_id, 'ask', 'price')]
@@ -127,8 +129,8 @@ class OrderBook:
         self.table = self.table.append(
             self._convert_last_record_to_table_row(), sort=True)
         # remove old rows
-        self.table = self.table.loc[self.table.index >=
-                                    self.table.index[-1] - _TIME_WINDOW]
+        self.table = self.table.loc[self.table.index
+                                    >= self.table.index[-1] - _TIME_WINDOW]
 
         # Callback
         self._trader.new_tick_received(

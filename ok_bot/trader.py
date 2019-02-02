@@ -161,25 +161,23 @@ class Trader:
                           open_price_gap, close_price_gap):
         if slow_side == LONG:
             amount = 0
-            slow_price = Decimal(
-                self.market_depth[slow_instrument_id][0][0][0])
+            slow_price = self.market_depth[slow_instrument_id][0][0][0]
             for price, vol in self.market_depth[slow_instrument_id][0]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = Decimal(price)
+                    slow_price = price
                     break
             fast_price = slow_price + open_price_gap
         else:
             assert slow_side == SHORT
             amount = 0
-            slow_price = Decimal(
-                self.market_depth[slow_instrument_id][1][0][0])
+            slow_price = self.market_depth[slow_instrument_id][1][0][0]
             for price, vol in self.market_depth[slow_instrument_id][1]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = Decimal(price)
+                    slow_price = price
                     break
             fast_price = slow_price - open_price_gap
 

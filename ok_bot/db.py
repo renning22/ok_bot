@@ -1,11 +1,12 @@
 # TODO: convert _testing to unittest
 
+import logging
 import sqlite3
 import time
 from concurrent.futures import ProcessPoolExecutor
-from decimal import Decimal
 from functools import partial
-import logging
+
+from .quant import Quant
 
 DEV_DB = 'dev.db'
 PROD_DB = 'prod.db'
@@ -14,7 +15,7 @@ PROD_DB = 'prod.db'
 def _sql_type_safe_filter(kwargs):
     ret = {}
     for k, v in kwargs.items():
-        if isinstance(v, Decimal):
+        if isinstance(v, Quant):
             ret[k] = str(v)
         else:
             ret[k] = v
@@ -185,7 +186,7 @@ def _testing():
     db.async_update_transaction(transaction_id='transaction-id-123',
                                 vol=5,
                                 slow_price=10.111,
-                                fast_price=Decimal('20.001'),
+                                fast_price=Quant(20.001),
                                 close_price_gap='1.01',
                                 start_time_sec=time.time(),
                                 end_time_sec=None,

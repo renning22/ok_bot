@@ -12,6 +12,9 @@ class Quant(Decimal):
         else:
             return super().__new__(cls, value)
 
+    def __abs__(self):
+        return Quant(super().__abs__())
+
     def __repr__(self):
         return str(self)
 
@@ -93,6 +96,10 @@ if __name__ == '__main__':
 
     assert (0.00000001 + g - 0.00000001) == g
     assert ((1234.5678 * g) / 1234.5678) == g
+    assert 1 / Quant(7) * 7 == 1
+    assert 1 / Quant(13) * 13 == 1
+    assert 1 / Quant(2.5) * 2.5 == 1
+    assert -abs(Quant(-2.5)) == -2.5
 
     print(a)
     print(b)
@@ -103,3 +110,4 @@ if __name__ == '__main__':
     print(g)
     print(h)
     print(i)
+    print(1 / Quant(7) * 7)
