@@ -2,6 +2,7 @@ import argparse
 import datetime
 import sqlite3
 
+
 class Accounting:
     def __init__(self, db_file, start_date_str, end_date_str):
         self.db_conn = sqlite3.connect(db_file)

@@ -6,7 +6,7 @@ https://www.anaconda.com/download/
 ### Pip dependencies
 ```sh
 conda install python=3.7.2
-pip install absl-py ccxt slackclient websockets pandas
+pip install ccxt slackclient websockets pandas
 ```
 
 ### Clone
@@ -27,7 +27,7 @@ python -m ok_bot --logtofile
 ```
 
 #### Also log to slack
-Send full absl to slack
+Send log to slack
 ```sh
 python -m ok_bot --alsologtoslack
 ```
