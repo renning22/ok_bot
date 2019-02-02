@@ -246,6 +246,9 @@ class OrderExecutor:
         elif status == constants.ORDER_STATUS_CODE__FULFILLED:
             self._logger.info(
                 '[POSTMORTEM] %s order is fulfilled', order_id)
+        elif status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
+            self._logger.info(
+                '[POSTMORTEM] %s order is being cancelled', order_id)
         else:
             self._logger.error('unknown status code: %s', status)
 

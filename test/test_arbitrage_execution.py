@@ -60,7 +60,7 @@ class TestArbitrageExecution(absltest.TestCase):
         singleton.book_listener = MockBookListerner_constantPriceGenerator()
         singleton.order_listener = None
         singleton.order_book = None
-        singleton.trader = None
+        singleton.trader = MagicMock()
         singleton.websocket = None
 
     def test_arbitrage_converged(self, MockOrderExecutor, mock_uuid4):
