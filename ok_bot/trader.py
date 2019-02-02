@@ -21,7 +21,7 @@ class Trader:
         self.market_depth = {}
         self.waiting_for_execution = False  # used for debugging
         self.is_in_cooldown = False
-        self.arbitrage_wip = False
+        self.on_going_arbitrage_count = 0
 
     def cool_down(self):
         async def stop_cool_down():
@@ -96,10 +96,15 @@ class Trader:
         the gap average will break the threshold, which is the arbitrage
         triggering condition.
         """
-        if self.arbitrage_wip:
-            logging.warning('skip process_pair because there\'s on '
-                            'going arbitrage')
+        if self.on_going_arbitrage_count > 0:
+            logging.log_every_n_seconds(
+                logging.CRITICAL,
+                'skip process_pair because there are %s on going arbitrages',
+                30,
+                on_going_arbitrage_count
+            )
             return
+
         history_gap = self.order_book.historical_mean_spread(product)
         current_spread = self.order_book.current_spread(product)
 
@@ -166,7 +171,9 @@ class Trader:
             '\nestimate_fee_per_tran_per_contract: %.3f'
             '\nestimate_net_profit: %.3f'
             '\nmin_price_gap: %.3f'
-            '\nclose_price_gap: %.3f',
+            '\nclose_price_gap: %.3f'
+            '\n'
+            '\non_going_arbitrage_count: %s',
             60,
             long_instrument,
             short_instrument,
@@ -177,7 +184,8 @@ class Trader:
             estimate_fee_per_tran_per_contract,
             estimate_net_profit,
             min_price_gap,
-            close_price_gap
+            close_price_gap,
+            on_going_arbitrage_count
         )
 
         # Ignore available amount for now.
@@ -186,9 +194,13 @@ class Trader:
                 long_instrument, 'ask')
             short_instrument_speed = self.order_book.price_speed(
                 short_instrument, 'bid')
-            logging.info(f'Long instrument speed: {long_instrument_speed:.3f}, '
-                         f'short instrument speed: '
-                         f'{short_instrument_speed:.3f}')
+            logging.log_every_n_seconds(
+                logging.INFO,
+                f'Long instrument speed: {long_instrument_speed:.3f}, '
+                f'short instrument speed: '
+                f'{short_instrument_speed:.3f}',
+                30
+            )
             if long_instrument_speed > short_instrument_speed:
                 self.trigger_arbitrage(
                     slow_instrument_id=short_instrument,
@@ -241,10 +253,14 @@ class Trader:
             fast_price = slow_price - open_price_gap
 
         if self.is_in_cooldown:
-            logging.warning(f'[COOL DOWN] Skipping arbitrage between '
-                            f'{slow_instrument_id}({slow_side}) and '
-                            f'{fast_instrument_id}({fast_side}) due to '
-                            f'cool down')
+            logging.log_every_n_seconds(
+                logging.WARNING,
+                f'[COOL DOWN] Skipping arbitrage between '
+                f'{slow_instrument_id}({slow_side}) and '
+                f'{fast_instrument_id}({fast_side}) due to '
+                f'cool down',
+                30
+            )
             return
 
         transaction = ArbitrageTransaction(
@@ -265,6 +281,7 @@ class Trader:
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.
+        self.on_going_arbitrage_count += 1
         asyncio.create_task(transaction.process())
 
 

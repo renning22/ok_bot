@@ -159,7 +159,6 @@ class ArbitrageTransaction:
             return order_executor.close_short_order()
 
     async def process(self):
-        singleton.trader.arbitrage_wip = True
         self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
@@ -167,7 +166,7 @@ class ArbitrageTransaction:
         self.logger.info(f'fast leg: {self.fast_leg}')
         result = await self._process()
         self.logger.info('=== arbitrage transaction ended ===')
-        singleton.trader.arbitrage_wip = False
+        singleton.trader.on_going_arbitrage_count -= 1
         return result
 
     async def _process(self):
