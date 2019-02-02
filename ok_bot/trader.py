@@ -102,36 +102,88 @@ class Trader:
             return
         history_gap = self.order_book.historical_mean_spread(product)
         current_spread = self.order_book.current_spread(product)
-        deviation = current_spread - history_gap
-        deviation_percent = deviation / abs(history_gap) * 100
-        threshold = self.aribitrage_gap_threshold(long_instrument,
-                                                  short_instrument)
 
-        min_price_gap = history_gap + threshold * abs(history_gap)
-        available_acount = amount_margin(
-            ask_stack=self.market_depth[long_instrument][0],
-            bid_stack=self.market_depth[short_instrument][1],
-            condition=lambda ask_price,
-            bid_price: bid_price - ask_price >= min_price_gap)
+        # The deviation is the larger the better (the more profitable).
+        #
+        #   deviation = (bid - ask) - (avg(bid) - avg(ask))
+        #             = (short_price - long_price) - ...
+        #
+        # Imagine deviation becomes deviation - 1.
+        # It could be either (or other cases equivalent) from:
+        #   1) short_price -> short_price - 1
+        #   2) long_price -> long_price + 1
+        #
+        # For either case we would profit 1 dollar (assume we opened
+        # 1-coin-value-equivalent contracts (after leverage) at on both side at
+        # price short_price/long_price.
+        #
+        # Assume the resilience drives deviation back to the half of the delta.
+        #
+        #   deviation --> deviation / 2
+        #
+        # And analogously, the total price differences would be:
+        #   total_price_diff = deviation / 2 - deviation
+        #
+        # Can it be an estimate of profit?
+        #
+        # For fee we can approximate it by 4 times of current average price:
+        #   total_fee = 4 * 0.030% * (short_price + long_price) / 2
+        deviation = current_spread - history_gap
+
+        current_price_average = self.order_book.current_price_average(product)
+
+        estimate_total_price_diff_after_resiliance = deviation / 2
+
+        estimate_profit_per_tran_per_dollar = (
+            estimate_total_price_diff_after_resiliance /
+            current_price_average)
+
+        estimate_profit_per_tran_per_contract = (
+            estimate_profit_per_tran_per_dollar
+            * constants.SINGLE_UNIT_IN_USD[singleton.coin_currency])
+
+        estimate_fee_per_tran_per_contract = (
+            4 * 0.00030 * constants.SINGLE_UNIT_IN_USD[singleton.coin_currency])
+
+        estimate_net_profit = estimate_profit_per_tran_per_contract - \
+            estimate_fee_per_tran_per_contract
+
+        # If esiamte_net_profit > 0, current spread is the minimum profitable
+        # gap.
+        min_price_gap = current_spread
+
+        # Close price gas is the target resilience point we estimate.
+        close_price_gap = (
+            min_price_gap - estimate_total_price_diff_after_resiliance)
+
         logging.log_every_n_seconds(
             logging.INFO,
-            '%s spread: %.3f '
-            'history_gap: %.3f\n deviation: %.4f(%.2f)%% '
-            'threshold: %.2f available: %d',
-            60,
-            product, current_spread, history_gap, deviation, deviation_percent,
-            threshold * 100, available_acount
+            '\nlong:%s , short:%s'
+            '\ncurrent_price_average: %s'
+            '\nestimate_total_price_diff_after_resiliance: %s'
+            '\nestimate_profit_per_tran_per_dollar: %s'
+            '\nestimate_profit_per_tran_per_contract: %s'
+            '\nestimate_fee_per_tran_per_contract: %s'
+            '\nestimate_net_profit: %s'
+            '\nmin_price_gap: %s'
+            '\nclose_price_gap: %s',
+            2,
+            long_instrument,
+            short_instrument,
+            current_price_average,
+            estimate_total_price_diff_after_resiliance,
+            estimate_profit_per_tran_per_dollar,
+            estimate_profit_per_tran_per_contract,
+            estimate_fee_per_tran_per_contract,
+            estimate_net_profit,
+            min_price_gap,
+            close_price_gap
         )
 
-        if available_acount >= \
-                constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-            # trigger arbitrage
-            close_price_gap = \
-                history_gap + self.close_aribitrage_gap_threshold(
-                    long_instrument, short_instrument) \
-                * abs(history_gap)
-            long_instrument_speed = self.order_book.price_speed(long_instrument,
-                                                                'ask')
+        # Ignore available amount for now.
+        if estimate_net_profit >= -0.01:
+            long_instrument_speed = self.order_book.price_speed(
+                long_instrument, 'ask')
             short_instrument_speed = self.order_book.price_speed(
                 short_instrument, 'bid')
             logging.info(f'Long instrument speed: {long_instrument_speed:.3f}, '
@@ -156,9 +208,13 @@ class Trader:
                     close_price_gap=close_price_gap
                 )
 
-    def trigger_arbitrage(self, slow_instrument_id, fast_instrument_id,
-                          slow_side, fast_side,
-                          open_price_gap, close_price_gap):
+    def trigger_arbitrage(self,
+                          slow_instrument_id,
+                          fast_instrument_id,
+                          slow_side,
+                          fast_side,
+                          open_price_gap,
+                          close_price_gap):
         if slow_side == LONG:
             amount = 0
             slow_price = self.market_depth[slow_instrument_id][0][0][0]
@@ -187,6 +243,7 @@ class Trader:
                             f'{fast_instrument_id}({fast_side}) due to '
                             f'cool down')
             return
+
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(
                 instrument_id=slow_instrument_id,
@@ -200,7 +257,8 @@ class Trader:
                 volume=1,
                 price=fast_price
             ),
-            close_price_gap_threshold=close_price_gap
+            close_price_gap_threshold=close_price_gap,
+            estimate_net_profit=estimate_net_profit
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.

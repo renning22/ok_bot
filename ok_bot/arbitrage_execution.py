@@ -1,10 +1,9 @@
 import asyncio
 import collections
 import concurrent
+import logging
 import time
 import uuid
-
-import logging
 
 from . import singleton
 from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
@@ -106,7 +105,8 @@ class ArbitrageTransaction:
     def __init__(self,
                  slow_leg,
                  fast_leg,
-                 close_price_gap_threshold):
+                 close_price_gap_threshold,
+                 estimate_net_profit=None):
         assert slow_leg.volume == fast_leg.volume
         self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
@@ -124,6 +124,7 @@ class ArbitrageTransaction:
                     close_price_gap=close_price_gap_threshold,
                     start_time_sec=self._start_time_sec,
                     end_time_sec=time.time(),
+                    estimate_net_profit=estimate_net_profit,
                     status=status)
         )
 

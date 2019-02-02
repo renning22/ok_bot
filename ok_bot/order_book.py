@@ -35,6 +35,12 @@ class OrderBook:
     def current_spread(self, cross_product):
         return Quant(self.table[cross_product].astype('float64').values[-1])
 
+    def current_price_average(self, cross_product):
+        for long_instrument, short_instrument, product in self._schema.markets_cartesian_product:
+            if product == cross_product:
+                return (self.ask_price(long_instrument) + self.bid_price(short_instrument)) / 2
+        raise RuntimeError(f'no such {cross_product}')
+
     def price_speed(self, instrument_id, ask_or_bid):
         assert ask_or_bid in ['ask', 'bid']
         column = Schema.make_column_name(
@@ -44,16 +50,16 @@ class OrderBook:
         return Quant(abs(current - history) / history)
 
     def ask_price(self, instrument_id):
-        return self.last_record[Schema.make_column_name(instrument_id, 'ask', 'price')]
+        return Quant(self.last_record[Schema.make_column_name(instrument_id, 'ask', 'price')])
 
     def bid_price(self, instrument_id):
-        return self.last_record[Schema.make_column_name(instrument_id, 'bid', 'price')]
+        return Quant(self.last_record[Schema.make_column_name(instrument_id, 'bid', 'price')])
 
     def ask_volume(self, instrument_id):
-        return self.last_record[Schema.make_column_name(instrument_id, 'ask', 'vol')]
+        return Quant(self.last_record[Schema.make_column_name(instrument_id, 'ask', 'vol')])
 
     def bid_volume(self, instrument_id):
-        return self.last_record[Schema.make_column_name(instrument_id, 'bid', 'vol')]
+        return Quant(self.last_record[Schema.make_column_name(instrument_id, 'bid', 'vol')])
 
     @property
     def row_num(self):
