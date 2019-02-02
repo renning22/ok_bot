@@ -70,13 +70,8 @@ class MockBookListerner_constantPriceGenerator:
         self._price = price
         self._vol = vol
         self._subscribers = {}
-        self._running = None
-        self._broadcast_loop = None
-
-    def start_broadcast_loop(self):
-        assert self._broadcast_loop is None
         self._running = True
-        self._broadcast_loop = asyncio.create_task(
+        self._broadcast_loop = asyncio.ensure_future(
             self._kick_off_broadcast_loop())
 
     async def shutdown_broadcast_loop(self):

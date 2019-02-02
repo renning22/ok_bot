@@ -56,7 +56,6 @@ class TestArbitrageExecution(absltest.TestCase):
             OPEN_POSITION_STATUS__SUCCEEDED)
 
         async def _testing_coroutine():
-            singleton.book_listener.start_broadcast_loop()
             week_instrument = 'ETH-USD-190201'
             quarter_instrument = 'ETH-USD-190329'
             transaction = ArbitrageTransaction(
