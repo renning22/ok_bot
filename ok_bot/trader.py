@@ -196,7 +196,8 @@ class Trader:
                     slow_side=SHORT,
                     fast_side=LONG,
                     open_price_gap=min_price_gap,
-                    close_price_gap=close_price_gap
+                    close_price_gap=close_price_gap,
+                    estimate_net_profit=estimate_net_profit
                 )
             else:
                 self.trigger_arbitrage(
@@ -205,7 +206,8 @@ class Trader:
                     slow_side=LONG,
                     fast_side=SHORT,
                     open_price_gap=min_price_gap,
-                    close_price_gap=close_price_gap
+                    close_price_gap=close_price_gap,
+                    estimate_net_profit=estimate_net_profit
                 )
 
     def trigger_arbitrage(self,
@@ -214,7 +216,8 @@ class Trader:
                           slow_side,
                           fast_side,
                           open_price_gap,
-                          close_price_gap):
+                          close_price_gap,
+                          estimate_net_profit):
         if slow_side == LONG:
             amount = 0
             slow_price = self.market_depth[slow_instrument_id][0][0][0]
