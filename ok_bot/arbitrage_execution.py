@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import concurrent
+import time
 import uuid
 
 import logging
@@ -92,7 +93,7 @@ class WaitingPriceConverge:
             logging.INFO,
             '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
             'available_amount: %d',
-            2,
+            10,
             self._ask_stack[0][0] - self._bid_stack[0][0],
             self._transaction.close_price_gap_threshold,
             available_amount
@@ -106,14 +107,25 @@ class ArbitrageTransaction:
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
+        assert slow_leg.volume == fast_leg.volume
         self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
         self.logger = create_transaction_logger(str(self.id))
+        self._start_time_sec = time.time()
         self._db_transaction_status_updater = (
-            lambda status: singleton.db.async_update_transaction(
-                transaction_id=self.id, status=status))
+            lambda status:
+                singleton.db.async_update_transaction(
+                    transaction_id=self.id,
+                    vol=self.slow_leg.volume,
+                    slow_price=self.slow_leg.price,
+                    fast_price=self.fast_leg.price,
+                    close_price_gap=close_price_gap_threshold,
+                    start_time_sec=self._start_time_sec,
+                    end_time_sec=time.time(),
+                    status=status)
+        )
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
@@ -202,13 +214,14 @@ class ArbitrageTransaction:
                 # timeout, close the position
                 self.logger.info('[CONVERGE TIMEOUT] prices failed to converge '
                                  'in time, closing both legs')
+                self._db_transaction_status_updater('ended_converge_timeout')
             else:
                 self.logger.info(f'[CONVERGED] prices converged with enough '
                                  f'margin({converge}), closing both legs')
+                self._db_transaction_status_updater('ended_normally')
             fast_order = self.close_position(self.fast_leg)
             slow_order = self.close_position(self.slow_leg)
             await asyncio.gather(fast_order, slow_order)
-            self._db_transaction_status_updater('ended_normally')
 
         return True
 
