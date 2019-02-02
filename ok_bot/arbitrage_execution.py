@@ -93,7 +93,7 @@ class WaitingPriceConverge:
             logging.INFO,
             '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
             'available_amount: %d',
-            2,
+            10,
             self._ask_stack[0][0] - self._bid_stack[0][0],
             self._transaction.close_price_gap_threshold,
             available_amount
