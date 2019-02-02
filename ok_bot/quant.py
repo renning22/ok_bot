@@ -1,4 +1,5 @@
 from decimal import Decimal, getcontext
+from json import JSONEncoder
 
 getcontext().prec = 8
 
@@ -19,6 +20,17 @@ class Quant(Decimal):
 
     def __repr__(self):
         return str(self)
+
+    def to_json(self):
+        return str(self)
+
+
+def _default(self, obj):
+    return getattr(obj.__class__, "to_json", _default.default)(obj)
+
+
+_default.default = JSONEncoder().default
+JSONEncoder.default = _default
 
 
 # https://docs.python.org/3/reference/datamodel.html?highlight=__int__#emulating-numeric-types
