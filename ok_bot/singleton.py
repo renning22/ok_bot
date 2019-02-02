@@ -11,6 +11,7 @@ rest_api = None
 schema = None
 trader = None
 websocket = None
+coin_currency = None
 
 
 def initialize_objects(currency):
@@ -32,7 +33,9 @@ def initialize_objects(currency):
     global schema
     global trader
     global websocket
+    global coin_currency
 
+    coin_currency = currency
     loop = asyncio.get_event_loop()
 
     db = ProdDb()

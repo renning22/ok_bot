@@ -1,10 +1,19 @@
 MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
+TRADING_VOLUME = 1  # 1 "张"
+SINGLE_UNIT_IN_USD = {
+    'BTC': 100.0,
+    'ETH': 10.0,
+}
 
 # Trader
 MIN_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
+MIN_ESTIMATE_PROFIT = 1e-5
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 
 # Arbitrage
+# According to https://www.okex.com/pages/products/fees.html, for Lv1
+# the fee is either 0.02% or 0.03%. We use 0.03% as estimate.
+FEE_RATE = 0.0003
 SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
 FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
 OPEN_THRESHOLDS = {
