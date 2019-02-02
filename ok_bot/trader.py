@@ -181,7 +181,7 @@ class Trader:
         )
 
         # Ignore available amount for now.
-        if estimate_net_profit > 0:
+        if estimate_net_profit >= -0.012:
             long_instrument_speed = self.order_book.price_speed(
                 long_instrument, 'ask')
             short_instrument_speed = self.order_book.price_speed(
