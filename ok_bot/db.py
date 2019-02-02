@@ -123,6 +123,9 @@ class _BaseDb:
             self._cursor_creator,
             **kwargs)
 
+    def shutdown(self, wait=True):
+        return self._executor.shutdown(wait=True)
+
 
 class ProdDb(_BaseDb):
     def __init__(self):
