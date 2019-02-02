@@ -10,7 +10,7 @@ from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from .logger import create_transaction_logger
+from .logger import create_transaction_logger, init_global_logger
 from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
 from .util import amount_margin
 
@@ -228,6 +228,7 @@ class ArbitrageTransaction:
 
 
 async def _test_coroutine():
+    from .quant import Quant
     await singleton.websocket.ready
     logging.info('WebSocket subscription finished')
     week_instrument = singleton.schema.all_instrument_ids[0]
@@ -235,8 +236,8 @@ async def _test_coroutine():
     transaction = ArbitrageTransaction(
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
-                              volume=1,
-                              price=100.0),
+                              volume=Quant(1),
+                              price=Quant(120.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
                               volume=1,
@@ -245,12 +246,8 @@ async def _test_coroutine():
     )
     await transaction.process()
 
-
-def _testing(_):
+if __name__ == '__main__':
+    init_global_logger(log_level=logging.INFO)
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     asyncio.ensure_future(_test_coroutine())
     singleton.start_loop()
-
-
-if __name__ == '__main__':
-    app.run(_testing)
