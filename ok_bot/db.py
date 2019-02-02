@@ -1,6 +1,7 @@
 # TODO: convert _testing to unittest
 
 import sqlite3
+import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import logging
@@ -15,10 +16,20 @@ def _update_transaction(cursor_creator, **kwargs):
             c.execute('''
                 INSERT OR REPLACE INTO runtime_transactions(
                     transaction_id,
+                    slow_price,
+                    fast_price,
+                    close_price_gap,
+                    start_time_sec,
+                    converge_time_sec,
                     status
                 )
                 VALUES (
                     :transaction_id,
+                    :slow_price,
+                    :fast_price,
+                    :close_price_gap,
+                    :start_time_sec,
+                    :converge_time_sec,
                     :status
                 );
             ''', kwargs)
@@ -86,25 +97,30 @@ class _BaseDb:
             with self._cursor_creator() as c:
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_transactions (
-                    transaction_id TEXT PRIMARY KEY,
-                    status TEXT,
-                    last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
+                    transaction_id     TEXT PRIMARY KEY,
+                    slow_price         NUMERIC,
+                    fast_price         NUMERIC,
+                    close_price_gap    NUMERIC,
+                    start_time_sec     NUMERIC,
+                    converge_time_sec  NUMERIC,
+                    status             TEXT,
+                    last_update_time   TEXT DEFAULT (DATETIME('now','localtime'))
                 );
                 ''')
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_orders (
-                    order_id INTEGER PRIMARY KEY,
-                    transaction_id TEXT,
-                    comment TEXT,
-                    status INTEGER,
-                    size INTEGER,
-                    filled_qty INTEGER,
-                    price DOUBLE,
-                    price_avg DOUBLE,
-                    fee DOUBLE,
-                    type INTEGER,
-                    timestamp TEXT,
-                    last_update_time TEXT DEFAULT (DATETIME('now','localtime'))
+                    order_id            INTEGER PRIMARY KEY,
+                    transaction_id      TEXT,
+                    comment             TEXT,
+                    status              INTEGER,
+                    size                INTEGER,
+                    filled_qty          INTEGER,
+                    price               NUMERIC,
+                    price_avg           NUMERIC,
+                    fee                 NUMERIC,
+                    type                INTEGER,
+                    timestamp           TEXT,
+                    last_update_time    TEXT DEFAULT (DATETIME('now','localtime'))
                 );
                 ''')
         except:
@@ -151,6 +167,11 @@ class DevDb(_BaseDb):
 def _testing():
     db = DevDb()
     db.async_update_transaction(transaction_id='transaction-id-123',
+                                slow_price=10.111,
+                                fast_price=20.000,
+                                close_price_gap='1.01',
+                                start_time_sec=time.time(),
+                                converge_time_sec=None,
                                 status='ended')
     db.async_update_order(order_id='2217655012660224',
                           transaction_id=None,
