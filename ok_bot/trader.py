@@ -1,14 +1,12 @@
 import asyncio
-from decimal import Decimal
 import logging
 
 import numpy as np
 
-from . import constants, singleton
+from . import constants, logger, singleton
 from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
                                   ArbitrageTransaction)
 from .util import amount_margin
-from . import logger
 
 
 class Trader:
@@ -227,4 +225,3 @@ if __name__ == '__main__':
     singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
     logging.info('Manual test started')
     singleton.start_loop()
-
