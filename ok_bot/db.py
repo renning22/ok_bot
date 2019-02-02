@@ -3,6 +3,7 @@
 import sqlite3
 import time
 from concurrent.futures import ProcessPoolExecutor
+from decimal import Decimal
 from functools import partial
 import logging
 
@@ -10,34 +11,48 @@ DEV_DB = 'dev.db'
 PROD_DB = 'prod.db'
 
 
+def _sql_type_safe_filter(kwargs):
+    ret = {}
+    for k, v in kwargs.items():
+        if isinstance(v, Decimal):
+            ret[k] = str(v)
+        else:
+            ret[k] = v
+    return ret
+
+
 def _update_transaction(cursor_creator, **kwargs):
+    kwargs = _sql_type_safe_filter(kwargs)
     try:
         with cursor_creator() as c:
             c.execute('''
                 INSERT OR REPLACE INTO runtime_transactions(
                     transaction_id,
+                    vol,
                     slow_price,
                     fast_price,
                     close_price_gap,
                     start_time_sec,
-                    converge_time_sec,
+                    end_time_sec,
                     status
                 )
                 VALUES (
                     :transaction_id,
+                    :vol,
                     :slow_price,
                     :fast_price,
                     :close_price_gap,
                     :start_time_sec,
-                    :converge_time_sec,
+                    :end_time_sec,
                     :status
                 );
             ''', kwargs)
-    except:
+    except sqlite3.OperationalError:
         logging.error('exception in _update_transaction', exc_info=True)
 
 
 def _update_order(cursor_creator, **kwargs):
+    kwargs = _sql_type_safe_filter(kwargs)
     try:
         with cursor_creator() as c:
             c.execute('''
@@ -68,7 +83,7 @@ def _update_order(cursor_creator, **kwargs):
                     :timestamp
                 );
             ''', kwargs)
-    except:
+    except sqlite3.OperationalError:
         logging.error('exception in _update_order', exc_info=True)
 
 
@@ -98,11 +113,12 @@ class _BaseDb:
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_transactions (
                     transaction_id     TEXT PRIMARY KEY,
+                    vol                NUMERIC,
                     slow_price         NUMERIC,
                     fast_price         NUMERIC,
                     close_price_gap    NUMERIC,
                     start_time_sec     NUMERIC,
-                    converge_time_sec  NUMERIC,
+                    end_time_sec       NUMERIC,
                     status             TEXT,
                     last_update_time   TEXT DEFAULT (DATETIME('now','localtime'))
                 );
@@ -123,7 +139,7 @@ class _BaseDb:
                     last_update_time    TEXT DEFAULT (DATETIME('now','localtime'))
                 );
                 ''')
-        except:
+        except sqlite3.OperationalError:
             logging.error('exception in _update_order', exc_info=True)
 
     def async_update_transaction(self, **kwargs):
@@ -167,11 +183,12 @@ class DevDb(_BaseDb):
 def _testing():
     db = DevDb()
     db.async_update_transaction(transaction_id='transaction-id-123',
+                                vol=5,
                                 slow_price=10.111,
-                                fast_price=20.000,
+                                fast_price=Decimal('20.001'),
                                 close_price_gap='1.01',
                                 start_time_sec=time.time(),
-                                converge_time_sec=None,
+                                end_time_sec=None,
                                 status='ended')
     db.async_update_order(order_id='2217655012660224',
                           transaction_id=None,

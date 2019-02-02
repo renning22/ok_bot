@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import concurrent
+import time
 import uuid
 
 import logging
@@ -106,14 +107,25 @@ class ArbitrageTransaction:
                  slow_leg,
                  fast_leg,
                  close_price_gap_threshold):
+        assert slow_leg.volume == fast_leg.volume
         self.id = str(uuid.uuid4())
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
         self.logger = create_transaction_logger(str(self.id))
+        self._start_time_sec = time.time()
         self._db_transaction_status_updater = (
-            lambda status: singleton.db.async_update_transaction(
-                transaction_id=self.id, status=status))
+            lambda status:
+                singleton.db.async_update_transaction(
+                    transaction_id=self.id,
+                    vol=self.slow_leg.volume,
+                    slow_price=self.slow_leg.price,
+                    fast_price=self.fast_leg.price,
+                    close_price_gap=close_price_gap_threshold,
+                    start_time_sec=self._start_time_sec,
+                    end_time_sec=time.time(),
+                    status=status)
+        )
 
     def open_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
