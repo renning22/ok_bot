@@ -1,8 +1,9 @@
+# TODO: convert _testing to unittest
+
 import sqlite3
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-
-from absl import app, logging
+import logging
 
 DEV_DB = 'dev.db'
 PROD_DB = 'prod.db'
@@ -147,7 +148,7 @@ class DevDb(_BaseDb):
         self.create_tables_if_not_exist()
 
 
-def _testing(_):
+def _testing():
     db = DevDb()
     db.async_update_transaction(transaction_id='transaction-id-123',
                                 status='ended')
@@ -166,4 +167,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()

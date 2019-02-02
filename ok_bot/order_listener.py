@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict
 
-from absl import app, logging
+import logging
 
 from . import constants, singleton
 
@@ -135,7 +135,7 @@ async def _testing_coroutine(instrument_id):
     singleton.order_listener.subscribe(order_id, trader)
 
 
-def _testing(_):
+def _testing():
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     logging.info('instruments: %s',
                  singleton.schema.all_instrument_ids)
@@ -146,4 +146,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()

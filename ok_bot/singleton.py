@@ -1,5 +1,7 @@
 import asyncio
 
+from . import logger
+
 book_listener = None
 db = None
 loop = None
@@ -12,6 +14,8 @@ websocket = None
 
 
 def initialize_objects(currency):
+    logger
+
     from .book_listener import BookListener
     from .db import ProdDb
     from .order_book import OrderBook

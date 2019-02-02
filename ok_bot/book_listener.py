@@ -1,9 +1,8 @@
 from collections import defaultdict
 from decimal import Decimal
 
-from absl import app, logging
+import logging
 
-from . import singleton
 
 
 class BookListener:
@@ -12,7 +11,7 @@ class BookListener:
         self.subscribers = defaultdict(set)
 
     def subscribe(self, instrument_id, responder):
-        '''
+        """
         :param instrument_id:
         :param responder: responder need to implement
                       tick_received(instrument_id,
@@ -22,7 +21,7 @@ class BookListener:
                                     bid_vols,
                                     timestamp)
         :return: None
-        '''
+        """
         if not hasattr(responder, 'tick_received'):
             raise Exception(
                 f"{type(responder)} doesn't have tick_received method")

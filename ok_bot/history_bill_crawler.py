@@ -8,10 +8,11 @@ import sqlite3
 import signal
 import sys
 
-from absl import logging
+import logging
 import argparse
 
 from .rest_api_v3 import RestApiV3
+from .logger import init_global_logger
 
 SLEEP_TIME_IN_SECOND = 60 * 12  # 12 hours
 
@@ -159,7 +160,7 @@ class BillCrawler:
 
 
 if __name__ == '__main__':
-    logging.get_absl_logger().setLevel(logging.DEBUG)
+    init_global_logger()
     args = argparse.ArgumentParser(
         description='Crawl completed order from OKEX')
     args.add_argument('--currency',

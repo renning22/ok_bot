@@ -3,7 +3,7 @@ import pprint
 import time
 
 import numpy as np
-from absl import logging
+import logging
 
 
 class MockTrader:

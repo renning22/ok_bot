@@ -3,6 +3,7 @@ import logging
 import os
 import socket
 import time
+import importlib
 import timeit
 
 from . import slack
@@ -38,6 +39,17 @@ def _seconds_have_elapsed(token, num_seconds):
         return True
     else:
         return False
+
+
+def log_every_n_seconds(level, msg, n_seconds, *args):
+    should_log = _seconds_have_elapsed(
+        logging.getLogger().findCaller(), n_seconds)
+    if should_log:
+        logging.log(level, msg, *args)
+
+
+# Monkey patch to logging
+logging.log_every_n_seconds = log_every_n_seconds
 
 
 class TransactionAdapter(logging.LoggerAdapter):
@@ -83,6 +95,10 @@ def init_global_logger(
         log_to_slack=False,
         log_level=logging.INFO):
     global _logging_transaction_to_slack
+
+    # basicConfig won't work if logging module is imported
+    # already, so reload it.
+    importlib.reload(logging)
     logging.basicConfig(
         level=log_level,
         format=LOG_FORMAT,
@@ -113,6 +129,6 @@ def _testing():
 
 
 if __name__ == '__main__':
-    init_global_logger(log_to_file=True, log_level=logging.DEBUG)
+    init_global_logger(log_to_file=False, log_level=logging.DEBUG)
     logging.debug('Testing transaction logging')
     _testing()

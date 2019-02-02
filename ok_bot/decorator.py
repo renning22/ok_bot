@@ -1,4 +1,4 @@
-from absl import app, logging
+import logging
 
 
 def async_try_catch_loop(f):
@@ -23,8 +23,7 @@ def try_catch_loop(f):
     return applicator
 
 
-def _testing(_):
-
+def _testing():
     @try_catch_loop
     def foo():
         from time import sleep
@@ -35,4 +34,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()

@@ -1,6 +1,6 @@
 import pprint
 
-from absl import app, logging
+import logging
 
 from . import singleton
 
@@ -76,8 +76,10 @@ class Schema:
         return columns
 
 
-def _testing(_):
+def _testing():
     from .rest_api_v3 import RestApiV3
+    from .logger import init_global_logger
+    init_global_logger()
     singleton.rest_api = RestApiV3()
     schema = Schema('BTC')
     logging.info('\n%s', pprint.pformat(schema.all_instrument_ids))
@@ -86,4 +88,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()

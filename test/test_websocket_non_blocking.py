@@ -1,11 +1,10 @@
 import asyncio
 import pprint
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+import unittest
 
 import requests
-from absl import logging
-from absl.testing import absltest
+import logging
 
 from ok_bot import singleton
 
@@ -14,7 +13,7 @@ _CRAWL_TIMES = 10
 _CRAWL_TEST_TIMEOUT_SEC = 15
 
 
-class TestWebsocketNonblocking(absltest.TestCase):
+class TestWebsocketNonblocking(unittest.TestCase):
     def test_non_blocking(self):
         async def crawl_job():
             crawled_times = 0
@@ -32,16 +31,16 @@ class TestWebsocketNonblocking(absltest.TestCase):
             await asyncio.sleep(_CRAWL_TEST_TIMEOUT_SEC)
 
         async def _testing_coroutine(test_class):
-            with self.assertLogs(logging.get_absl_logger(), level='INFO') as cm:
+            with self.assertLogs(logging.getLogger(), level='INFO') as cm:
                 t = await asyncio.gather(crawl_job(), sleeper())
                 crawled_times = t[0]
                 log_message = cm.output
 
             print(pprint.pformat(log_message))
             test_class.assertIn(
-                'INFO:absl:Sending heartbeat message', log_message)
+                'INFO:root:Sending heartbeat message', log_message)
             test_class.assertIn(
-                'INFO:absl:Received heartbeat message', log_message)
+                'INFO:root:Received heartbeat message', log_message)
             test_class.assertEqual(
                 crawled_times, _CRAWL_TIMES,
                 f'crawled {crawled_times} expected {_CRAWL_TIMES}')
@@ -60,4 +59,6 @@ class TestWebsocketNonblocking(absltest.TestCase):
 
 
 if __name__ == '__main__':
-    absltest.main()
+    from ok_bot.logger import init_global_logger
+    init_global_logger()
+    unittest.main()

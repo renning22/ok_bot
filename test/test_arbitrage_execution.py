@@ -1,9 +1,8 @@
 import asyncio
 import time
 from unittest.mock import MagicMock, call, patch
-
-from absl import logging
-from absl.testing import absltest
+import logging
+import unittest
 
 from ok_bot import singleton
 from ok_bot.arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
@@ -25,7 +24,7 @@ class AsyncMock(MagicMock):
 
 @patch('uuid.uuid4', return_value='11111111-1111-1111-1111-111111111111')
 @patch('ok_bot.arbitrage_execution.OrderExecutor')
-class TestArbitrageExecution(absltest.TestCase):
+class TestArbitrageExecution(unittest.TestCase):
 
     def setUp(self):
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
@@ -111,4 +110,4 @@ class TestArbitrageExecution(absltest.TestCase):
 
 
 if __name__ == '__main__':
-    absltest.main()
+    unittest.main()

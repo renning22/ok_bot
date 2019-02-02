@@ -2,7 +2,7 @@ import datetime
 
 import numpy as np
 import pandas as pd
-from absl import logging
+import logging
 
 from . import constants, singleton
 from .schema import Schema

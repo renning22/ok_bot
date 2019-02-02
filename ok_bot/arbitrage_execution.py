@@ -3,7 +3,7 @@ import collections
 import concurrent
 import uuid
 
-from absl import app, logging
+import logging
 
 from . import singleton
 from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,

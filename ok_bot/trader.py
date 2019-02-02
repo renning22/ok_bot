@@ -1,13 +1,14 @@
 import asyncio
 from decimal import Decimal
+import logging
 
 import numpy as np
-from absl import logging
 
 from . import constants, singleton
 from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
                                   ArbitrageTransaction)
 from .util import amount_margin
+from . import logger
 
 
 class Trader:
@@ -211,16 +212,19 @@ class Trader:
 
 
 if __name__ == '__main__':
-    def _mock_trigger_arbitrage(trans_id, slow_leg, fast_leg, close_threshold):
+    def _mock_trigger_arbitrage(
+            slow_instrument_id, fast_instrument_id,
+            slow_side, fast_side,
+            open_price_gap, close_price_gap):
         logging.info(
-            f'trigger arbitrage({trans_id}) on {slow_leg} and {fast_leg},'
-            f' close threshold: {close_threshold}')
+            f'trigger arbitrage({slow_instrument_id})'
+            f' and ({fast_instrument_id})')
 
-    def main(_):
-        singleton.initialize_objects_with_dev_db('ETH')
-        singleton.trader.min_time_window = np.timedelta64(3, 's')
-        singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
-        singleton.start_loop()
+    logger.init_global_logger(log_level=logging.INFO)
+    constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE = -1  # Ensure trigger
+    singleton.initialize_objects('ETH')
+    singleton.trader.min_time_window = np.timedelta64(3, 's')
+    singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
+    logging.info('Manual test started')
+    singleton.start_loop()
 
-    from absl import app
-    app.run(main)

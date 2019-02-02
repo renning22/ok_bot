@@ -1,8 +1,9 @@
 import asyncio
 from unittest.mock import MagicMock
+import unittest
 
-from absl import logging
-from absl.testing import absltest
+import logging
+
 
 from ok_bot import constants, db, order_executor, singleton
 
@@ -29,7 +30,7 @@ class MockOrderListerner_cancelImmediately:
         pass
 
 
-class TestOrderExecutor(absltest.TestCase):
+class TestOrderExecutor(unittest.TestCase):
 
     def setUp(self):
         singleton.db = db.DevDb()
@@ -75,4 +76,4 @@ class TestOrderExecutor(absltest.TestCase):
 
 
 if __name__ == '__main__':
-    absltest.main()
+    unittest.main()

@@ -4,7 +4,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from absl import app, logging
+import logging
 
 from . import singleton
 from .api_v3.okex_sdk.futures_api import FutureAPI
@@ -78,7 +78,8 @@ class RestApiV3:
             logging.error(f'Failed to place order: {ex}')
             return None, ex.code
 
-    def open_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
+    def open_long_order(self, instrument_id, amount, price,
+                        custom_order_id=None, is_market_order=False):
         return singleton.loop.run_in_executor(
             self._executor,
             self.create_order,
@@ -90,7 +91,8 @@ class RestApiV3:
             is_market_order
         )
 
-    def open_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
+    def open_short_order(self, instrument_id, amount, price,
+                         custom_order_id=None, is_market_order=False):
         return singleton.loop.run_in_executor(
             self._executor,
             self.create_order,
@@ -102,7 +104,8 @@ class RestApiV3:
             is_market_order
         )
 
-    def close_long_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
+    def close_long_order(self, instrument_id, amount, price,
+                         custom_order_id=None, is_market_order=False):
         return singleton.loop.run_in_executor(
             self._executor,
             self.create_order,
@@ -114,7 +117,8 @@ class RestApiV3:
             is_market_order
         )
 
-    def close_short_order(self, instrument_id, amount, price, custom_order_id=None, is_market_order=False):
+    def close_short_order(self, instrument_id, amount, price,
+                          custom_order_id=None, is_market_order=False):
         return singleton.loop.run_in_executor(
             self._executor,
             self.create_order,
@@ -188,18 +192,23 @@ class RestApiV3:
                 break
         return ret
 
-async def _testing_coroutine(i, api):
-    logging.info('start %s', i)
-    r = await api.get_all_instrument_ids_blocking('ETH')
-    logging.info('end %s = %s', i, r)
+
+async def _testing_coroutine(api, instrument):
+    logging.info('start %s', instrument)
+    r = await api.close_long_order('ETH', 1, 1000)
+    logging.info('end %s = %s', instrument, r)
 
 
-def _testing(_):
+def _testing():
+    from .logger import init_global_logger
+    init_global_logger()
     singleton.loop = asyncio.get_event_loop()
     api = RestApiV3()
-    coroutines = [_testing_coroutine(i, api) for i in range(5)]
+    instruments = api.get_all_instrument_ids_blocking('ETH')
+    coroutines = [_testing_coroutine(api, instrument)
+                  for instrument in instruments]
     singleton.loop.run_until_complete(asyncio.gather(*coroutines))
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()
