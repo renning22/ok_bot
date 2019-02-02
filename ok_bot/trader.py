@@ -101,7 +101,7 @@ class Trader:
                 logging.CRITICAL,
                 'skip process_pair because there are %s on going arbitrages',
                 30,
-                on_going_arbitrage_count
+                self.on_going_arbitrage_count
             )
             return
 
@@ -185,7 +185,7 @@ class Trader:
             estimate_net_profit,
             min_price_gap,
             close_price_gap,
-            on_going_arbitrage_count
+            self.on_going_arbitrage_count
         )
 
         # Ignore available amount for now.
