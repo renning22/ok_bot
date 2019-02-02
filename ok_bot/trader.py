@@ -157,7 +157,7 @@ class Trader:
             min_price_gap - estimate_total_price_diff_after_resiliance)
 
         logging.log_every_n_seconds(
-            logging.INFO,
+            logging.CRITICAL,
             '\nlong:%s , short:%s'
             '\ncurrent_price_average: %s'
             '\nestimate_total_price_diff_after_resiliance: %s'
@@ -167,7 +167,7 @@ class Trader:
             '\nestimate_net_profit: %s'
             '\nmin_price_gap: %s'
             '\nclose_price_gap: %s',
-            2,
+            60,
             long_instrument,
             short_instrument,
             current_price_average,
@@ -181,7 +181,7 @@ class Trader:
         )
 
         # Ignore available amount for now.
-        if estimate_net_profit >= -0.01:
+        if estimate_net_profit > 0:
             long_instrument_speed = self.order_book.price_speed(
                 long_instrument, 'ask')
             short_instrument_speed = self.order_book.price_speed(
