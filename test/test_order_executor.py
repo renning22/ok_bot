@@ -1,11 +1,9 @@
 import asyncio
-from unittest.mock import MagicMock
-import unittest
-
 import logging
+import unittest
+from unittest.mock import MagicMock
 
-
-from ok_bot import constants, db, order_executor, singleton
+from ok_bot import constants, db, logger, order_executor, singleton
 
 _FAKE_ORDER_ID = 12345
 _SIZE = 1
@@ -33,6 +31,7 @@ class MockOrderListerner_cancelImmediately:
 class TestOrderExecutor(unittest.TestCase):
 
     def setUp(self):
+        logger.init_global_logger(log_level=logging.INFO)
         singleton.db = db.DevDb()
         singleton.db.create_tables_if_not_exist()
         singleton.rest_api = AsyncMock()

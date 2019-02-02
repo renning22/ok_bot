@@ -40,7 +40,7 @@ python -m ok_bot --log_transaction_to_slack
 ### Unit Test
 Run all unit tests
 ```sh
-python -m test
+python -m unittest -v
 ```
 
 Run individual test class
@@ -48,14 +48,8 @@ Run individual test class
 python -m test.test_arbitrage_execution
 ```
 
-Run all unit tests and dump the report to XML.
-```sh
-python -m test -xml_output_file='1.xml'
-```
-The report can be sent to Jenkins later.
-
 ### Accounting checks
-Read logs from existing arbitrage transactions and compare with OKEX reports. 
+Read logs from existing arbitrage transactions and compare with OKEX reports.
 Generate reports. Check consistency and generate reports.
 
 Colab notebook: https://colab.research.google.com/drive/1q9i0ItGftw5Mf1lGhKuFSi4Y1hfF0XI4

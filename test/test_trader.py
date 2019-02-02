@@ -1,10 +1,9 @@
 import asyncio
-from unittest.mock import MagicMock
-from unittest import TestCase, main
-
 import logging
+from unittest import TestCase
+from unittest.mock import MagicMock
 
-from ok_bot import constants, singleton
+from ok_bot import constants, logger, singleton
 from ok_bot.order_executor import OrderExecutor
 
 
@@ -15,6 +14,7 @@ class AsyncMock(MagicMock):
 
 class TestTrader(TestCase):
     def setUp(self):
+        logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
@@ -44,6 +44,4 @@ class TestTrader(TestCase):
 
 
 if __name__ == '__main__':
-    from ok_bot.logger import init_global_logger
-    init_global_logger()
-    main()
+    unittest.main()

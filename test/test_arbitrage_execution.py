@@ -1,10 +1,10 @@
 import asyncio
-import time
-from unittest.mock import MagicMock, call, patch
 import logging
+import time
 import unittest
+from unittest.mock import MagicMock, call, patch
 
-from ok_bot import singleton
+from ok_bot import logger, singleton
 from ok_bot.arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
 from ok_bot.constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
@@ -27,6 +27,7 @@ class AsyncMock(MagicMock):
 class TestArbitrageExecution(unittest.TestCase):
 
     def setUp(self):
+        logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
