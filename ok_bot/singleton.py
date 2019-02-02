@@ -14,8 +14,6 @@ websocket = None
 
 
 def initialize_objects(currency):
-    logger
-
     from .book_listener import BookListener
     from .db import ProdDb
     from .order_book import OrderBook

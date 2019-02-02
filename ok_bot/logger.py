@@ -10,6 +10,8 @@ from . import slack
 
 LOG_FORMAT = '%(levelname)-7s %(asctime)s %(filename)s:%(lineno)4d] %(message)s'
 _logging_transaction_to_slack = False
+_USER_NAME = getpass.getuser()
+_HOST_NAME = socket.gethostname()
 
 os.makedirs('log', exist_ok=True)
 os.makedirs('transaction', exist_ok=True)
@@ -72,9 +74,7 @@ class TransactionAdapter(logging.LoggerAdapter):
 
 class SlackHandler(logging.Handler):
     def format(self, record):
-        user_name = getpass.getuser()
-        host_name = socket.gethostname()
-        prefix = '{}@{} '.format(user_name, host_name)
+        prefix = '{}@{} '.format(_USER_NAME, _HOST_NAME)
         return prefix + super().format(record)
 
     def emit(self, record):
@@ -108,7 +108,7 @@ def init_global_logger(
         fh.setFormatter(logging.Formatter(LOG_FORMAT))
         logging.getLogger().addHandler(fh)
     if log_to_slack:
-        logging.getLogger().addHandler(SlackHandler('INFO'))
+        logging.getLogger().addHandler(SlackHandler('CRITICAL'))
         _logging_transaction_to_slack = True
 
 

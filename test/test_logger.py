@@ -19,9 +19,9 @@ def temp_log_file():
     try:
         yield fd
     finally:
+        fd.close()
         if os.path.exists(tmp_log_file):
             os.remove(tmp_log_file)
-        fd.close()
 
 
 class TestLogger(unittest.TestCase):
