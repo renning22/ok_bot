@@ -3,7 +3,7 @@ import concurrent
 import pprint
 from collections import namedtuple
 
-from absl import app, logging
+import logging
 
 from . import constants, singleton
 
@@ -281,11 +281,13 @@ async def _testing_coroutine(instrument_id):
                              transaction_id='fake_transaction_id')
 
     logging.info('open_long_position has been called')
-    order_status = await executor.open_long_position()
+    order_status = await executor.close_long_order()
     logging.info('execution result: %s', order_status)
 
 
-def _testing(_):
+def _testing():
+    from .logger import init_global_logger
+    init_global_logger()
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     asyncio.ensure_future(_testing_coroutine(
@@ -294,4 +296,4 @@ def _testing(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    _testing()

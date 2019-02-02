@@ -11,7 +11,7 @@ from decimal import Decimal
 import dateutil.parser as dp
 import requests
 import websockets
-from absl import app, logging
+import logging
 
 from . import api_v3_key_reader, decorator, singleton
 
@@ -294,7 +294,7 @@ class WebsocketApi:
         asyncio.ensure_future(self._read_loop())
 
 
-def _testing_non_blocking(_):
+def _testing_non_blocking():
     from . import singleton
     from datetime import datetime
 
@@ -319,4 +319,4 @@ def _testing_non_blocking(_):
 
 
 if __name__ == '__main__':
-    app.run(_testing_non_blocking)
+    _testing_non_blocking()

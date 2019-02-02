@@ -1,5 +1,7 @@
 import asyncio
 
+from . import logger
+
 book_listener = None
 db = None
 loop = None

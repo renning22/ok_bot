@@ -1,18 +1,17 @@
 import getpass
-import logging as py_logging
+import logging
 import os
 import socket
 import time
+import importlib
 import timeit
-
-import absl
-from absl import app, flags, logging
-from absl.logging import DEBUG, ERROR, FATAL, INFO, WARNING
 
 from . import slack
 
-_USERNAME = getpass.getuser()
-_HOSTNAME = socket.gethostname()
+LOG_FORMAT = '%(levelname)-7s %(asctime)s %(filename)s:%(lineno)4d] %(message)s'
+_logging_transaction_to_slack = False
+_USER_NAME = getpass.getuser()
+_HOST_NAME = socket.gethostname()
 
 os.makedirs('log', exist_ok=True)
 os.makedirs('transaction', exist_ok=True)
@@ -44,7 +43,18 @@ def _seconds_have_elapsed(token, num_seconds):
         return False
 
 
-class TransactionAdapter(py_logging.LoggerAdapter):
+def log_every_n_seconds(level, msg, n_seconds, *args):
+    should_log = _seconds_have_elapsed(
+        logging.getLogger().findCaller(), n_seconds)
+    if should_log:
+        logging.log(level, msg, *args)
+
+
+# Monkey patch to logging
+logging.log_every_n_seconds = log_every_n_seconds
+
+
+class TransactionAdapter(logging.LoggerAdapter):
     """Add transaction id/relative time."""
 
     def __init__(self, *argv, **kwargs):
@@ -57,47 +67,14 @@ class TransactionAdapter(py_logging.LoggerAdapter):
 
     def log_every_n_seconds(self, level, msg, n_seconds, *args):
         should_log = _seconds_have_elapsed(
-            logging.get_absl_logger().findCaller(), n_seconds)
-        self.log_if(level, msg, should_log, *args)
-
-    def log_if(self, level, msg, condition, *args):
-        if condition:
+            logging.getLogger().findCaller(), n_seconds)
+        if should_log:
             self.log(level, msg, *args)
 
-    def log(self, level, msg, *args, **kwargs):
-        if level > absl.logging.converter.ABSL_DEBUG:
-            standard_level = absl.logging.converter.STANDARD_DEBUG - \
-                (level - 1)
-        else:
-            if level < absl.logging.converter.ABSL_FATAL:
-                level = absl.logging.converter.ABSL_FATAL
-            standard_level = absl.logging.converter.absl_to_standard(level)
 
-        super().log(standard_level, msg, *args, **kwargs)
-
-    def fatal(self, msg, *args, **kwargs):
-        self.log(FATAL, msg, *args, **kwargs)
-
-    def error(self, msg, *args, **kwargs):
-        self.log(ERROR, msg, *args, **kwargs)
-
-    def warning(self, msg, *args, **kwargs):
-        self.log(WARNING, msg, *args, **kwargs)
-
-    def info(self, msg, *args, **kwargs):
-        self.log(INFO, msg, *args, **kwargs)
-
-    def debug(self, msg, *args, **kwargs):
-        self.log(DEBUG, msg, *args, **kwargs)
-
-    def critical(self, msg, *args, **kwargs):
-        raise NotImplemented
-
-
-class SlackHandler(py_logging.Handler):
-
+class SlackHandler(logging.Handler):
     def format(self, record):
-        prefix = '{}@{} '.format(_USERNAME, _HOSTNAME)
+        prefix = '{}@{} '.format(_USER_NAME, _HOST_NAME)
         return prefix + super().format(record)
 
     def emit(self, record):
@@ -105,36 +82,53 @@ class SlackHandler(py_logging.Handler):
 
 
 def create_transaction_logger(id):
-    logger = logging.get_absl_logger().getChild(str(id))
-    fh = py_logging.FileHandler(f'transaction/{id}.log')
+    logger = logging.getLogger().getChild(str(id))
+    fh = logging.FileHandler(f'transaction/{id}.log')
     logger.addHandler(fh)
-    if flags.FLAGS.log_transaction_to_slack:
+    if _logging_transaction_to_slack:
         logger.addHandler(SlackHandler('INFO'))
     return TransactionAdapter(logger, {})
 
 
-def init_global_logger():
-    if flags.FLAGS.logtofile:
-        logging.get_absl_handler().use_absl_log_file('ok_bot', 'log')
-    if flags.FLAGS.alsologtoslack:
-        logging.get_absl_logger().addHandler(SlackHandler('INFO'))
+def init_global_logger(
+        log_to_file=False,
+        log_to_slack=False,
+        log_level=logging.INFO):
+    global _logging_transaction_to_slack
+
+    # basicConfig won't work if logging module is imported
+    # already, so reload it.
+    importlib.reload(logging)
+    logging.basicConfig(
+        level=log_level,
+        format=LOG_FORMAT,
+    )
+    if log_to_file:
+        fh = logging.FileHandler('log/ok_bot.log')
+        fh.setFormatter(logging.Formatter(LOG_FORMAT))
+        logging.getLogger().addHandler(fh)
+    if log_to_slack:
+        logging.getLogger().addHandler(SlackHandler('CRITICAL'))
+        _logging_transaction_to_slack = True
 
 
-def _testing(_):
-    logger = create_transaction_logger('test_id_0')
-    logger.info('1111')
-    logger.warning('2222')
+def _testing():
+    logger_0 = create_transaction_logger('test_id_0')
+    logger_0.info('1111')
+    logger_0.warning('2222')
 
-    logger = create_transaction_logger('test_id_1')
-    logger.info('3333')
+    logger_1 = create_transaction_logger('test_id_1')
+    logger_1.info('3333')
     time.sleep(1)
-    logger.warning('4444')
+    logger_1.warning('4444')
 
-    for i in range(10):
-        logger.log_every_n_seconds(INFO, '[A] %s seconds', 2, i)
-        logger.log_every_n_seconds(INFO, '[B] %s seconds', 5, i)
+    for i in range(12):
+        logger_0.log_every_n_seconds(logging.INFO, '[A] %s seconds', 2, i)
+        logger_0.log_every_n_seconds(logging.INFO, '[B] %s seconds', 5, i)
         time.sleep(1)
 
 
 if __name__ == '__main__':
-    app.run(_testing)
+    init_global_logger(log_to_file=False, log_level=logging.DEBUG)
+    logging.debug('Testing transaction logging')
+    _testing()

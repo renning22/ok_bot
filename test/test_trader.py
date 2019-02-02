@@ -1,10 +1,9 @@
 import asyncio
+import logging
+from unittest import TestCase
 from unittest.mock import MagicMock
 
-from absl import logging
-from absl.testing import absltest
-
-from ok_bot import constants, singleton
+from ok_bot import constants, logger, singleton
 from ok_bot.order_executor import OrderExecutor
 
 
@@ -13,20 +12,21 @@ class AsyncMock(MagicMock):
         return super().__call__(*args, **kwargs)
 
 
-class TestTrader(absltest.TestCase):
+class TestTrader(TestCase):
     def setUp(self):
+        logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
     def test_cool_down(self):
-        async def _testing_coroutine(test_class):
+        async def _testing_coroutine():
             order_exe = OrderExecutor(
                 singleton.schema.all_instrument_ids[0],
                 amount=1,
                 price=10000,
                 timeout_sec=10,
                 is_market_order=False,
-                logger=logging.get_absl_logger()
+                logger=logging.getLogger()
             )
             constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
             singleton.rest_api.open_long_order.return_value = \
@@ -35,13 +35,13 @@ class TestTrader(absltest.TestCase):
             logging.info('open_long_position result: %s', result)
             logging.info('start sleeping')
             await asyncio.sleep(5)
-            test_class.assertTrue(singleton.trader.is_in_cooldown)
+            self.assertTrue(singleton.trader.is_in_cooldown)
             logging.info('start another sleeping')
             await asyncio.sleep(8)  # wait for cool down to finish
-            test_class.assertFalse(singleton.trader.is_in_cooldown)
+            self.assertFalse(singleton.trader.is_in_cooldown)
 
-        singleton.loop.run_until_complete(_testing_coroutine(self))
+        singleton.loop.run_until_complete(_testing_coroutine())
 
 
 if __name__ == '__main__':
-    absltest.main()
+    unittest.main()
