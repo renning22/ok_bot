@@ -2,6 +2,10 @@ MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
 
 # Trader
 MIN_TIME_WINDOW_IN_SECOND = 60 * 1  # 1 minutes
+SINGLE_UNIT_IN_USD = {
+    'BTC': 100.0,
+    'ETH': 10.0,
+}
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 
 # Arbitrage
