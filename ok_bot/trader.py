@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import random
 
 import numpy as np
 
@@ -63,7 +62,8 @@ class Trader:
         if self.on_going_arbitrage_count > 0:
             logging.log_every_n_seconds(
                 logging.CRITICAL,
-                'skip process_pair because there are %s on going arbitrages',
+                '[WIP SKIP] skip process_pair because there '
+                'are %s on going arbitrages',
                 30,
                 self.on_going_arbitrage_count
             )
@@ -79,26 +79,26 @@ class Trader:
             )
             return
 
-        trigger_info = self.trigger_strategy.trigger()
-        if trigger_info:
-            self.trigger_arbitrage(trigger_info)
+        arbitrage_plan = self.trigger_strategy.trigger()
+        if arbitrage_plan:
+            self.trigger_arbitrage(arbitrage_plan)
 
-    def trigger_arbitrage(self, trigger_info):
+    def trigger_arbitrage(self, arbitrage_plan):
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(
-                instrument_id=trigger_info.slow_instrument_id,
-                side=trigger_info.slow_side,
-                volume=trigger_info.volume,
-                price=trigger_info.slow_price
+                instrument_id=arbitrage_plan.slow_instrument_id,
+                side=arbitrage_plan.slow_side,
+                volume=arbitrage_plan.volume,
+                price=arbitrage_plan.slow_price
             ),
             fast_leg=ArbitrageLeg(
-                instrument_id=trigger_info.fast_instrument_id,
-                side=trigger_info.fast_side,
-                volume=trigger_info.volume,
-                price=trigger_info.fast_price
+                instrument_id=arbitrage_plan.fast_instrument_id,
+                side=arbitrage_plan.fast_side,
+                volume=arbitrage_plan.volume,
+                price=arbitrage_plan.fast_price
             ),
-            close_price_gap_threshold=trigger_info.close_price_gap,
-            estimate_net_profit=trigger_info.estimate_net_profit
+            close_price_gap_threshold=arbitrage_plan.close_price_gap,
+            estimate_net_profit=arbitrage_plan.estimate_net_profit
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.

@@ -18,11 +18,7 @@ FEE_RATE = 0.0003
 SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
 FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
 CLOSE_POSITION_ORDER_TIMEOUT_SECOND = 5
-OPEN_THRESHOLDS = {
-    ('this_week', 'next_week'): 0.25,
-    ('next_week', 'quarter'): 0.1,
-    ('this_week', 'quarter'): 0.1,
-}
+
 CLOSE_THRESHOLDS = {
     ('this_week', 'next_week'): 0.1,
     ('next_week', 'quarter'): 0.025,
