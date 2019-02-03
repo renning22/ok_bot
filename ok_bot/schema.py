@@ -1,6 +1,5 @@
-import pprint
-
 import logging
+import pprint
 
 from . import singleton
 
@@ -61,7 +60,8 @@ class Schema:
                             ask_market,
                             bid_market,
                             Schema.make_market_cross_product(
-                                bid_market, ask_market)
+                                ask_market=ask_market,
+                                bid_market=bid_market)
                         )
                     )
         return columns
