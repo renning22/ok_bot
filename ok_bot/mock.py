@@ -1,12 +1,15 @@
 import asyncio
+import logging
 import pprint
 import time
 
 import numpy as np
-import logging
 
 
 class MockTrader:
+    def __init__(self):
+        self.on_going_arbitrage_count = 0
+
     def new_tick_received(self,
                           instrument_id,
                           ask_prices,
@@ -16,13 +19,14 @@ class MockTrader:
         logging.log_every_n_seconds(
             logging.INFO,
             'mock trader got new tick: %s, best ask: %.3f@%d,'
-            'best bid: %.3f@%d',
+            'best bid: %.3f@%d, on_going_arbitrage_count: %s',
             10,
             instrument_id,
             ask_prices[0],
             ask_vols[0],
             bid_prices[0],
-            bid_vols[0])
+            bid_vols[0],
+            self.on_going_arbitrage_count)
 
 
 class MockOrderBook:

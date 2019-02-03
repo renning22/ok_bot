@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 from . import singleton
 from .logger import init_global_logger
@@ -30,7 +31,7 @@ def main():
     args = args.parse_args()
     init_global_logger(args.log_to_file, args.log_to_slack, args.log_level)
     symbol = args.symbol
-    logging.info(f'starting program with {symbol}')
+    logging.critical('starting program with %s, args: %s', symbol, sys.argv)
 
     # initialize components
     singleton.initialize_objects(symbol)

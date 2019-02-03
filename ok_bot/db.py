@@ -1,11 +1,12 @@
 # TODO: convert _testing to unittest
 
+import logging
 import sqlite3
 import time
 from concurrent.futures import ProcessPoolExecutor
-from decimal import Decimal
 from functools import partial
-import logging
+
+from .quant import Quant
 
 DEV_DB = 'dev.db'
 PROD_DB = 'prod.db'
@@ -14,7 +15,7 @@ PROD_DB = 'prod.db'
 def _sql_type_safe_filter(kwargs):
     ret = {}
     for k, v in kwargs.items():
-        if isinstance(v, Decimal):
+        if isinstance(v, Quant):
             ret[k] = str(v)
         else:
             ret[k] = v
@@ -34,6 +35,7 @@ def _update_transaction(cursor_creator, **kwargs):
                     close_price_gap,
                     start_time_sec,
                     end_time_sec,
+                    estimate_net_profit,
                     status
                 )
                 VALUES (
@@ -44,6 +46,7 @@ def _update_transaction(cursor_creator, **kwargs):
                     :close_price_gap,
                     :start_time_sec,
                     :end_time_sec,
+                    :estimate_net_profit,
                     :status
                 );
             ''', kwargs)
@@ -112,15 +115,16 @@ class _BaseDb:
             with self._cursor_creator() as c:
                 c.execute('''
                 CREATE TABLE IF NOT EXISTS runtime_transactions (
-                    transaction_id     TEXT PRIMARY KEY,
-                    vol                NUMERIC,
-                    slow_price         NUMERIC,
-                    fast_price         NUMERIC,
-                    close_price_gap    NUMERIC,
-                    start_time_sec     NUMERIC,
-                    end_time_sec       NUMERIC,
-                    status             TEXT,
-                    last_update_time   TEXT DEFAULT (DATETIME('now','localtime'))
+                    transaction_id      TEXT PRIMARY KEY,
+                    vol                 NUMERIC,
+                    slow_price          NUMERIC,
+                    fast_price          NUMERIC,
+                    close_price_gap     NUMERIC,
+                    start_time_sec      NUMERIC,
+                    end_time_sec        NUMERIC,
+                    estimate_net_profit NUMERIC,
+                    status              TEXT,
+                    last_update_time    TEXT DEFAULT (DATETIME('now','localtime'))
                 );
                 ''')
                 c.execute('''
@@ -185,10 +189,11 @@ def _testing():
     db.async_update_transaction(transaction_id='transaction-id-123',
                                 vol=5,
                                 slow_price=10.111,
-                                fast_price=Decimal('20.001'),
+                                fast_price=Quant(20.001),
                                 close_price_gap='1.01',
                                 start_time_sec=time.time(),
                                 end_time_sec=None,
+                                estimate_net_profit=None,
                                 status='ended')
     db.async_update_order(order_id='2217655012660224',
                           transaction_id=None,
