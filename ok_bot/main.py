@@ -34,5 +34,6 @@ def main():
     logging.critical('starting program with %s, args: %s', symbol, sys.argv)
 
     # initialize components
-    singleton.initialize_objects(symbol)
+    singleton.initialize_objects(currency=symbol,
+                                 simple_strategy=args.simple_strategy)
     singleton.start_loop()

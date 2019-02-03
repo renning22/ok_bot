@@ -10,7 +10,7 @@ from .util import amount_margin
 
 
 class Trader:
-    def __init__(self):
+    def __init__(self, simple_strategy=False):
         self.min_time_window = np.timedelta64(
             constants.MIN_TIME_WINDOW_IN_SECOND, 's')
         self.max_volume_per_trading = 1  # always use smallest possible amount
@@ -18,8 +18,10 @@ class Trader:
         self.is_in_cooldown = False
         self.on_going_arbitrage_count = 0
 
-        # TODO: make this configurable
-        self.trigger_strategy = trigger_strategy.PercentageTriggerStrategy()
+        if simple_strategy:
+            self.trigger_strategy = trigger_strategy.SimpleTriggerStrategy()
+        else:
+            self.trigger_strategy = trigger_strategy.PercentageTriggerStrategy()
         assert isinstance(self.trigger_strategy,
                           trigger_strategy.TriggerStrategy)
 
@@ -79,11 +81,14 @@ class Trader:
             )
             return
 
-        arbitrage_plan = self.trigger_strategy.trigger()
+        arbitrage_plan = self.trigger_strategy.is_there_a_plan(
+            long_instrument=long_instrument,
+            short_instrument=short_instrument,
+            product=product)
         if arbitrage_plan:
-            self.trigger_arbitrage(arbitrage_plan)
+            self.kick_off_arbitrage(arbitrage_plan)
 
-    def trigger_arbitrage(self, arbitrage_plan):
+    def kick_off_arbitrage(self, arbitrage_plan):
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(
                 instrument_id=arbitrage_plan.slow_instrument_id,

@@ -6,10 +6,18 @@ SINGLE_UNIT_IN_USD = {
     'ETH': 10.0,
 }
 
-# Trader
-MIN_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
+# Strategy
+MIN_TIME_WINDOW_IN_SECOND = 60 * 1  # 1 minutes
 MIN_ESTIMATE_PROFIT = 1e-5
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
+
+# Unit: USD per contract per transaction.
+# -0.001 means we expect losing 0.1 cent per transaction.
+SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = -0.001
+
+# X >= 1 (standard deviation) is 84% percentiles in standard gaussian
+# distribution, 34% deviated from center.
+SIMPLE_STRATEGY_ZSCORE_THRESHOLD = 1.0
 
 # Arbitrage
 # According to https://www.okex.com/pages/products/fees.html, for Lv1
@@ -36,9 +44,15 @@ SHORT = 'SHORT'
 REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH = 32016
 REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST = 32004
 
-# -1.撤单成功；0:等待成交 1:部分成交 2:全部成交
+# 订单状态(-1.撤单成功；0:等待成交 1:部分成交 2:全部成交
 ORDER_STATUS_CODE__CANCELLED = -1
 ORDER_STATUS_CODE__PENDING = 0
 ORDER_STATUS_CODE__PARTIALLY_FILLED = 1
 ORDER_STATUS_CODE__FULFILLED = 2
 ORDER_STATUS_CODE__CANCEL_IN_PROCESS = 4
+
+# 订单类型(1:开多 2:开空 3:平多 4:平空)
+ORDER_TYPE_CODE__OPEN_LONG = 1
+ORDER_TYPE_CODE__OPEN_SHORT = 2
+ORDER_TYPE_CODE__CLOSE_LONG = 3
+ORDER_TYPE_CODE__CLOSE_SHORT = 4

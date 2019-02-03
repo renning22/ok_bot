@@ -14,7 +14,7 @@ trader = None
 websocket = None
 
 
-def initialize_objects(currency):
+def initialize_objects(currency, simple_strategy=False):
     from .book_listener import BookListener
     from .db import ProdDb
     from .order_book import OrderBook
@@ -46,7 +46,7 @@ def initialize_objects(currency):
     book_listener = BookListener()
     order_listener = OrderListener()
     schema = Schema(currency)
-    trader = Trader()
+    trader = Trader(simple_strategy=simple_strategy)
     order_book = OrderBook()
     websocket = WebsocketApi(
         schema=schema,
