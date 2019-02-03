@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, call, patch
 
 from ok_bot import logger, singleton
 from ok_bot.arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
-from ok_bot.constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
+from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
+                              FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from ok_bot.mock import MockBookListerner_constantPriceGenerator
@@ -92,18 +93,18 @@ class TestArbitrageExecution(unittest.TestCase):
                 call(instrument_id=week_instrument,
                      amount=1,
                      price=-1,
-                     timeout_sec=None,
-                     is_market_order=True,
-                     logger=transaction.logger,
-                     transaction_id=transaction.id),
-                call(instrument_id=quarter_instrument,
-                     amount=1,
-                     price=-1,
-                     timeout_sec=None,
+                     timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                      is_market_order=True,
                      logger=transaction.logger,
                      transaction_id=transaction.id),
                 call().close_long_order(),
+                call(instrument_id=quarter_instrument,
+                     amount=1,
+                     price=-1,
+                     timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
+                     is_market_order=True,
+                     logger=transaction.logger,
+                     transaction_id=transaction.id),
                 call().close_short_order(),
             ])
 
