@@ -4,7 +4,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from . import constants, logger, singleton
+from . import constants, logger, singleton, util
 from .arbitrage_execution import LONG, SHORT
 
 ArbitragePlan = namedtuple('ArbitragePlan',
@@ -32,7 +32,7 @@ def close_aribitrage_gap_threshold(long_instrument_id,
         return constants.CLOSE_THRESHOLDS[
             long_instrument_period, short_instrument_period]
     assert short_instrument_period, long_instrument_period in \
-                                    constants.CLOSE_THRESHOLDS
+        constants.CLOSE_THRESHOLDS
     return constants.CLOSE_THRESHOLDS[
         short_instrument_period, long_instrument_period]
 
@@ -50,8 +50,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin
-           + usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin +
+           usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -171,7 +171,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
             )
             return None
 
-        available_amount = amount_margin(
+        available_amount = util.amount_margin(
             ask_stack=singleton.order_book.market_depth[long_instrument][0],
             bid_stack=singleton.order_book.market_depth[short_instrument][1],
             condition=lambda ask_price,
