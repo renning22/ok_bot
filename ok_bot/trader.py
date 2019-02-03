@@ -168,12 +168,10 @@ class Trader:
                                                                 'ask')
             short_instrument_speed = self.order_book.price_speed(
                 short_instrument, 'bid')
-            logging.log_every_n_seconds(
-                logging.INFO,
+            logging.info(
                 f'Long instrument speed: {long_instrument_speed:.3f}, '
                 f'short instrument speed: '
-                f'{short_instrument_speed:.3f}',
-                30
+                f'{short_instrument_speed:.3f}'
             )
             if long_instrument_speed > short_instrument_speed:
                 self.trigger_arbitrage(

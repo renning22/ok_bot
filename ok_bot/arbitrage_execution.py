@@ -168,6 +168,10 @@ class ArbitrageTransaction:
                 self.logger.info(
                     '[CLOSE POSITION GUARANTEED] succeeded: %s', leg)
                 return
+            else:
+                self.logger.warning(
+                    '[CLOSE POSITION GUARANTEED] failed with %s, will retry: %s',
+                    close_status, leg)
 
     async def process(self):
         self._db_transaction_status_updater('started')
