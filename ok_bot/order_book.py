@@ -20,6 +20,7 @@ class OrderBook:
         # order book data
         self.table = pd.DataFrame()
         self.last_record = {}
+        self.market_depth = {}
 
         self.update_book = self._update_book__ramp_up_mode
         for instrument_id in singleton.schema.all_instrument_ids:
@@ -40,6 +41,10 @@ class OrderBook:
             if product == cross_product:
                 return (self.ask_price(long_instrument) + self.bid_price(short_instrument)) / 2
         raise RuntimeError(f'no such {cross_product}')
+
+    def market_depth(self, instrument_id):
+        return [list(zip(ask_prices, ask_vols)),
+                list(zip(bid_prices, bid_vols))]
 
     def price_speed(self, instrument_id, ask_or_bid):
         assert ask_or_bid in ['ask', 'bid']
@@ -81,8 +86,13 @@ class OrderBook:
                       bid_prices,
                       bid_vols,
                       timestamp):
-        self.update_book(instrument_id, ask_prices,
-                         ask_vols, bid_prices, bid_vols)
+        self.market_depth[instrument_id] = [list(zip(ask_prices, ask_vols)),
+                                            list(zip(bid_prices, bid_vols))]
+        self.update_book(instrument_id,
+                         ask_prices,
+                         ask_vols,
+                         bid_prices,
+                         bid_vols)
 
     def _sink_piece_of_fresh_data_to_last_record(self,
                                                  instrument_id,
