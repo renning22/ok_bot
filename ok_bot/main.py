@@ -14,19 +14,19 @@ def main():
                       required=True)
     args.add_argument('--log-to-file',
                       help='Log to file when set to true',
-                      type=bool,
-                      default=False)
+                      action='store_true')
     args.add_argument('--log-to-slack',
                       help='Also log to slack when set to true',
-                      type=bool,
-                      default=False)
+                      action='store_true')
     args.add_argument('--verbose',
                       help='Log debug level info',
                       action='store_const',
                       dest='log_level',
                       const=logging.DEBUG,
-                      default=logging.INFO
-                      )
+                      default=logging.INFO)
+    args.add_argument('--simple-strategy',
+                      help='Enable simple trigger strategy',
+                      action='store_true')
 
     args = args.parse_args()
     init_global_logger(args.log_to_file, args.log_to_slack, args.log_level)
