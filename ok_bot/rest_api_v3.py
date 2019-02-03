@@ -1,12 +1,11 @@
 import asyncio
 import json
+import logging
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-import logging
-
-from . import singleton
+from . import constants, singleton
 from .api_v3.okex_sdk.futures_api import FutureAPI
 from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
 
@@ -85,7 +84,7 @@ class RestApiV3:
             self.create_order,
             custom_order_id,
             instrument_id,
-            1,
+            constants.ORDER_TYPE_CODE__OPEN_LONG,
             amount,
             price,
             is_market_order
@@ -98,7 +97,7 @@ class RestApiV3:
             self.create_order,
             custom_order_id,
             instrument_id,
-            2,
+            constants.ORDER_TYPE_CODE__OPEN_SHORT,
             amount,
             price,
             is_market_order
@@ -111,7 +110,7 @@ class RestApiV3:
             self.create_order,
             custom_order_id,
             instrument_id,
-            3,
+            constants.ORDER_TYPE_CODE__CLOSE_LONG,
             amount,
             price,
             is_market_order
@@ -124,7 +123,7 @@ class RestApiV3:
             self.create_order,
             custom_order_id,
             instrument_id,
-            4,
+            constants.ORDER_TYPE_CODE__CLOSE_SHORT,
             amount,
             price,
             is_market_order
@@ -181,7 +180,7 @@ class RestApiV3:
             time.sleep(1)  # sleep 1 second
             resp = self.future_sdk.get_order_list(
                 instrument_id,
-                status=7, # fulfilled and canceled)
+                status=7,  # fulfilled and canceled)
                 froms=page,
                 to=page,
                 limit=100

@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from . import constants, singleton
 from .quant import Quant
@@ -28,6 +29,10 @@ class OrderBook:
 
     def has_ramped_up(self):
         return self.update_book == self._update_book__regular
+
+    def zscore(self, cross_product):
+        zscores = stats.zscore(self.table[cross_product].astype('float64'))
+        return Quant(zscores[-1])
 
     def historical_mean_spread(self, cross_product):
         return Quant(
