@@ -39,16 +39,12 @@ def estimate_profit(prices, gap_threshold):
 
 
 class Trader:
-    def __init__(self,
-                 min_time_window=np.timedelta64(
-                     constants.MIN_TIME_WINDOW_IN_SECOND - 1, 's')):
-        self.min_time_window = min_time_window
-        self._schema = singleton.schema
+    def __init__(self):
+        self.min_time_window = np.timedelta64(
+            constants.MIN_TIME_WINDOW_IN_SECOND, 's')
         self.max_volume_per_trading = 1  # always use smallest possible amount
-        self.order_book = None
         self.new_tick_received = self.new_tick_received__ramp_up_mode
         self.market_depth = {}
-        self.waiting_for_execution = False  # used for debugging
         self.is_in_cooldown = False
         self.on_going_arbitrage_count = 0
 
@@ -90,19 +86,16 @@ class Trader:
 
     def new_tick_received__ramp_up_mode(self, instrument_id, ask_prices,
                                         ask_vols, bid_prices, bid_vols):
-        # This can't be in __init__ due to circular dependency with OrderBook
-        self.order_book = singleton.order_book
-
         self.market_depth[instrument_id] = [list(zip(ask_prices, ask_vols)),
                                             list(zip(bid_prices, bid_vols))]
 
-        if self.order_book.time_window >= self.min_time_window:
+        if singleton.order_book.time_window >= self.min_time_window:
             self.new_tick_received = self.new_tick_received__regular
             return
 
         logging.log_every_n_seconds(
             logging.INFO, 'ramping up: %d/%s', 1,
-            self.order_book.time_window / np.timedelta64(1, 's'),
+            singleton.order_book.time_window / np.timedelta64(1, 's'),
             self.min_time_window)
 
     def new_tick_received__regular(self, instrument_id, ask_prices, ask_vols,
@@ -110,7 +103,7 @@ class Trader:
         self.market_depth[instrument_id] = [list(zip(ask_prices, ask_vols)),
                                             list(zip(bid_prices, bid_vols))]
         for long_instrument, short_instrument, product in \
-                self._schema.markets_cartesian_product:
+                singleton.schema.markets_cartesian_product:
             if instrument_id in [long_instrument, short_instrument]:
                 self._process_pair(long_instrument, short_instrument, product)
 
@@ -134,8 +127,8 @@ class Trader:
             )
             return
 
-        history_gap = self.order_book.historical_mean_spread(product)
-        current_spread = self.order_book.current_spread(product)
+        history_gap = singleton.order_book.historical_mean_spread(product)
+        current_spread = singleton.order_book.current_spread(product)
         deviation = current_spread - history_gap
         deviation_percent = deviation / abs(history_gap) * 100
         threshold = self.aribitrage_gap_threshold(long_instrument,
@@ -160,13 +153,14 @@ class Trader:
         if available_amount >= \
                 constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
             # trigger arbitrage
-            close_price_gap = \
+            close_price_gap = (
                 history_gap + self.close_aribitrage_gap_threshold(
-                    long_instrument, short_instrument) \
-                * abs(history_gap)
-            long_instrument_speed = self.order_book.price_speed(long_instrument,
-                                                                'ask')
-            short_instrument_speed = self.order_book.price_speed(
+                    long_instrument, short_instrument) *
+                abs(history_gap))
+            long_instrument_speed = singleton.order_book.price_speed(
+                long_instrument,
+                'ask')
+            short_instrument_speed = singleton.order_book.price_speed(
                 short_instrument, 'bid')
             logging.info(
                 f'Long instrument speed: {long_instrument_speed:.3f}, '
