@@ -136,38 +136,6 @@ class Trader:
 
         history_gap = self.order_book.historical_mean_spread(product)
         current_spread = self.order_book.current_spread(product)
-
-        # The deviation is the larger the better (the more profitable).
-        #
-        #   deviation = (bid - ask) - (avg(bid) - avg(ask))
-        #             = (short_price - long_price) - ...
-        #
-        # Imagine deviation becomes deviation - 1.
-        # It could be either (or other cases equivalent) from:
-        #   1) short_price -> short_price - 1
-        #   2) long_price -> long_price + 1
-        #
-        # For either case we would profit 1 dollar (assume we opened
-        # 1-coin-value-equivalent contracts (after leverage) at on both side at
-        # price short_price/long_price.
-        #
-        # Assume the resilience drives deviation back to the half of the delta.
-        #
-        #   deviation --> deviation / 2
-        #
-        # And analogously, the total price differences would be:
-        #   total_price_diff = deviation / 2 - deviation
-        #
-        # Can it be an estimate of profit?
-        #
-        # For fee we can approximate it by 4 times of current average price:
-        #   total_fee = 4 * 0.030% * (short_price + long_price) / 2
-        if self.arbitrage_wip:
-            logging.warning('skip process_pair because there\'s on '
-                            'going arbitrage')
-            return
-        history_gap = self.order_book.historical_mean_spread(product)
-        current_spread = self.order_book.current_spread(product)
         deviation = current_spread - history_gap
         deviation_percent = deviation / abs(history_gap) * 100
         threshold = self.aribitrage_gap_threshold(long_instrument,
