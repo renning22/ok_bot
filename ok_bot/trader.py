@@ -1,6 +1,7 @@
 import asyncio
 from decimal import Decimal
 import logging
+import random
 
 import numpy as np
 
@@ -9,6 +10,33 @@ from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
                                   ArbitrageTransaction)
 from .util import amount_margin
 from . import logger
+
+
+def spot_profit(long_begin, long_end, short_begin, short_end):
+    usd = constants.TRADING_VOLUME * \
+                   constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
+    fee = (usd / long_begin + usd / long_end + usd / short_begin + \
+          usd / short_end) * constants.FEE_RATE
+    gain = usd / long_begin - usd / long_end + \
+           usd / short_end - usd / short_begin
+    return gain - fee
+
+
+def estimate_profit(prices, gap_threshold):
+    low, high = prices[LONG], prices[SHORT]  # Note low <= high is not necessary
+
+    ret = 1e10
+    for _ in range(10):
+        # case 1: low side rise to high - gap_threshold
+        high_end = np.random.normal(high, high * 0.01)
+        low_end = high_end - gap_threshold
+        est1 = spot_profit(low, low_end, high, high_end)
+        # case 2: high side drop to low + gap_threshold
+        low_end = np.random.normal(low, low * 0.01)
+        high_end = low_end + gap_threshold
+        est2 = spot_profit(low, low_end, high, high_end)
+        ret = min(ret, est1, est2)
+    return ret
 
 
 class Trader:
@@ -29,6 +57,7 @@ class Trader:
         async def stop_cool_down():
             await asyncio.sleep(constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND)
             self.is_in_cooldown = False
+
         self.is_in_cooldown = True
         asyncio.create_task(stop_cool_down())
 
@@ -42,7 +71,7 @@ class Trader:
             return constants.OPEN_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
         assert short_instrument_period, long_instrument_period in \
-            constants.OPEN_THRESHOLDS
+                                        constants.OPEN_THRESHOLDS
         return constants.OPEN_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -57,7 +86,7 @@ class Trader:
             return constants.CLOSE_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
         assert short_instrument_period, long_instrument_period in \
-            constants.CLOSE_THRESHOLDS
+                                        constants.CLOSE_THRESHOLDS
         return constants.CLOSE_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -110,11 +139,11 @@ class Trader:
                                                   short_instrument)
 
         min_price_gap = history_gap + threshold * abs(history_gap)
-        available_acount = amount_margin(
+        available_amount = amount_margin(
             ask_stack=self.market_depth[long_instrument][0],
             bid_stack=self.market_depth[short_instrument][1],
             condition=lambda ask_price,
-            bid_price: bid_price - ask_price >= min_price_gap)
+                             bid_price: bid_price - ask_price >= min_price_gap)
         logging.log_every_n_seconds(
             logging.INFO,
             '%s spread: %.3f '
@@ -122,10 +151,10 @@ class Trader:
             'threshold: %.2f available: %d',
             60,
             product, current_spread, history_gap, deviation, deviation_percent,
-            threshold * 100, available_acount
+            threshold * 100, available_amount
         )
 
-        if available_acount >= \
+        if available_amount >= \
                 constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
             # trigger arbitrage
             close_price_gap = \
@@ -191,6 +220,19 @@ class Trader:
                             f'{fast_instrument_id}({fast_side}) due to '
                             f'cool down')
             return
+
+        est_profit = estimate_profit(
+            {
+                slow_side: slow_price,
+                fast_side: fast_price,
+            },
+            close_price_gap
+        )
+
+        if est_profit < constants.MIN_ESTIMATE_PROFIT:
+            logging.info(f'Profit estimat is {est_profit}, not enough')
+            return
+
         transaction = ArbitrageTransaction(
             slow_leg=ArbitrageLeg(
                 instrument_id=slow_instrument_id,
@@ -220,6 +262,7 @@ if __name__ == '__main__':
             f'trigger arbitrage({slow_instrument_id})'
             f' and ({fast_instrument_id})')
 
+
     logger.init_global_logger(log_level=logging.INFO)
     constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE = -1  # Ensure trigger
     singleton.initialize_objects('ETH')
@@ -227,4 +270,3 @@ if __name__ == '__main__':
     singleton.trader.trigger_arbitrage = _mock_trigger_arbitrage
     logging.info('Manual test started')
     singleton.start_loop()
-
