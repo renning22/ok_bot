@@ -4,16 +4,16 @@ import base64
 import concurrent
 import hmac
 import json
+import logging
 import pprint
 import zlib
-from decimal import Decimal
 
 import dateutil.parser as dp
 import requests
 import websockets
-import logging
 
 from . import api_v3_key_reader, decorator, singleton
+from .quant import Quant
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
 OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
@@ -233,10 +233,10 @@ class WebsocketApi:
             int(leverage),
             int(size),
             int(filled_qty),
-            Decimal(str(price)),
-            Decimal(str(fee)),
+            Quant(price),
+            Quant(fee),
             contract_val,
-            Decimal(str(price_avg)),
+            Quant(price_avg),
             int(type),
             instrument_id,
             int(order_id),

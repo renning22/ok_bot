@@ -3,6 +3,7 @@ import asyncio
 from . import logger
 
 book_listener = None
+coin_currency = None
 db = None
 loop = None
 order_book = None
@@ -11,7 +12,6 @@ rest_api = None
 schema = None
 trader = None
 websocket = None
-coin_currency = None
 
 
 def initialize_objects(currency):
@@ -25,6 +25,7 @@ def initialize_objects(currency):
     from .websocket_api import WebsocketApi
 
     global book_listener
+    global coin_currency
     global db
     global loop
     global order_book
@@ -33,9 +34,9 @@ def initialize_objects(currency):
     global schema
     global trader
     global websocket
-    global coin_currency
 
     coin_currency = currency
+
     loop = asyncio.get_event_loop()
 
     db = ProdDb()

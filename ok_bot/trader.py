@@ -1,29 +1,28 @@
 import asyncio
-from decimal import Decimal
 import logging
 import random
 
 import numpy as np
 
-from . import constants, singleton
+from . import constants, logger, singleton
 from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
                                   ArbitrageTransaction)
 from .util import amount_margin
-from . import logger
 
 
 def spot_profit(long_begin, long_end, short_begin, short_end):
     usd = constants.TRADING_VOLUME * \
-                   constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin + \
-          usd / short_end) * constants.FEE_RATE
+        constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
+    fee = (usd / long_begin + usd / long_end + usd / short_begin
+           + usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
-           usd / short_end - usd / short_begin
+        usd / short_end - usd / short_begin
     return gain - fee
 
 
 def estimate_profit(prices, gap_threshold):
-    low, high = prices[LONG], prices[SHORT]  # Note low <= high is not necessary
+    # Note low <= high is not necessary
+    low, high = prices[LONG], prices[SHORT]
 
     ret = 1e10
     for _ in range(10):
@@ -51,13 +50,12 @@ class Trader:
         self.market_depth = {}
         self.waiting_for_execution = False  # used for debugging
         self.is_in_cooldown = False
-        self.arbitrage_wip = False
+        self.on_going_arbitrage_count = 0
 
     def cool_down(self):
         async def stop_cool_down():
             await asyncio.sleep(constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND)
             self.is_in_cooldown = False
-
         self.is_in_cooldown = True
         asyncio.create_task(stop_cool_down())
 
@@ -71,7 +69,7 @@ class Trader:
             return constants.OPEN_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
         assert short_instrument_period, long_instrument_period in \
-                                        constants.OPEN_THRESHOLDS
+            constants.OPEN_THRESHOLDS
         return constants.OPEN_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -86,7 +84,7 @@ class Trader:
             return constants.CLOSE_THRESHOLDS[
                 long_instrument_period, short_instrument_period]
         assert short_instrument_period, long_instrument_period in \
-                                        constants.CLOSE_THRESHOLDS
+            constants.CLOSE_THRESHOLDS
         return constants.CLOSE_THRESHOLDS[
             short_instrument_period, long_instrument_period]
 
@@ -127,10 +125,15 @@ class Trader:
         the gap average will break the threshold, which is the arbitrage
         triggering condition.
         """
-        if self.arbitrage_wip:
-            logging.warning('skip process_pair because there\'s on '
-                            'going arbitrage')
+        if self.on_going_arbitrage_count > 0:
+            logging.log_every_n_seconds(
+                logging.CRITICAL,
+                'skip process_pair because there are %s on going arbitrages',
+                30,
+                self.on_going_arbitrage_count
+            )
             return
+
         history_gap = self.order_book.historical_mean_spread(product)
         current_spread = self.order_book.current_spread(product)
         deviation = current_spread - history_gap
@@ -143,7 +146,7 @@ class Trader:
             ask_stack=self.market_depth[long_instrument][0],
             bid_stack=self.market_depth[short_instrument][1],
             condition=lambda ask_price,
-                             bid_price: bid_price - ask_price >= min_price_gap)
+            bid_price: bid_price - ask_price >= min_price_gap)
         logging.log_every_n_seconds(
             logging.INFO,
             '%s spread: %.3f '
@@ -165,9 +168,11 @@ class Trader:
                                                                 'ask')
             short_instrument_speed = self.order_book.price_speed(
                 short_instrument, 'bid')
-            logging.info(f'Long instrument speed: {long_instrument_speed:.3f}, '
-                         f'short instrument speed: '
-                         f'{short_instrument_speed:.3f}')
+            logging.info(
+                f'Long instrument speed: {long_instrument_speed:.3f}, '
+                f'short instrument speed: '
+                f'{short_instrument_speed:.3f}'
+            )
             if long_instrument_speed > short_instrument_speed:
                 self.trigger_arbitrage(
                     slow_instrument_id=short_instrument,
@@ -187,38 +192,44 @@ class Trader:
                     close_price_gap=close_price_gap
                 )
 
-    def trigger_arbitrage(self, slow_instrument_id, fast_instrument_id,
-                          slow_side, fast_side,
-                          open_price_gap, close_price_gap):
+    def trigger_arbitrage(self,
+                          slow_instrument_id,
+                          fast_instrument_id,
+                          slow_side,
+                          fast_side,
+                          open_price_gap,
+                          close_price_gap):
         if slow_side == LONG:
             amount = 0
-            slow_price = Decimal(
-                self.market_depth[slow_instrument_id][0][0][0])
+            slow_price = self.market_depth[slow_instrument_id][0][0][0]
             for price, vol in self.market_depth[slow_instrument_id][0]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = Decimal(price)
+                    slow_price = price
                     break
             fast_price = slow_price + open_price_gap
         else:
             assert slow_side == SHORT
             amount = 0
-            slow_price = Decimal(
-                self.market_depth[slow_instrument_id][1][0][0])
+            slow_price = self.market_depth[slow_instrument_id][1][0][0]
             for price, vol in self.market_depth[slow_instrument_id][1]:
                 amount += vol
                 if amount >= \
                         constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
-                    slow_price = Decimal(price)
+                    slow_price = price
                     break
             fast_price = slow_price - open_price_gap
 
         if self.is_in_cooldown:
-            logging.warning(f'[COOL DOWN] Skipping arbitrage between '
-                            f'{slow_instrument_id}({slow_side}) and '
-                            f'{fast_instrument_id}({fast_side}) due to '
-                            f'cool down')
+            logging.log_every_n_seconds(
+                logging.WARNING,
+                f'[COOL DOWN] Skipping arbitrage between '
+                f'{slow_instrument_id}({slow_side}) and '
+                f'{fast_instrument_id}({fast_side}) due to '
+                f'cool down',
+                30
+            )
             return
 
         est_profit = estimate_profit(
@@ -246,10 +257,12 @@ class Trader:
                 volume=1,
                 price=fast_price
             ),
-            close_price_gap_threshold=close_price_gap
+            close_price_gap_threshold=close_price_gap,
+            estimate_net_profit=est_profit
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.
+        self.on_going_arbitrage_count += 1
         asyncio.create_task(transaction.process())
 
 
@@ -261,7 +274,6 @@ if __name__ == '__main__':
         logging.info(
             f'trigger arbitrage({slow_instrument_id})'
             f' and ({fast_instrument_id})')
-
 
     logger.init_global_logger(log_level=logging.INFO)
     constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE = -1  # Ensure trigger

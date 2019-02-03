@@ -1,8 +1,7 @@
-from collections import defaultdict
-from decimal import Decimal
-
 import logging
+from collections import defaultdict
 
+from .quant import Quant
 
 
 class BookListener:
@@ -39,9 +38,9 @@ class BookListener:
                                 timestamp):
         asks = sorted(asks)
         bids = sorted(bids, reverse=True)
-        ask_prices = [Decimal(str(i[0])) for i in asks]
+        ask_prices = [Quant(i[0]) for i in asks]
         ask_vols = [int(i[1]) for i in asks]
-        bid_prices = [Decimal(str(i[0])) for i in bids]
+        bid_prices = [Quant(i[0]) for i in bids]
         bid_vols = [int(i[1]) for i in bids]
         for responder in self.subscribers[instrument_id]:
             responder.tick_received(instrument_id,

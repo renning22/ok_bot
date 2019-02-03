@@ -5,8 +5,9 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from ok_bot import constants, logger, singleton, trader
-from ok_bot.order_executor import OrderExecutor
 from ok_bot.arbitrage_execution import LONG, SHORT
+from ok_bot.order_executor import OrderExecutor
+
 
 class AsyncMock(MagicMock):
     async def __call__(self, *args, **kwargs):
