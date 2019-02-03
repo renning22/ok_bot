@@ -1,7 +1,7 @@
 MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
 
 # Trader
-MIN_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
+MIN_TIME_WINDOW_IN_SECOND = 60 * 1  # 1 minutes
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 
 # Arbitrage
