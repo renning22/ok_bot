@@ -6,7 +6,8 @@ import time
 import uuid
 
 from . import singleton
-from .constants import (FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
+from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
+                        FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
@@ -143,13 +144,13 @@ class ArbitrageTransaction:
         else:
             return order_executor.open_short_position()
 
-    def close_position(self, leg):
+    def close_position(self, leg, timeout_in_sec):
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
             amount=leg.volume,
             price=-1,
-            timeout_sec=None,
+            timeout_sec=timeout_in_sec,
             is_market_order=True,
             logger=self.logger,
             transaction_id=self.id)
@@ -157,6 +158,16 @@ class ArbitrageTransaction:
             return order_executor.close_long_order()
         else:
             return order_executor.close_short_order()
+
+    async def close_position_guaranteed(self, leg):
+        while True:
+            self.logger.info('[CLOSE POSITION GUARANTEED] try: %s', leg)
+            close_status = await self.close_position(
+                leg, CLOSE_POSITION_ORDER_TIMEOUT_SECOND)
+            if close_status == OPEN_POSITION_STATUS__SUCCEEDED:
+                self.logger.info(
+                    '[CLOSE POSITION GUARANTEED] succeeded: %s', leg)
+                return
 
     async def process(self):
         self._db_transaction_status_updater('started')
@@ -196,7 +207,7 @@ class ArbitrageTransaction:
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
             self._db_transaction_status_updater('ended_fast_leg_failed')
-            await self.close_position(self.slow_leg)
+            await self.close_position_guaranteed(self.slow_leg)
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
             return False
@@ -219,10 +230,10 @@ class ArbitrageTransaction:
                 self.logger.info(f'[CONVERGED] prices converged with enough '
                                  f'margin({converge}), closing both legs')
                 self._db_transaction_status_updater('ended_normally')
-            fast_order = self.close_position(self.fast_leg)
-            slow_order = self.close_position(self.slow_leg)
-            await asyncio.gather(fast_order, slow_order)
 
+        fast_close_task = self.close_position_guaranteed(self.fast_leg)
+        slow_close_task = self.close_position_guaranteed(self.slow_leg)
+        await asyncio.gather(fast_close_task, slow_close_task)
         return True
 
 
@@ -236,11 +247,11 @@ async def _test_coroutine():
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
                               volume=Quant(1),
-                              price=Quant(120.0)),
+                              price=Quant(105.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
                               volume=1,
-                              price=80.0),
+                              price=110.0),
         close_price_gap_threshold=1,
     )
     await transaction.process()
