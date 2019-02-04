@@ -191,10 +191,6 @@ class PercentageTriggerStrategy(TriggerStrategy):
             return None
         else:
             # trigger arbitrage
-            close_price_gap = (
-                history_gap + self.close_aribitrage_gap_threshold(
-                    long_instrument, short_instrument) *
-                abs(history_gap))
             long_instrument_speed = singleton.order_book.price_speed(
                 long_instrument,
                 'ask')
