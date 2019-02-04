@@ -10,9 +10,11 @@ from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                         FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
-                        SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
+                        SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
+                        REST_API_ERROR_CODE__NOT_ENOUGH_POSITION_TO_CLOSE)
 from .logger import create_transaction_logger, init_global_logger
-from .order_executor import OPEN_POSITION_STATUS__SUCCEEDED, OrderExecutor
+from .order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
+                             OrderExecutor, OpenPositionStatus)
 from .util import amount_margin
 
 ArbitrageLeg = collections.namedtuple(
@@ -160,6 +162,15 @@ class ArbitrageTransaction:
             return order_executor.close_short_order()
 
     async def close_position_guaranteed(self, leg):
+        def should_retry(status: OpenPositionStatus) -> bool:
+            if type(status.message) == dict \
+                    and 'error_code' in status.message:
+                api_error_code = status.message['error_code']
+                if api_error_code == \
+                        REST_API_ERROR_CODE__NOT_ENOUGH_POSITION_TO_CLOSE:
+                    return False
+            return True
+
         while True:
             self.logger.info('[CLOSE POSITION GUARANTEED] try: %s', leg)
             close_status = await self.close_position(
@@ -169,8 +180,13 @@ class ArbitrageTransaction:
                     '[CLOSE POSITION GUARANTEED] succeeded: %s', leg)
                 return
             else:
+                if not should_retry(close_status):
+                    self.logger.warning(
+                        "Close failed with status that can't retry: %s, %s",
+                        close_status, leg)
+                    break
                 self.logger.warning(
-                    '[CLOSE POSITION GUARANTEED] failed with %s, will retry: %s',
+                    '[CLOSE POSITION GUARANTEED] failed with %s, will retry %s',
                     close_status, leg)
 
     async def process(self):

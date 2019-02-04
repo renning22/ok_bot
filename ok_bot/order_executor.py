@@ -29,6 +29,13 @@ ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
 ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
+def make_open_position_status(
+        result: bool,
+        message
+) -> OpenPositionStatus:
+    return OpenPositionStatus(result, message)
+
+
 class OrderAwaiter:
     def __init__(self, order_id, logger, timeout_sec, transaction_id=None):
         self._order_id = order_id
@@ -156,7 +163,8 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return OPEN_POSITION_STATUS__REST_API
+            return make_open_position_status(
+                False, {'type': 'API', 'error_code': error_code})
 
         self._logger.info(
             f'{order_id} ({self._instrument_id}) order was created '
