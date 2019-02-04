@@ -63,7 +63,7 @@ def initialize_objects_with_mock_trader_and_dev_db(currency):
 
     with patch('ok_bot.trader.Trader', new=MockTrader),\
             patch('ok_bot.db.ProdDb', new=DevDb):
-        initialize_objects(currency)
+        initialize_objects(currency=currency)
 
 
 def initialize_objects_with_dev_db(currency):
@@ -71,7 +71,7 @@ def initialize_objects_with_dev_db(currency):
     from unittest.mock import patch
 
     with patch('ok_bot.db.ProdDb', new=DevDb):
-        initialize_objects(currency)
+        initialize_objects(currency=currency)
 
 
 def start_loop():

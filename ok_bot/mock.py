@@ -7,7 +7,7 @@ import numpy as np
 
 
 class MockTrader:
-    def __init__(self):
+    def __init__(self, simple_strategy):
         self.on_going_arbitrage_count = 0
 
     def new_tick_received(self,
