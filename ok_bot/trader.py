@@ -4,19 +4,21 @@ import logging
 import numpy as np
 
 from . import constants, logger, singleton, trigger_strategy
-from .arbitrage_execution import (LONG, SHORT, ArbitrageLeg,
+from .arbitrage_execution import (ArbitrageLeg,
                                   ArbitrageTransaction)
-from .util import amount_margin
 
 
 class Trader:
-    def __init__(self, simple_strategy=False):
+    def __init__(self,
+                 simple_strategy=False,
+                 max_parallel_transaction_num=int(1e9)):
         self.min_time_window = np.timedelta64(
             constants.MIN_TIME_WINDOW_IN_SECOND, 's')
         self.max_volume_per_trading = 1  # always use smallest possible amount
         self.new_tick_received = self.new_tick_received__ramp_up_mode
         self.is_in_cooldown = False
         self.on_going_arbitrage_count = 0
+        self.max_parallel_transaction_num = max_parallel_transaction_num
 
         if simple_strategy:
             self.trigger_strategy = trigger_strategy.SimpleTriggerStrategy()
@@ -61,13 +63,14 @@ class Trader:
         the gap average will break the threshold, which is the arbitrage
         triggering condition.
         """
-        if self.on_going_arbitrage_count > 0:
+        if self.on_going_arbitrage_count > self.max_parallel_transaction_num:
             logging.log_every_n_seconds(
                 logging.CRITICAL,
                 '[WIP SKIP] skip process_pair because there '
-                'are %s on going arbitrages',
+                'are %d on going arbitrages(max=%d)',
                 30,
-                self.on_going_arbitrage_count
+                self.on_going_arbitrage_count,
+                self.max_parallel_transaction_num
             )
             return
         elif self.is_in_cooldown:

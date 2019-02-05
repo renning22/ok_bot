@@ -1,7 +1,5 @@
 import asyncio
 
-from . import logger
-
 book_listener = None
 coin_currency = None
 db = None
@@ -14,7 +12,10 @@ trader = None
 websocket = None
 
 
-def initialize_objects(currency, simple_strategy=False):
+def initialize_objects(
+        currency,
+        simple_strategy=False,
+        max_parallel_transaction_num=int(1e9)):
     from .book_listener import BookListener
     from .db import ProdDb
     from .order_book import OrderBook
@@ -46,7 +47,10 @@ def initialize_objects(currency, simple_strategy=False):
     book_listener = BookListener()
     order_listener = OrderListener()
     schema = Schema(currency)
-    trader = Trader(simple_strategy=simple_strategy)
+    trader = Trader(
+        simple_strategy=simple_strategy,
+        max_parallel_transaction_num=max_parallel_transaction_num
+    )
     order_book = OrderBook()
     websocket = WebsocketApi(
         schema=schema,
