@@ -61,6 +61,7 @@ class OrderRevoker:
             await asyncio.sleep(1)
 
     async def _send_revoke_request(self):
+        """Returns True if the http response confirms the request was done."""
         self._logger.info('[REVOKE PENDING ORDER] %s', self._order_id)
         ret = await singleton.rest_api.revoke_order(
             self._instrument_id, self._order_id)
