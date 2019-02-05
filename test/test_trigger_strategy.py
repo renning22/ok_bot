@@ -31,7 +31,7 @@ class TestPercentageTriggerStrategy(TestCase):
                     LONG: 100,
                     SHORT: 150,
                 },
-                gap_threshold=50
+                gap_threshold=49.9
             ),
             -(10 / 100 * 2 + 10 / 150 * 2) * constants.FEE_RATE
         )
@@ -51,9 +51,9 @@ class TestPercentageTriggerStrategy(TestCase):
             trigger_strategy.estimate_profit(
                 {
                     LONG: 100,
-                    SHORT: 150,
+                    SHORT: 101,
                 },
-                gap_threshold=48
+                gap_threshold=20
             ),
             constants.MIN_ESTIMATE_PROFIT
         )

@@ -27,6 +27,10 @@ def main():
     args.add_argument('--simple-strategy',
                       help='Enable simple trigger strategy',
                       action='store_true')
+    args.add_argument('--max-parallel-transaction-num',
+                      type=int,
+                      default=int(1e9),
+                      help='Max number of concurrent transactions')
 
     args = args.parse_args()
     init_global_logger(args.log_to_file, args.log_to_slack, args.log_level)
@@ -34,6 +38,9 @@ def main():
     logging.critical('starting program with %s, args: %s', symbol, sys.argv)
 
     # initialize components
-    singleton.initialize_objects(currency=symbol,
-                                 simple_strategy=args.simple_strategy)
+    singleton.initialize_objects(
+        currency=symbol,
+        simple_strategy=args.simple_strategy,
+        max_parallel_transaction_num=args.max_parallel_transaction_num
+    )
     singleton.start_loop()
