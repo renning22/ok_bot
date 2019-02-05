@@ -301,7 +301,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
-        logging.log_every_n_seconds(
+        logging.info(
             logging.CRITICAL,
             '\nlong:%s , short:%s'
             '\ncurrent_price_average: %.3f'
@@ -348,8 +348,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 fast_side = SHORT
                 slow_price = singleton.order_book.ask_price(slow_instrument_id)
                 fast_price = singleton.order_book.bid_price(fast_instrument_id)
-            logging.log_every_n_seconds(
-                logging.CRITICAL,
+            logging.critical(
                 '\nTRIGGERED'
                 '\nlong:%s , short:%s'
                 '\ncurrent_price_average: %.3f'
@@ -359,7 +358,6 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\nestimate_net_profit: %.3f'
                 '\nzscore: %.3f'
                 '\nclose_price_gap: %.3f',
-                1,
                 long_instrument,
                 short_instrument,
                 current_price_average,
