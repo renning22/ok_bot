@@ -43,6 +43,9 @@ class OrderRevoker:
             revoke_successful = await self._send_revoke_request()
             if revoke_successful:
                 return OrderRevoker.REVOKED_COMPLETELY
+
+            await asyncio.sleep(1)
+
             order_info = await singleton.rest_api.get_order_info(
                 self._order_id, self._instrument_id)
             self._logger.info(
@@ -57,8 +60,6 @@ class OrderRevoker:
                 return OrderRevoker.FULFILLED_BEFORE_REVOKE
             elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
                 pass
-
-            await asyncio.sleep(1)
 
     async def _send_revoke_request(self):
         """Returns True if the http response confirms the request was done."""
