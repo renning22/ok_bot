@@ -222,7 +222,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
 
 
 class SimpleTriggerStrategy(TriggerStrategy):
-    """ Simple full-to-half mean-reversion strategy.
+    """Simple short-term mean-reversion strategy.
 
     The deviation is the larger the better (the more profitable).
 
@@ -267,7 +267,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
         current_price_average = singleton.order_book.current_price_average(
             product)
 
-        estimate_total_price_diff_after_resiliance = deviation / 2
+        estimate_total_price_diff_after_resiliance = (
+            deviation * constants.SIMPLE_STRATEGY_RESILIANCE)
 
         # USD per transaction per USD.
         estimate_profit_per_tran_per_usd = (
@@ -306,7 +307,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             '\nestimate_net_profit: %.3f'
             '\nzscore: %.3f'
             '\nclose_price_gap: %.3f',
-            60,
+            60 * 10,
             long_instrument,
             short_instrument,
             current_price_average,
@@ -343,6 +344,26 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 fast_side = SHORT
                 slow_price = singleton.order_book.ask_price(slow_instrument_id)
                 fast_price = singleton.order_book.bid_price(fast_instrument_id)
+            logging.critical(
+                '\nTRIGGERED'
+                '\nlong:%s , short:%s'
+                '\ncurrent_price_average: %.3f'
+                '\nestimate_total_price_diff_after_resiliance: %.3f'
+                '\nestimate_profit_per_transaction: %.3f'
+                '\nestimate_fee_per_transaction: %.3f'
+                '\nestimate_net_profit: %.3f'
+                '\nzscore: %.3f'
+                '\nclose_price_gap: %.3f',
+                long_instrument,
+                short_instrument,
+                current_price_average,
+                estimate_total_price_diff_after_resiliance,
+                estimate_profit_per_transaction,
+                estimate_fee_per_transaction,
+                estimate_net_profit,
+                zscore,
+                close_price_gap
+            )
             return ArbitragePlan(
                 volume=constants.TRADING_VOLUME,
                 slow_instrument_id=slow_instrument_id,

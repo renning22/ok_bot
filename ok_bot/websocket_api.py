@@ -12,7 +12,7 @@ import dateutil.parser as dp
 import requests
 import websockets
 
-from . import api_v3_key_reader, decorator, singleton
+from . import api_v3_key_reader, singleton
 from .quant import Quant
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
@@ -282,13 +282,16 @@ class WebsocketApi:
         logging.info(short_qty)
         logging.info(short_avg_cost)
 
-    @decorator.async_try_catch_loop
     async def _read_loop(self):
-        async with websockets.connect(OK_WEBSOCKET_ADDRESS) as self._conn:
-            await self._create_and_login()
-            await self._subscribe_all_interested()
-            while True:
-                await self._receive_and_dispatch()
+        while True:
+            try:
+                async with websockets.connect(OK_WEBSOCKET_ADDRESS) as self._conn:
+                    await self._create_and_login()
+                    await self._subscribe_all_interested()
+                    while True:
+                        await self._receive_and_dispatch()
+            except websockets.exceptions.InvalidState:
+                logging.error('websocket exception in %s', exc_info=True)
 
     def start_read_loop(self):
         asyncio.ensure_future(self._read_loop())
