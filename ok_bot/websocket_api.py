@@ -298,7 +298,7 @@ class WebsocketApi:
                 return
 
     def start_read_loop(self):
-            asyncio.ensure_future(self._read_loop())
+        asyncio.ensure_future(self._read_loop())
 
 
 def _testing_non_blocking():

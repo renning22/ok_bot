@@ -69,7 +69,6 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_dev_db('ETH')
         self.strategy = PercentageTriggerStrategy()
-        self.thread_executor = ThreadPoolExecutor(max_workers=10)
 
     def tearDown(self):
         singleton.db.shutdown(wait=True)
@@ -81,13 +80,8 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         await singleton.trader.ready
         long_instrument_id, short_instrument_id, product = \
             singleton.schema.markets_cartesian_product[0]
-        return await singleton.loop.run_in_executor(
-            self.thread_executor,
-            self.strategy.is_there_a_plan,
-            long_instrument_id,
-            short_instrument_id,
-            product
-        )
+        return self.strategy.is_there_a_plan(
+            long_instrument_id, short_instrument_id, product)
 
     @patch('ok_bot.trigger_strategy.estimate_profit', return_value=10000)
     @patch('ok_bot.util.amount_margin', return_value=10000)

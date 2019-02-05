@@ -26,7 +26,6 @@ class AsyncMock(MagicMock):
 @patch('uuid.uuid4', return_value='11111111-1111-1111-1111-111111111111')
 @patch('ok_bot.arbitrage_execution.OrderExecutor')
 class TestArbitrageExecution(unittest.TestCase):
-
     def setUp(self):
         logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
