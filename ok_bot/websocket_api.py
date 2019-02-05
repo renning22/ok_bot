@@ -7,6 +7,7 @@ import json
 import logging
 import pprint
 import zlib
+from concurrent.futures import CancelledError
 
 import dateutil.parser as dp
 import requests
@@ -292,9 +293,12 @@ class WebsocketApi:
                         await self._receive_and_dispatch()
             except websockets.exceptions.InvalidState:
                 logging.error('websocket exception in %s', exc_info=True)
+            except CancelledError:
+                logging.critical('Websocket loop is cancelled')
+                return
 
     def start_read_loop(self):
-        asyncio.ensure_future(self._read_loop())
+            asyncio.ensure_future(self._read_loop())
 
 
 def _testing_non_blocking():

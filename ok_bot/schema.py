@@ -13,7 +13,8 @@ class Schema:
             zip(self._all_instrument_ids,
                 ['this_week', 'next_week', 'quarter']))
         self._markets_cartesian_product = self._init_markets_cartesian_product()
-        self._all_necessary_source_columns = self._init_all_necessary_source_columns()
+        self._all_necessary_source_columns =\
+            self._init_all_necessary_source_columns()
 
     @staticmethod
     def make_column_name(instrument_id, ask_or_bid, price_or_vol):

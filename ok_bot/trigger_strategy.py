@@ -82,8 +82,7 @@ def estimate_profit(prices, gap_threshold):
     return ret
 
 
-def make_arbitrage_plan(self,
-                        slow_instrument_id,
+def make_arbitrage_plan(slow_instrument_id,
                         fast_instrument_id,
                         slow_side,
                         fast_side,
@@ -188,6 +187,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
 
         if available_amount < \
                 constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+            logging.info('[amount margin too small] skip')
             return None
         else:
             # trigger arbitrage
@@ -202,7 +202,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
                 f'{short_instrument_speed:.3f}'
             )
             if long_instrument_speed > short_instrument_speed:
-                return self.make_arbitrage_plan(
+                return make_arbitrage_plan(
                     slow_instrument_id=short_instrument,
                     fast_instrument_id=long_instrument,
                     slow_side=SHORT,
@@ -211,7 +211,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
                     close_price_gap=close_price_gap
                 )
             else:
-                return self.make_arbitrage_plan(
+                return make_arbitrage_plan(
                     slow_instrument_id=long_instrument,
                     fast_instrument_id=short_instrument,
                     slow_side=LONG,
