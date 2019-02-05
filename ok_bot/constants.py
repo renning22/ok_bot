@@ -1,4 +1,4 @@
-MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 10  # 10 minutes
+MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 5  # 5 minutes
 
 TRADING_VOLUME = 1  # 1 "张"
 SINGLE_UNIT_IN_USD = {
@@ -18,6 +18,9 @@ SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = -0.001
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.
 SIMPLE_STRATEGY_ZSCORE_THRESHOLD = 1.0
+
+# Bounds back distance.
+SIMPLE_STRATEGY_RESILIANCE = 0.75
 
 # Arbitrage
 # According to https://www.okex.com/pages/products/fees.html, for Lv1
