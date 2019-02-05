@@ -28,11 +28,55 @@ ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
 ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
-def make_open_position_status(
-        result: bool,
-        message
-) -> OpenPositionStatus:
-    return OpenPositionStatus(result, message)
+class OrderRevoker:
+    # Return values
+    REVOKED_COMPLETELY = 'REVOKED_COMPLETELY'
+    FULFILLED_BEFORE_REVOKE = 'FULFILLED_BEFORE_REVOKE'
+
+    def __init__(self, order_id, instrument_id, logger):
+        self._order_id = order_id
+        self._instrument_id = instrument_id
+        self._logger = logger
+
+    async def revoke_guaranteed(self):
+        while True:
+            revoke_successful = await self._send_revoke_request()
+            if revoke_successful:
+                return OrderRevoker.REVOKED_COMPLETELY
+            order_info = await singleton.rest_api.get_order_info(
+                self._order_id, self._instrument_id)
+            self._logger.info(
+                '[REVOKE GUARANTEED] order info from rest api:\n%s',
+                pprint.pformat(order_info))
+            final_status = int(order_info.get('status', None))
+            if final_status == constants.ORDER_STATUS_CODE__CANCELLED:
+                return OrderRevoker.REVOKED_COMPLETELY
+            elif final_status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
+                raise NotImplemented('PARTIALLY_FILLED not implemented')
+            elif final_status == constants.ORDER_STATUS_CODE__FULFILLED:
+                return OrderRevoker.FULFILLED_BEFORE_REVOKE
+            elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
+                pass
+
+            await asyncio.sleep(1)
+
+    async def _send_revoke_request(self):
+        self._logger.info('[REVOKE PENDING ORDER] %s', self._order_id)
+        ret = await singleton.rest_api.revoke_order(
+            self._instrument_id, self._order_id)
+        if ret.get('result', False) is True:
+            assert int(ret.get('order_id', None)) == self._order_id
+            self._logger.info('[REVOKE SUCCESSFUL] %s', self._order_id)
+            return True
+        elif int(ret.get('error_code', -1)) ==\
+                constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
+            self._logger.warning('[REVOKE ORDER NOT EXIST] %s', self._order_id)
+            return False
+        else:
+            self._logger.fatal(
+                f'unexpected revoking order response:\n{pprint.pformat(ret)}')
+            raise RuntimeError(
+                f'unexpected revoking order response:\n{pprint.pformat(ret)}')
 
 
 class OrderAwaiter:
@@ -146,14 +190,14 @@ class OrderExecutor:
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor):
-        result = await self._async_place_order_and_await(rest_request_functor)
+        result = await self._place_order_and_await(rest_request_functor)
         if self._order_id:
             # Always postmortem order final status for any cases. This will make
             # sure the final order info written into DB is accurate and final.
             asyncio.create_task(self._post_log_order_final_status())
         return result
 
-    async def _async_place_order_and_await(self, rest_request_functor):
+    async def _place_order_and_await(self, rest_request_functor):
         # TODO: add timeout_sec for rest api wait() as well.
         self._order_id, error_code = await rest_request_functor(
             self._instrument_id,
@@ -168,8 +212,7 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return make_open_position_status(
-                False, {'type': 'API', 'error_code': error_code})
+            return OPEN_POSITION_STATUS__REST_API
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
@@ -198,22 +241,26 @@ class OrderExecutor:
                     f'[TIMEOUT] {self._order_id} ({self._instrument_id}) '
                     'cancelling the pending order')
 
-                # The resolved status is either FULFILLED(True) or
-                # CANCELLED(False) successfully.
-                result = await self._revoke_order_and_resolve_final_status_guaranteed()
-                if result:
+                revoker = OrderRevoker(order_id=self._order_id,
+                                       instrument_id=self._instrument_id,
+                                       logger=self._logger)
+                revoke_status = await revoker.revoke_guaranteed()
+                if revoke_status == OrderRevoker.FULFILLED_BEFORE_REVOKE:
                     self._logger.info(
                         f'[TIMEOUT -> FULFILLED] {self._order_id} ({self._instrument_id}) '
                         'after resovling status via rest api, we found the order was '
                         'actually fulfilled (in the very last minute)')
                     return OPEN_POSITION_STATUS__SUCCEEDED
-                else:
+                elif revoke_status == OrderRevoker.REVOKED_COMPLETELY:
                     self._logger.info(
                         f'[TIMEOUT -> TIMEOUT] {self._order_id} ({self._instrument_id}) '
                         'after resovling status via rest api, we confirmed the '
                         'pending order has been revoked successful and return '
                         'timeout')
                     return OPEN_POSITION_STATUS__TIMEOUT
+                else:
+                    raise RuntimeError(
+                        f'unexpected revoke_status: {revoke_status}')
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
                     f'[CANCELLED] {self._order_id} ({self._instrument_id}) '
@@ -229,71 +276,7 @@ class OrderExecutor:
                     f'[EXCEPTION] {self._order_id} ({self._instrument_id}) '
                     'pending order encountered unexpected ORDER_AWAIT_STATUS '
                     f'{result}')
-                raise Exception(f'unexpected ORDER_AWAIT_STATUS: {result}')
-
-    async def _revoke_order(self):
-        self._logger.info('[REVOKE PENDING ORDER] %s', self._order_id)
-        ret = await singleton.rest_api.revoke_order(
-            self._instrument_id, self._order_id)
-        if ret.get('result', False) is True:
-            assert int(ret.get('order_id', None)) == self._order_id
-            self._logger.info('[REVOKE SUCCESSFUL] %s', self._order_id)
-            return True
-        elif int(ret.get('error_code', -1)) ==\
-                constants.REST_API_ERROR_CODE__PENDING_ORDER_NOT_EXIST:
-            self._logger.warning('[REVOKE ORDER NOT EXIST] %s', self._order_id)
-            return False
-        else:
-            self._logger.fatal(
-                'unexpected revoking order response:\n%s', pprint.pformat(ret))
-            return False
-
-    async def _revoke_order_and_resolve_final_status_guaranteed(self):
-        """Returns either Ture: fulfilled; False: cancelled."""
-        while True:
-            result = await self._revoke_order()
-            if result:
-                # Cancelled successfully.
-                return False
-            final_status = await self._resolve_final_status_after_revoke()
-            if final_status == constants.ORDER_STATUS_CODE__CANCELLED:
-                return False
-            elif final_status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-                # TODO: handle partial position.
-                pass
-            elif final_status == constants.ORDER_STATUS_CODE__FULFILLED:
-                return True
-            elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
-                pass
-
-            await asyncio.sleep(1)
-
-    async def _resolve_final_status_after_revoke(self):
-        ret = await singleton.rest_api.get_order_info(
-            self._order_id, self._instrument_id)
-        self._logger.info(
-            '[RESOLVE AFTER REVOKE] order info from rest api:\n%s',
-            pprint.pformat(ret))
-        status = int(ret.get('status', None))
-        if status == constants.ORDER_STATUS_CODE__CANCELLED:
-            self._logger.info(
-                '[RESOLVE AFTER REVOKE] %s order has been cancelled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PENDING:
-            self._logger.fatal(
-                '[RESOLVE AFTER REVOKE] %s THIS SHOULD NOT HAPPEN', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-            self._logger.info(
-                '[RESOLVE AFTER REVOKE] %s is partially filled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__FULFILLED:
-            self._logger.info(
-                '[RESOLVE AFTER REVOKE] %s order is fulfilled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
-            self._logger.info(
-                '[RESOLVE AFTER REVOKE] %s order is being cancelled in progress',
-                self._order_id)
-        else:
-            self._logger.fatal('unknown status code: %s', status)
-        return status
+                raise RuntimeError(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
     async def _post_log_order_final_status(self):
         ret = await singleton.rest_api.get_order_info(
