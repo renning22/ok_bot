@@ -21,8 +21,8 @@ ArbitragePlan = namedtuple('ArbitragePlan',
                            ])
 
 
-def close_aribitrage_gap_threshold(long_instrument_id,
-                                   short_instrument_id):
+def close_arbitrage_gap_threshold(long_instrument_id,
+                                  short_instrument_id):
     long_instrument_period = singleton.schema.instrument_period(
         long_instrument_id)
     short_instrument_period = singleton.schema.instrument_period(
@@ -155,7 +155,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
                         product):
 
         history_gap = singleton.order_book.historical_mean_spread(product)
-        close_price_gap = history_gap + close_aribitrage_gap_threshold(
+        close_price_gap = history_gap + close_arbitrage_gap_threshold(
             long_instrument, short_instrument) * abs(history_gap)
         current_spread = singleton.order_book.current_spread(product)
         profit_est = estimate_profit({
