@@ -301,7 +301,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
-        logging.info(
+        logging.log_every_n_seconds(
             logging.CRITICAL,
             '\nlong:%s , short:%s'
             '\ncurrent_price_average: %.3f'
