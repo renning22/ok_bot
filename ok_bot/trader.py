@@ -77,8 +77,8 @@ class Trader:
             logging.log_every_n_seconds(
                 logging.WARNING,
                 f'[COOL DOWN] Skipping arbitrage between '
-                f'{slow_instrument_id}({slow_side}) and '
-                f'{fast_instrument_id}({fast_side}) due to '
+                f'{slow_instrument}({slow_side}) and '
+                f'{fast_instrument}({fast_side}) due to '
                 f'cool down',
                 30
             )
