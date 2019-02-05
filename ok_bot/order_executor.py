@@ -52,7 +52,7 @@ class OrderRevoker:
             if final_status == constants.ORDER_STATUS_CODE__CANCELLED:
                 return OrderRevoker.REVOKED_COMPLETELY
             elif final_status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-                raise NotImplemented('PARTIALLY_FILLED not implemented')
+                raise NotImplemented('PARTIALLY_FILLED should never happen')
             elif final_status == constants.ORDER_STATUS_CODE__FULFILLED:
                 return OrderRevoker.FULFILLED_BEFORE_REVOKE
             elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
@@ -254,7 +254,7 @@ class OrderExecutor:
                     return OPEN_POSITION_STATUS__SUCCEEDED
                 elif revoke_status == OrderRevoker.REVOKED_COMPLETELY:
                     self._logger.info(
-                        f'[TIMEOUT -> TIMEOUT] {self._order_id} ({self._instrument_id}) '
+                        f'[TIMEOUT CONFIRMED] {self._order_id} ({self._instrument_id}) '
                         'after resovling status via rest api, we confirmed the '
                         'pending order has been revoked successful and return '
                         'timeout')
@@ -279,6 +279,7 @@ class OrderExecutor:
                     f'{result}')
                 raise RuntimeError(f'unexpected ORDER_AWAIT_STATUS: {result}')
 
+    # TODO: move post logging out of OrderExecutor.
     async def _post_log_order_final_status(self):
         ret = await singleton.rest_api.get_order_info(
             self._order_id, self._instrument_id)
@@ -327,7 +328,7 @@ async def _testing_coroutine(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=106,
+                             price=100,
                              timeout_sec=5,
                              is_market_order=False,
                              logger=logging,
