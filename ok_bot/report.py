@@ -1,8 +1,8 @@
 import logging
-import pprint
-from collections import namedtuple
 
-from . import constants, logger, singleton
+import pandas as pd
+
+from . import constants, singleton
 
 
 class Report:
@@ -20,39 +20,91 @@ class Report:
         self.fast_open_order_id = None
         self.fast_close_order_id = None
 
-    def generate(self):
-        pass
+        # Result table
+        self.table = pd.DataFrame()
 
-    async def _retrieve_order_info_and_log_to_db(self, order_id, instrument_id):
-        ret = await singleton.rest_api.get_order_info(
-            self._order_id, self._instrument_id)
-        self.logger.info(
-            '[POSTMORTEM] order info from rest api:\n%s', pprint.pformat(ret))
+    async def generate(self):
+        """Returns the net profit (in unit of coins)"""
+        if self.slow_open_order_id:
+            self.table = self.table.append(
+                await self._retrieve_order_info_and_log_to_db(
+                    'slow_open_order',
+                    self.slow_open_order_id,
+                    self.slow_instrument_id)
+            )
+        if self.slow_close_order_id:
+            self.table = self.table.append(
+                await self._retrieve_order_info_and_log_to_db(
+                    'slow_close_order',
+                    self.slow_close_order_id,
+                    self.slow_instrument_id)
+            )
+        if self.fast_open_order_id:
+            self.table = self.table.append(
+                await self._retrieve_order_info_and_log_to_db(
+                    'fast_open_order',
+                    self.fast_open_order_id,
+                    self.fast_instrument_id)
+            )
+        if self.fast_close_order_id:
+            self.table = self.table.append(
+                await self._retrieve_order_info_and_log_to_db(
+                    'fast_close_order',
+                    self.fast_close_order_id,
+                    self.fast_instrument_id)
+            )
 
-        status = int(ret.get('status', None))
-        if status == constants.ORDER_STATUS_CODE__CANCELLED:
-            self.logger.info(
-                '[POSTMORTEM] %s order has been cancelled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PENDING:
-            self.logger.info(
-                '[POSTMORTEM] %s order is still pending', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-            self.logger.info(
-                '[POSTMORTEM] %s order is partially filled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__FULFILLED:
-            self.logger.info(
-                '[POSTMORTEM] %s order is fulfilled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
-            self.logger.info(
-                '[POSTMORTEM] %s order is being cancelled in progress',
-                order_id)
+        self.table['contract_val'] = self.table['contract_val'].astype('int64')
+        self.table['fee'] = self.table['fee'].astype('float64')
+        self.table['filled_qty'] = self.table['filled_qty'].astype('int64')
+        self.table['leverage'] = self.table['leverage'].astype('int64')
+        self.table['price_avg'] = self.table['price_avg'].astype('float64')
+        self.table['status'] = self.table['status'].astype('int64')
+        self.table['type'] = self.table['type'].astype('int64')
+
+        self.logger.info('[REPORT] orders:\n%s', self.table)
+
+        if len(self.table) != 4 or set(self.table['type']) != set([1, 2, 3, 4]):
+            self.logger.critical('[REPORT] ORPHAN ORDERS')
+            return None
         else:
-            self.logger.critical('unknown status code: %s', status)
+            net_profit = 0.0
+            for index, row in self.table.iterrows():
+                contract_val = row['contract_val']
+                fee = row['fee']
+                filled_qty = row['filled_qty']
+                leverage = row['leverage']
+                price_avg = row['price_avg']
+                type = row['type']
 
-        assert int(self._order_id) == int(ret.get('order_id'))
+                # margin_coins (before leveraged)
+                margin_coins = (
+                    filled_qty * contract_val / price_avg / leverage
+                )
+                if type == constants.ORDER_TYPE_CODE__OPEN_LONG:
+                    net_profit += margin_coins
+                elif type == constants.ORDER_TYPE_CODE__CLOSE_LONG:
+                    net_profit -= margin_coins
+                elif type == constants.ORDER_TYPE_CODE__OPEN_SHORT:
+                    net_profit -= margin_coins
+                elif type == constants.ORDER_TYPE_CODE__CLOSE_SHORT:
+                    net_profit += margin_coins
+                net_profit += fee
+
+            self.logger.info('[REPORT] net_profit: %s', net_profit)
+            return net_profit
+
+    async def _retrieve_order_info_and_log_to_db(self,
+                                                 index,
+                                                 order_id,
+                                                 instrument_id):
+        """Returns as a pandas table(row)"""
+        ret = await singleton.rest_api.get_order_info(
+            order_id, instrument_id)
+        assert int(order_id) == int(ret.get('order_id'))
         singleton.db.async_update_order(
             order_id=ret.get('order_id'),
-            transaction_id=self._transaction_id,
+            transaction_id=self.transaction_id,
             comment='final',
             status=ret.get('status'),
             size=ret.get('size'),
@@ -63,20 +115,4 @@ class Report:
             type=ret.get('type'),
             timestamp=ret.get('timestamp')
         )
-
-
-def _testing():
-    from ok_bot.mock import AsyncMock
-    logger.init_global_logger(log_level=logging.INFO)
-    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    singleton.rest_api = AsyncMock()
-
-    report = Report(transaction_id=self.id,
-                    slow_instrument_id=slow_leg.instrument_id,
-                    fast_instrument_id=fast_leg.instrument_id,
-                    logger=logging)
-    report.generate()
-
-
-if __name__ == '__main__':
-    _testing()
+        return pd.DataFrame(ret, index=[index])

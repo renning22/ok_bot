@@ -15,6 +15,12 @@ class Quant(Decimal):
         else:
             return super().__new__(cls, value)
 
+    def __neg__(self):
+        return Quant(super().__neg__())
+
+    def __pos__(self):
+        return Quant(super().__pos__())
+
     def __abs__(self):
         return Quant(super().__abs__())
 
