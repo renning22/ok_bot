@@ -223,7 +223,10 @@ class ArbitrageTransaction:
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
             self._db_transaction_status_updater('ended_fast_leg_failed')
-            await self.close_position_guaranteed(self.slow_leg)
+            slow_close_order = await self.close_position_guaranteed(
+                self.slow_leg)
+            assert slow_close_order.succeeded
+            self.report.slow_close_order_id = slow_close_order.order_id
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
             return False
@@ -270,11 +273,11 @@ async def _test_coroutine():
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
                               volume=Quant(1),
-                              price=Quant(105.0)),
+                              price=Quant(99.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
                               volume=1,
-                              price=110.0),
+                              price=95.0),
         close_price_gap_threshold=1,
     )
     await transaction.process()

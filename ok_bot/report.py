@@ -52,6 +52,10 @@ class Report:
                     self.fast_instrument_id)
             )
 
+        if len(self.table) == 0:
+            self.logger.info('[REPORT] empty transaction')
+            return 0
+
         self.table['contract_val'] = self.table['contract_val'].astype('int64')
         self.table['fee'] = self.table['fee'].astype('float64')
         self.table['filled_qty'] = self.table['filled_qty'].astype('int64')
@@ -62,10 +66,19 @@ class Report:
 
         self.logger.info('[REPORT] orders:\n%s', self.table)
 
-        if len(self.table) != 4 or set(self.table['type']) != set([1, 2, 3, 4]):
-            self.logger.critical('[REPORT] ORPHAN ORDERS')
-            return None
-        else:
+        all_types = set(self.table['type'])
+
+        two_opposite_orders = (
+            len(self.table) == 2 and (
+                all_types == set([1, 3]) or all_types == set([2, 4])
+            )
+        )
+
+        four_different_orders = (
+            len(self.table) == 4 and all_types == set([1, 2, 3, 4])
+        )
+
+        if two_opposite_orders or four_different_orders:
             net_profit = 0.0
             for index, row in self.table.iterrows():
                 contract_val = row['contract_val']
@@ -77,7 +90,7 @@ class Report:
 
                 # margin_coins (before leveraged)
                 margin_coins = (
-                    filled_qty * contract_val / price_avg / leverage
+                    (contract_val / leverage) * filled_qty / price_avg
                 )
                 if type == constants.ORDER_TYPE_CODE__OPEN_LONG:
                     net_profit += margin_coins
@@ -89,9 +102,12 @@ class Report:
                     net_profit += margin_coins
                 net_profit += fee
 
-            self.logger.info('[REPORT] net_profit: %.8s %s',
+            self.logger.info('[REPORT] net_profit: %.6f %s',
                              net_profit, singleton.coin_currency)
             return net_profit
+        else:
+            self.logger.fatal('[REPORT] ORPHAN ORDERS!')
+            raise RuntimeError('[REPORT] ORPHAN ORDERS!')
 
     async def _retrieve_order_info_and_log_to_db(self,
                                                  index,

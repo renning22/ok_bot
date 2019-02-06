@@ -10,10 +10,10 @@ from ok_bot.report import Report
 
 
 def expected_net_profit_way_1():
-    long_margin = 10 / 101.111 / 10
-    short_margin = 10 / 103.333 / 10
-    long_margin_after = 10 / 102.222 / 10
-    short_margin_after = 10 / 104.444 / 10
+    long_margin = 10 / 10 / 101.111
+    short_margin = 10 / 10 / 103.333
+    long_margin_after = 10 / 10 / 102.222
+    short_margin_after = 10 / 10 / 104.444
     total_fee = 4 * -0.01
     return sum([
         long_margin - long_margin_after,
@@ -23,8 +23,8 @@ def expected_net_profit_way_1():
 
 
 def expected_net_profit_way_2():
-    long_margin = 10 / 101.111 / 10
-    short_margin = 10 / 103.333 / 10
+    long_margin = 10 / 10 / 101.111
+    short_margin = 10 / 10 / 103.333
     long_gain_rate = (102.222 - 101.111) / 101.111
     short_gain_rate = -(104.444 - 103.333) / 103.333
     total_fee = 4 * -0.01
@@ -91,6 +91,9 @@ class TestArbitrageExecution(unittest.TestCase):
              'type': str(constants.ORDER_TYPE_CODE__CLOSE_SHORT)},
         ]
 
+    def tearDown(self):
+        singleton.db.shutdown(wait=True)
+
     def test_net_profit(self):
         async def _testing_coroutine():
             report = Report(
@@ -104,12 +107,15 @@ class TestArbitrageExecution(unittest.TestCase):
             report.fast_close_order_id = 10004
             net_profit = await report.generate()
 
-            # Cross-validation
+            # Cross-validation (there's floating point error)
             np.testing.assert_almost_equal(
                 expected_net_profit_way_1(),
                 expected_net_profit_way_2()
             )
-            self.assertEqual(net_profit, expected_net_profit_way_1())
+            np.testing.assert_almost_equal(
+                net_profit,
+                expected_net_profit_way_1()
+            )
 
             singleton.rest_api.get_order_info.assert_has_calls([
                 call(10001, 'ETH-USD-190201'),
