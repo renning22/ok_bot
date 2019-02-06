@@ -2,6 +2,8 @@ import argparse
 import logging
 import sys
 
+import git
+
 from . import singleton
 from .logger import init_global_logger
 
@@ -35,7 +37,9 @@ def main():
     args = args.parse_args()
     init_global_logger(args.log_to_file, args.log_to_slack, args.log_level)
     symbol = args.symbol
-    logging.critical('starting program with %s, args: %s', symbol, sys.argv)
+    sha = git.Repo(search_parent_directories=True).head.object.hexsha
+    logging.critical('starting program with %s, args: %s, GIT sha: %s',
+                     symbol, sys.argv, sha)
 
     # initialize components
     singleton.initialize_objects(

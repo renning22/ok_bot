@@ -6,7 +6,7 @@ https://www.anaconda.com/download/
 ### Pip dependencies
 ```sh
 conda install python=3.7.2
-pip install ccxt slackclient websockets pandas
+pip install ccxt slackclient websockets pandas gitpython
 ```
 
 ### Clone
