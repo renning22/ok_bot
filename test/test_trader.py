@@ -2,15 +2,10 @@ import asyncio
 import logging
 import unittest
 from unittest import TestCase
-from unittest.mock import MagicMock
 
 from ok_bot import constants, logger, singleton, trader
+from ok_bot.mock import AsyncMock
 from ok_bot.order_executor import OrderExecutor
-
-
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
 
 
 class TestTrader(TestCase):

@@ -10,17 +10,12 @@ from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                               FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from ok_bot.mock import MockBookListerner_constantPriceGenerator
+from ok_bot.mock import AsyncMock, MockBookListerner_constantPriceGenerator
 from ok_bot.order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
                                    OrderExecutor)
 
 _FAKE_MARKET_PRICE = 100.0
 _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
-
-
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
 
 
 @patch('uuid.uuid4', return_value='11111111-1111-1111-1111-111111111111')
@@ -71,7 +66,10 @@ class TestArbitrageExecution(unittest.TestCase):
             )
             result = await transaction.process()
             self.assertTrue(result)
-
+            self.assertEqual(quarter_instrument,
+                             transaction.report.slow_instrument_id)
+            self.assertEqual(week_instrument,
+                             transaction.report.fast_instrument_id)
             self.assertEqual(10002, transaction.report.slow_open_order_id)
             self.assertEqual(10004, transaction.report.slow_close_order_id)
             self.assertEqual(10001, transaction.report.fast_open_order_id)

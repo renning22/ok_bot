@@ -2,8 +2,14 @@ import asyncio
 import logging
 import pprint
 import time
+from unittest.mock import MagicMock
 
 import numpy as np
+
+
+class AsyncMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
 
 
 class MockTrader:

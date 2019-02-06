@@ -117,7 +117,10 @@ class ArbitrageTransaction:
         self.close_price_gap_threshold = close_price_gap_threshold
         self.logger = create_transaction_logger(self.id)
         self._start_time_sec = time.time()
-        self.report = Report(self.id)
+        self.report = Report(transaction_id=self.id,
+                             slow_instrument_id=slow_leg.instrument_id,
+                             fast_instrument_id=fast_leg.instrument_id,
+                             logger=self.logger)
         self._db_transaction_status_updater = (
             lambda status:
                 singleton.db.async_update_transaction(
@@ -182,8 +185,12 @@ class ArbitrageTransaction:
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         result = await self._process()
-        self.logger.info('=== arbitrage transaction ended ===')
+
+        # We don't want to block new arbitrage spawned during report generating.
         singleton.trader.on_going_arbitrage_count -= 1
+        self.report.generate()
+
+        self.logger.info('=== arbitrage transaction ended ===')
         return result
 
     async def _process(self):

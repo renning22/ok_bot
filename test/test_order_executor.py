@@ -1,18 +1,13 @@
 import asyncio
 import logging
 import unittest
-from unittest.mock import MagicMock
 
 from ok_bot import constants, db, logger, order_executor, singleton
+from ok_bot.mock import AsyncMock
 
 _FAKE_ORDER_ID = 12345
 _SIZE = 1
 _PRICE = 100.0
-
-
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
 
 
 class MockOrderListerner_cancelImmediately:

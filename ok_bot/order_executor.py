@@ -201,12 +201,7 @@ class OrderExecutor:
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor):
-        result = await self._place_order_and_await(rest_request_functor)
-        if self._order_id:
-            # Always postmortem order final status for any cases. This will make
-            # sure the final order info written into DB is accurate and final.
-            asyncio.create_task(self._post_log_order_final_status())
-        return result
+        return await self._place_order_and_await(rest_request_functor)
 
     async def _place_order_and_await(self, rest_request_functor):
         # TODO: add timeout_sec for rest api wait() as well.
@@ -288,48 +283,6 @@ class OrderExecutor:
                     'pending order encountered unexpected ORDER_AWAIT_STATUS '
                     f'{result}')
                 raise RuntimeError(f'unexpected ORDER_AWAIT_STATUS: {result}')
-
-    # TODO: move post logging out of OrderExecutor.
-    async def _post_log_order_final_status(self):
-        ret = await singleton.rest_api.get_order_info(
-            self._order_id, self._instrument_id)
-        self._logger.info(
-            '[POSTMORTEM] order info from rest api:\n%s', pprint.pformat(ret))
-
-        status = int(ret.get('status', None))
-        if status == constants.ORDER_STATUS_CODE__CANCELLED:
-            self._logger.info(
-                '[POSTMORTEM] %s order has been cancelled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PENDING:
-            self._logger.info(
-                '[POSTMORTEM] %s order is still pending', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-            self._logger.info(
-                '[POSTMORTEM] %s order is partially filled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__FULFILLED:
-            self._logger.info(
-                '[POSTMORTEM] %s order is fulfilled', self._order_id)
-        elif status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
-            self._logger.info(
-                '[POSTMORTEM] %s order is being cancelled in progress',
-                order_id)
-        else:
-            self._logger.critical('unknown status code: %s', status)
-
-        assert int(self._order_id) == int(ret.get('order_id'))
-        singleton.db.async_update_order(
-            order_id=ret.get('order_id'),
-            transaction_id=self._transaction_id,
-            comment='final',
-            status=ret.get('status'),
-            size=ret.get('size'),
-            filled_qty=ret.get('filled_qty'),
-            price=ret.get('price'),
-            price_avg=ret.get('price_avg'),
-            fee=ret.get('fee'),
-            type=ret.get('type'),
-            timestamp=ret.get('timestamp')
-        )
 
 
 async def _testing_coroutine(instrument_id):
