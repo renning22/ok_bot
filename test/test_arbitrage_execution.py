@@ -20,6 +20,7 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 
 @patch('uuid.uuid4', return_value='11111111-1111-1111-1111-111111111111')
 @patch('ok_bot.arbitrage_execution.OrderExecutor')
+@patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
         logger.init_global_logger(log_level=logging.INFO)
@@ -38,7 +39,7 @@ class TestArbitrageExecution(unittest.TestCase):
             singleton.book_listener.shutdown_broadcast_loop())
         singleton.db.shutdown(wait=True)
 
-    def test_arbitrage_converge(self, MockOrderExecutor, mock_uuid4):
+    def test_arbitrage_converge(self, MockReport, MockOrderExecutor, mock_uuid4):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
@@ -49,6 +50,9 @@ class TestArbitrageExecution(unittest.TestCase):
             OPEN_POSITION_STATUS__SUCCEEDED(10003))
         mock_order_executor.close_short_order.return_value = (
             OPEN_POSITION_STATUS__SUCCEEDED(10004))
+
+        mock_report = AsyncMock()
+        MockReport.return_value = mock_report
 
         async def _testing_coroutine():
             week_instrument = 'ETH-USD-190201'
@@ -66,14 +70,17 @@ class TestArbitrageExecution(unittest.TestCase):
             )
             result = await transaction.process()
             self.assertTrue(result)
+
+            # Assert reports
+            mock_report.generate.assert_called_once()
             self.assertEqual(quarter_instrument,
-                             transaction.report.slow_instrument_id)
+                             mock_report.slow_instrument_id)
             self.assertEqual(week_instrument,
-                             transaction.report.fast_instrument_id)
-            self.assertEqual(10002, transaction.report.slow_open_order_id)
-            self.assertEqual(10004, transaction.report.slow_close_order_id)
-            self.assertEqual(10001, transaction.report.fast_open_order_id)
-            self.assertEqual(10003, transaction.report.fast_close_order_id)
+                             mock_report.fast_instrument_id)
+            self.assertEqual(10002, mock_report.slow_open_order_id)
+            self.assertEqual(10004, mock_report.slow_close_order_id)
+            self.assertEqual(10001, mock_report.fast_open_order_id)
+            self.assertEqual(10003, mock_report.fast_close_order_id)
 
             MockOrderExecutor.assert_has_calls([
                 call(instrument_id=quarter_instrument,

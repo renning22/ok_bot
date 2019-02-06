@@ -188,7 +188,7 @@ class ArbitrageTransaction:
 
         # We don't want to block new arbitrage spawned during report generating.
         singleton.trader.on_going_arbitrage_count -= 1
-        self.report.generate()
+        await self.report.generate()
 
         self.logger.info('=== arbitrage transaction ended ===')
         return result

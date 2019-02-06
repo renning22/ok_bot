@@ -1,5 +1,3 @@
-import logging
-
 import pandas as pd
 
 from . import constants, singleton
@@ -91,7 +89,8 @@ class Report:
                     net_profit += margin_coins
                 net_profit += fee
 
-            self.logger.info('[REPORT] net_profit: %s', net_profit)
+            self.logger.info('[REPORT] net_profit: %.8s %s',
+                             net_profit, singleton.coin_currency)
             return net_profit
 
     async def _retrieve_order_info_and_log_to_db(self,
