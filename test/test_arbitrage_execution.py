@@ -47,13 +47,13 @@ class TestArbitrageExecution(unittest.TestCase):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10001))
         mock_order_executor.open_short_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10002))
         mock_order_executor.close_long_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10003))
         mock_order_executor.close_short_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10004))
 
         async def _testing_coroutine():
             week_instrument = 'ETH-USD-190201'
@@ -71,6 +71,11 @@ class TestArbitrageExecution(unittest.TestCase):
             )
             result = await transaction.process()
             self.assertTrue(result)
+
+            self.assertEqual(10002, transaction.report.slow_open_order_id)
+            self.assertEqual(10004, transaction.report.slow_close_order_id)
+            self.assertEqual(10001, transaction.report.fast_open_order_id)
+            self.assertEqual(10003, transaction.report.fast_close_order_id)
 
             MockOrderExecutor.assert_has_calls([
                 call(instrument_id=quarter_instrument,

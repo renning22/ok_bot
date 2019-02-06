@@ -6,22 +6,30 @@ from collections import namedtuple
 
 from . import constants, singleton
 
-OpenPositionStatus = namedtuple('OpenPositionStatus',
-                                ['result',  # boolean, successful or not.
-                                 # detailed error message if failed.
-                                 'message',
-                                 ])
+OpenPositionStatus = namedtuple(
+    'OpenPositionStatus',
+    [
+        'succeeded',
+        'message',
+        'order_id',
+    ])
 
-OPEN_POSITION_STATUS__SUCCEEDED = OpenPositionStatus(
-    result=True, message='order fulfilled')
+
+def OPEN_POSITION_STATUS__SUCCEEDED(order_id):
+    return OpenPositionStatus(
+        succeeded=True,
+        message='order fulfilled',
+        order_id=order_id)
+
+
 OPEN_POSITION_STATUS__UNKNOWN = OpenPositionStatus(
-    result=False, message='unknown')
+    succeeded=False, message='unknown', order_id=None)
 OPEN_POSITION_STATUS__REST_API = OpenPositionStatus(
-    result=False, message='rest api http error')
+    succeeded=False, message='rest api http error', order_id=None)
 OPEN_POSITION_STATUS__TIMEOUT = OpenPositionStatus(
-    result=False, message='failed to fulfill in time')
+    succeeded=False, message='failed to fulfill in time', order_id=None)
 OPEN_POSITION_STATUS__CANCELLED = OpenPositionStatus(
-    result=False, message='order cancelled')
+    succeeded=False, message='order cancelled', order_id=None)
 
 
 ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
@@ -273,7 +281,7 @@ class OrderExecutor:
                 self._logger.info(
                     f'[FULFILLED] {self._order_id} ({self._instrument_id}) '
                     ' pending order has been fulfilled')
-                return OPEN_POSITION_STATUS__SUCCEEDED
+                return OPEN_POSITION_STATUS__SUCCEEDED(self._order_id)
             else:
                 self._logger.critical(
                     f'[EXCEPTION] {self._order_id} ({self._instrument_id}) '
