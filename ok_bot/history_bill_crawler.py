@@ -160,7 +160,7 @@ class BillCrawler:
 
 
 if __name__ == '__main__':
-    init_global_logger()
+    init_global_logger(log_level=logging.DEBUG)
     args = argparse.ArgumentParser(
         description='Crawl completed order from OKEX')
     args.add_argument('--currency',
