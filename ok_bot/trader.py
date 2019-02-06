@@ -19,6 +19,7 @@ class Trader:
         self.is_in_cooldown = False
         self.on_going_arbitrage_count = 0
         self.max_parallel_transaction_num = max_parallel_transaction_num
+        self.ready = singleton.loop.create_future()
 
         if simple_strategy:
             self.trigger_strategy = trigger_strategy.SimpleTriggerStrategy()
@@ -38,6 +39,8 @@ class Trader:
                                         ask_vols, bid_prices, bid_vols):
         if singleton.order_book.time_window >= self.min_time_window:
             self.new_tick_received = self.new_tick_received__regular
+            if not self.ready.done():
+                self.ready.set_result(True)
             return
 
         logging.log_every_n_seconds(

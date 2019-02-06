@@ -26,9 +26,7 @@ class OrderBook:
         self.update_book = self._update_book__ramp_up_mode
         for instrument_id in singleton.schema.all_instrument_ids:
             singleton.book_listener.subscribe(instrument_id, self)
-
-    def has_ramped_up(self):
-        return self.update_book == self._update_book__regular
+        self.ready = singleton.loop.create_future()
 
     def zscore(self, cross_product):
         zscores = stats.zscore(self.table[cross_product].astype('float64'))
@@ -156,6 +154,8 @@ class OrderBook:
         # Callback
         self._trader.new_tick_received(
             instrument_id, ask_prices, ask_vols, bid_prices, bid_vols)
+        if not self.ready.done():
+            self.ready.set_result(True)
 
     def _convert_last_record_to_table_row(self):
         # TODO(luanjunyi): consider removing the handicap data from table. Use table only

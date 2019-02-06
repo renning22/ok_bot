@@ -1,9 +1,14 @@
 import logging
 import unittest
+import asyncio
+import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
+from unittest.mock import patch, Mock
 
 from ok_bot import constants, logger, singleton, trigger_strategy
 from ok_bot.arbitrage_execution import LONG, SHORT
+from ok_bot.trigger_strategy import PercentageTriggerStrategy
 
 
 class TestPercentageTriggerStrategy(TestCase):
@@ -57,6 +62,56 @@ class TestPercentageTriggerStrategy(TestCase):
             ),
             constants.MIN_ESTIMATE_PROFIT
         )
+
+
+class FeatTestPercentageTriggerStrategy(TestCase):
+    def setUp(self):
+        logger.init_global_logger(log_level=logging.INFO)
+        singleton.initialize_objects_with_dev_db('ETH')
+        self.strategy = PercentageTriggerStrategy()
+
+    def tearDown(self):
+        singleton.db.shutdown(wait=True)
+        for task in asyncio.Task.all_tasks():
+            task.cancel()
+
+    async def query_plan_after_ready(self):
+        singleton.trader.min_time_window = np.timedelta64(5, 's')
+        await singleton.trader.ready
+        long_instrument_id, short_instrument_id, product = \
+            singleton.schema.markets_cartesian_product[0]
+        return self.strategy.is_there_a_plan(
+            long_instrument_id, short_instrument_id, product)
+
+    @patch('ok_bot.trigger_strategy.estimate_profit', return_value=10000)
+    @patch('ok_bot.util.amount_margin', return_value=10000)
+    @patch('ok_bot.arbitrage_execution.ArbitrageTransaction')
+    def test_strategy_trigger_in_basic_cases(
+            self, arbitrage, amount_margin, estimate_profit):
+        # Produce plan when there's enough profit estimation and amount margin
+        amount_margin.return_value = 10000
+        estimate_profit.return_value = 10000
+        singleton.websocket.start_read_loop()
+        plan = singleton.loop.run_until_complete(
+            self.query_plan_after_ready()
+        )
+        self.assertIsNotNone(plan)
+        # No plan when not enough amount margin
+        amount_margin.return_value = 0
+        estimate_profit.return_value = 10000
+        singleton.websocket.start_read_loop()
+        plan = singleton.loop.run_until_complete(
+            self.query_plan_after_ready()
+        )
+        self.assertIsNone(plan)
+        # No plan when profit estimation is negative
+        amount_margin.return_value = 10000
+        estimate_profit.return_value = -1
+        singleton.websocket.start_read_loop()
+        plan = singleton.loop.run_until_complete(
+            self.query_plan_after_ready()
+        )
+        self.assertIsNone(plan)
 
 
 if __name__ == '__main__':
