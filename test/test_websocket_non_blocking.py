@@ -1,10 +1,10 @@
 import asyncio
+import logging
 import pprint
-from concurrent.futures import ThreadPoolExecutor
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
-import logging
 
 from ok_bot import singleton
 
@@ -30,24 +30,24 @@ class TestWebsocketNonblocking(unittest.TestCase):
         async def sleeper():
             await asyncio.sleep(_CRAWL_TEST_TIMEOUT_SEC)
 
-        async def _testing_coroutine(test_class):
+        async def _testing_coroutine():
             with self.assertLogs(logging.getLogger(), level='INFO') as cm:
                 t = await asyncio.gather(crawl_job(), sleeper())
                 crawled_times = t[0]
                 log_message = cm.output
 
             print(pprint.pformat(log_message))
-            test_class.assertIn(
+            self.assertIn(
                 'INFO:root:Sending heartbeat message', log_message)
-            test_class.assertIn(
+            self.assertIn(
                 'INFO:root:Received heartbeat message', log_message)
-            test_class.assertEqual(
+            self.assertEqual(
                 crawled_times, _CRAWL_TIMES,
                 f'crawled {crawled_times} expected {_CRAWL_TIMES}')
-            test_class.assertGreaterEqual(
+            self.assertGreaterEqual(
                 singleton.websocket.heartbeat_ping, 1,
                 f'{singleton.websocket.heartbeat_ping}')
-            test_class.assertGreaterEqual(
+            self.assertGreaterEqual(
                 singleton.websocket.heartbeat_pong, 1,
                 f'{singleton.websocket.heartbeat_pong}')
 
@@ -55,7 +55,7 @@ class TestWebsocketNonblocking(unittest.TestCase):
         # make sure nothing will return from websocket subscription
         singleton.websocket.book_listener = None
         singleton.websocket.start_read_loop()
-        singleton.loop.run_until_complete(_testing_coroutine(self))
+        singleton.loop.run_until_complete(_testing_coroutine())
 
 
 if __name__ == '__main__':

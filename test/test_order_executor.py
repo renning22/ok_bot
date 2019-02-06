@@ -52,7 +52,7 @@ class TestOrderExecutor(unittest.TestCase):
         singleton.order_listener = MockOrderListerner_cancelImmediately()
 
     def test_order_cancelled(self):
-        async def _testing_coroutine(test_class):
+        async def _testing_coroutine():
             executor = order_executor.OrderExecutor(
                 instrument_id='instrument_id',
                 amount=_SIZE,
@@ -64,11 +64,11 @@ class TestOrderExecutor(unittest.TestCase):
             logging.info('open_long_position has been called')
             order_status = await executor.open_long_position()
             logging.info('result: %s', order_status)
-            test_class.assertIs(
+            self.assertIs(
                 order_status, order_executor.OPEN_POSITION_STATUS__CANCELLED)
 
         singleton.loop = asyncio.get_event_loop()
-        singleton.loop.run_until_complete(_testing_coroutine(self))
+        singleton.loop.run_until_complete(_testing_coroutine())
 
         self.assertEqual(
             singleton.order_listener.last_subscribed_order_id, _FAKE_ORDER_ID)
