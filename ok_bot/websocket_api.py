@@ -25,7 +25,7 @@ def _get_server_time_iso():
     if response.status_code == 200:
         return response.json()['iso']
     else:
-        logging.fatal('failed to request server time')
+        logging.critical('failed to request server time')
         return ''
 
 

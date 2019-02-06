@@ -75,7 +75,7 @@ class OrderRevoker:
             self._logger.warning('[REVOKE ORDER NOT EXIST] %s', self._order_id)
             return False
         else:
-            self._logger.fatal(
+            self._logger.critical(
                 f'unexpected revoking order response:\n{pprint.pformat(ret)}')
             raise RuntimeError(
                 f'unexpected revoking order response:\n{pprint.pformat(ret)}')
@@ -103,7 +103,8 @@ class OrderAwaiter:
         singleton.order_listener.unsubscribe(self._order_id, self)
 
         if type is not None:
-            self._logger.fatal('exception within OrderAwaiter', exc_info=True)
+            self._logger.critical(
+                'exception within OrderAwaiter', exc_info=True)
 
     def order_pending(self, order_id):
         assert self._order_id == order_id
@@ -249,16 +250,16 @@ class OrderExecutor:
                 revoke_status = await revoker.revoke_guaranteed()
                 if revoke_status == OrderRevoker.FULFILLED_BEFORE_REVOKE:
                     self._logger.info(
-                        f'[TIMEOUT -> FULFILLED] {self._order_id} ({self._instrument_id}) '
-                        'after resovling status via rest api, we found the order was '
-                        'actually fulfilled (in the very last minute)')
+                        f'[TIMEOUT -> FULFILLED] '
+                        f'{self._order_id} ({self._instrument_id}) '
+                        'order was resolved as fulfilled by REST API')
                     return OPEN_POSITION_STATUS__SUCCEEDED
                 elif revoke_status == OrderRevoker.REVOKED_COMPLETELY:
                     self._logger.info(
-                        f'[TIMEOUT CONFIRMED] {self._order_id} ({self._instrument_id}) '
-                        'after resovling status via rest api, we confirmed the '
-                        'pending order has been revoked successful and return '
-                        'timeout')
+                        f'[TIMEOUT CONFIRMED] '
+                        f'{self._order_id} ({self._instrument_id}) '
+                        'order was confirmed as cancelled by REST API, '
+                        'will return timeout')
                     return OPEN_POSITION_STATUS__TIMEOUT
                 else:
                     raise RuntimeError(
@@ -274,7 +275,7 @@ class OrderExecutor:
                     ' pending order has been fulfilled')
                 return OPEN_POSITION_STATUS__SUCCEEDED
             else:
-                self._logger.fatal(
+                self._logger.critical(
                     f'[EXCEPTION] {self._order_id} ({self._instrument_id}) '
                     'pending order encountered unexpected ORDER_AWAIT_STATUS '
                     f'{result}')
@@ -305,7 +306,7 @@ class OrderExecutor:
                 '[POSTMORTEM] %s order is being cancelled in progress',
                 order_id)
         else:
-            self._logger.fatal('unknown status code: %s', status)
+            self._logger.critical('unknown status code: %s', status)
 
         assert int(self._order_id) == int(ret.get('order_id'))
         singleton.db.async_update_order(
