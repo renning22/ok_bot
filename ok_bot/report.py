@@ -102,7 +102,7 @@ class Report:
                     net_profit += margin_coins
                 net_profit += fee
 
-            self.logger.info('[REPORT] net_profit: %.6f %s',
+            self.logger.info('[REPORT] net_profit: %.8f %s',
                              net_profit, singleton.coin_currency)
             return net_profit
         else:
