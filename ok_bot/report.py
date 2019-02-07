@@ -92,9 +92,7 @@ class Report:
                 type = row['type']
 
                 # margin_coins (before leveraged)
-                margin_coins = (
-                    (contract_val / leverage) * filled_qty / price_avg
-                )
+                margin_coins = contract_val * filled_qty / price_avg
                 if type == constants.ORDER_TYPE_CODE__OPEN_LONG:
                     net_profit += margin_coins
                 elif type == constants.ORDER_TYPE_CODE__CLOSE_LONG:
@@ -105,7 +103,6 @@ class Report:
                     net_profit += margin_coins
                 net_profit += fee
             return net_profit
-
 
     async def _retrieve_order_info_and_log_to_db(self,
                                                  index,

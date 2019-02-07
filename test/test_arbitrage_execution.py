@@ -68,6 +68,7 @@ class TestArbitrageExecution(unittest.TestCase):
                                       volume=1,
                                       price=80.0),
                 close_price_gap_threshold=1,
+                estimate_net_profit=0.002
             )
             result = await transaction.process()
             self.assertTrue(result)

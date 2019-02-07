@@ -115,6 +115,7 @@ class ArbitrageTransaction:
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
+        self.estimate_net_profit = estimate_net_profit
         self.logger = create_transaction_logger(self.id)
         self._start_time_sec = time.time()
         self.report = Report(transaction_id=self.id,
@@ -190,8 +191,12 @@ class ArbitrageTransaction:
         singleton.trader.on_going_arbitrage_count -= 1
         net_profit = await self.report.report_profit()
 
-        self.logger.info('[SUMMARY] %s net_profit: %.8f %s',
-                         self.id, net_profit, singleton.coin_currency)
+        self.logger.info('[SUMMARY] id:%s\n'
+                         'net_profit: %.8f %s (estimate: %.8f)',
+                         self.id,
+                         net_profit,
+                         singleton.coin_currency,
+                         self.estimate_net_profit)
         self.logger.info('=== arbitrage transaction ended ===')
         return result
 
