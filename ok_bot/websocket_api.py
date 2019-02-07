@@ -283,7 +283,7 @@ class WebsocketApi:
         logging.info(short_qty)
         logging.info(short_avg_cost)
 
-    async def _read_loop(self):
+    async def read_loop(self):
         while True:
             try:
                 async with websockets.connect(OK_WEBSOCKET_ADDRESS) as self._conn:

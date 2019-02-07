@@ -92,7 +92,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # Produce plan when there's enough profit estimation and amount margin
         amount_margin.return_value = 10000
         estimate_profit.return_value = 10000
-        asyncio.ensure_future(singleton.websocket._read_loop())
+        asyncio.ensure_future(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
@@ -100,7 +100,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # No plan when not enough amount margin
         amount_margin.return_value = 0
         estimate_profit.return_value = 10000
-        asyncio.ensure_future(singleton.websocket._read_loop())
+        asyncio.ensure_future(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
@@ -108,7 +108,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # No plan when profit estimation is negative
         amount_margin.return_value = 10000
         estimate_profit.return_value = -1
-        asyncio.ensure_future(singleton.websocket._read_loop())
+        asyncio.ensure_future(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
