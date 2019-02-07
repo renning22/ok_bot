@@ -283,7 +283,7 @@ class WebsocketApi:
         logging.info(short_qty)
         logging.info(short_avg_cost)
 
-    async def _read_loop(self):
+    async def read_loop(self):
         while True:
             try:
                 async with websockets.connect(OK_WEBSOCKET_ADDRESS) as self._conn:
@@ -292,18 +292,20 @@ class WebsocketApi:
                     while True:
                         await self._receive_and_dispatch()
             except websockets.exceptions.InvalidState:
-                logging.error('websocket exception in %s', exc_info=True)
+                logging.error('websocket exception', exc_info=True)
             except CancelledError:
-                logging.critical('Websocket loop is cancelled')
+                logging.critical('Websocket loop is cancelled', exc_info=True)
                 return
-
-    def start_read_loop(self):
-        asyncio.ensure_future(self._read_loop())
+            except:
+                logging.critical('Unhandled exception', exc_info=True)
+                return
 
 
 def _testing_non_blocking():
-    from . import singleton
+    from . import singleton, logger
     from datetime import datetime
+
+    logger.init_global_logger(log_level=logging.INFO)
 
     async def ping(url):
         await singleton.websocket.ready
@@ -312,9 +314,10 @@ def _testing_non_blocking():
             r = requests.get(url)
             end = datetime.now()
             elapse = end - start
-            print(f'{url} GET response: {r.status_code}, start: {start}, '
-                  f'end: {end}'
-                  f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
+            logging.info(
+                f'{url} GET response: {r.status_code}, start: {start}, '
+                f'end: {end}'
+                f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
             await asyncio.sleep(5)
 
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')

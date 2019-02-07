@@ -40,7 +40,7 @@ def main():
                        log_to_stderr=args.log_to_stderr)
     symbol = args.symbol
     last_ci = git.Repo(search_parent_directories=True).head.commit
-    logging.critical('starting program @%s (%s) with %s, args: %s, ',
+    logging.critical('Starting program @%s (%s) with %s, args: %s, ',
                      str(last_ci)[:6], last_ci.summary,
                      symbol, sys.argv)
 
@@ -51,3 +51,4 @@ def main():
         max_parallel_transaction_num=args.max_parallel_transaction_num
     )
     singleton.start_loop()
+    logging.critical('Ended program @%s', str(last_ci)[:6])
