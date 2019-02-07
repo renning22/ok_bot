@@ -14,8 +14,8 @@ def main():
                       help='Symbol for crypto-currency in under case',
                       default='ETH',
                       required=True)
-    args.add_argument('--log-to-file',
-                      help='Log to file when set to true',
+    args.add_argument('--log-to-stderr',
+                      help='Log to STDERR when set to true',
                       action='store_true')
     args.add_argument('--log-to-slack',
                       help='Also log to slack when set to true',
@@ -35,7 +35,9 @@ def main():
                       help='Max number of concurrent transactions')
 
     args = args.parse_args()
-    init_global_logger(args.log_to_file, args.log_to_slack, args.log_level)
+    init_global_logger(log_to_slack=args.log_to_slack,
+                       log_level=args.log_level,
+                       log_to_stderr=args.log_to_stderr)
     symbol = args.symbol
     last_ci = git.Repo(search_parent_directories=True).head.commit
     logging.critical('starting program @%s (%s) with %s, args: %s, ',

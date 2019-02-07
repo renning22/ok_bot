@@ -26,7 +26,12 @@ SIMPLE_STRATEGY_RESILIANCE = 0.75
 # According to https://www.okex.com/pages/products/fees.html, for Lv1
 # the fee is either 0.02% or 0.03%. We use 0.03% as estimate.
 FEE_RATE = 0.0003
-SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
+# Slow side should be must tight because when it timeout, there's no fee. Also
+# there are many cases when the order is fulfilled but OKEX didn't send update
+# via websocket. We don't know until we try revoke the order. Then we found it's
+# actually fulfilled and then the opportunity is gone for the fast leg. We end
+# up losing the fee in open/close the slow side.
+SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 2
 FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
 CLOSE_POSITION_ORDER_TIMEOUT_SECOND = 5
 
