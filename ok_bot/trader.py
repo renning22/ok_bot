@@ -66,7 +66,7 @@ class Trader:
         the gap average will break the threshold, which is the arbitrage
         triggering condition.
         """
-        if self.on_going_arbitrage_count > self.max_parallel_transaction_num:
+        if self.on_going_arbitrage_count >= self.max_parallel_transaction_num:
             logging.log_every_n_seconds(
                 logging.CRITICAL,
                 '[WIP SKIP] skip process_pair because there '
