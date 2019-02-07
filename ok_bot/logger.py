@@ -91,9 +91,9 @@ def create_transaction_logger(id):
 
 
 def init_global_logger(
-        log_to_file=False,
         log_to_slack=False,
-        log_level=logging.INFO):
+        log_level=logging.INFO,
+        log_to_stderr=False):
     global _logging_transaction_to_slack
 
     # basicConfig won't work if logging module is imported
@@ -102,11 +102,12 @@ def init_global_logger(
     logging.basicConfig(
         level=log_level,
         format=LOG_FORMAT,
+        filename='log/ok_bot.log'
     )
-    if log_to_file:
-        fh = logging.FileHandler('log/ok_bot.log')
-        fh.setFormatter(logging.Formatter(LOG_FORMAT))
-        logging.getLogger().addHandler(fh)
+    if log_to_stderr:
+        sh = logging.StreamHandler()  # STDERR
+        sh.setFormatter(logging.Formatter(LOG_FORMAT))
+        logging.getLogger().addHandler(sh)
     if log_to_slack:
         logging.getLogger().addHandler(SlackHandler('CRITICAL'))
         _logging_transaction_to_slack = True
@@ -129,6 +130,6 @@ def _testing():
 
 
 if __name__ == '__main__':
-    init_global_logger(log_to_file=False, log_level=logging.DEBUG)
+    init_global_logger(log_to_stderr=True, log_level=logging.DEBUG)
     logging.debug('Testing transaction logging')
     _testing()
