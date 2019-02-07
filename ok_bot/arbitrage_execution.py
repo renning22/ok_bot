@@ -136,7 +136,8 @@ class ArbitrageTransaction:
                     status=status)
         )
 
-    def open_position(self, leg, timeout_in_sec):
+    def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int)\
+            -> OpenPositionStatus:
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
@@ -151,7 +152,8 @@ class ArbitrageTransaction:
         else:
             return order_executor.open_short_position()
 
-    def close_position(self, leg, timeout_in_sec):
+    def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) \
+            -> OpenPositionStatus:
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
