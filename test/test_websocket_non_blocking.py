@@ -54,7 +54,7 @@ class TestWebsocketNonblocking(unittest.TestCase):
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         # make sure nothing will return from websocket subscription
         singleton.websocket.book_listener = None
-        asyncio.ensure_future(singleton.websocket.read_loop())
+        singleton.loop.create_task(singleton.websocket.read_loop())
         singleton.loop.run_until_complete(_testing_coroutine())
 
 
