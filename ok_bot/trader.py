@@ -79,11 +79,11 @@ class Trader:
         elif self.is_in_cooldown:
             logging.log_every_n_seconds(
                 logging.WARNING,
-                f'[COOL DOWN] Skipping arbitrage between '
-                f'{slow_instrument}({slow_side}) and '
-                f'{fast_instrument}({fast_side}) due to '
-                f'cool down',
-                30
+                '[COOL DOWN] Skipping arbitrage between '
+                '%s and %s due to cool down',
+                30,
+                long_instrument,
+                short_instrument
             )
             return
 

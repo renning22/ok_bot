@@ -160,10 +160,11 @@ class OrderAwaiter:
                                filled_qty,
                                price_avg):
         assert self._order_id == order_id
-        self._logger.info(
+        self._logger.warning(
             '[WEBSOCKET] %s order_partially_filled\n'
             'price_avg: %s, size: %s, filled_qty: %s',
             order_id, price_avg, size, filled_qty)
+        raise NotImplementedError('Order should never be partially fulfilled')
 
 
 class OrderExecutor:
@@ -184,23 +185,23 @@ class OrderExecutor:
         self._transaction_id = transaction_id
         self._order_id = None
 
-    def open_long_position(self):
+    def open_long_position(self) -> OpenPositionStatus:
         """Returns Future[OpenPositionStatus]"""
         return self._place_order(singleton.rest_api.open_long_order)
 
-    def open_short_position(self):
+    def open_short_position(self) -> OpenPositionStatus:
         """Returns Future[OpenPositionStatus]"""
         return self._place_order(singleton.rest_api.open_short_order)
 
-    def close_long_order(self):
+    def close_long_order(self) -> OpenPositionStatus:
         """Returns Future[OpenPositionStatus]"""
         return self._place_order(singleton.rest_api.close_long_order)
 
-    def close_short_order(self):
+    def close_short_order(self) -> OpenPositionStatus:
         """Returns Future[OpenPositionStatus]"""
         return self._place_order(singleton.rest_api.close_short_order)
 
-    async def _place_order(self, rest_request_functor):
+    async def _place_order(self, rest_request_functor) -> OpenPositionStatus:
         # TODO: add timeout_sec for rest api wait() as well.
         self._order_id, error_code = await rest_request_functor(
             self._instrument_id,
@@ -253,7 +254,7 @@ class OrderExecutor:
                         f'[TIMEOUT -> FULFILLED] '
                         f'{self._order_id} ({self._instrument_id}) '
                         'order was resolved as fulfilled by REST API')
-                    return OPEN_POSITION_STATUS__SUCCEEDED
+                    return OPEN_POSITION_STATUS__SUCCEEDED(self._order_id)
                 elif revoke_status == OrderRevoker.REVOKED_COMPLETELY:
                     self._logger.info(
                         f'[TIMEOUT CONFIRMED] '
