@@ -201,9 +201,6 @@ class OrderExecutor:
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor):
-        return await self._place_order_and_await(rest_request_functor)
-
-    async def _place_order_and_await(self, rest_request_functor):
         # TODO: add timeout_sec for rest api wait() as well.
         self._order_id, error_code = await rest_request_functor(
             self._instrument_id,

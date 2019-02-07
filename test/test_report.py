@@ -2,8 +2,6 @@ import logging
 import unittest
 from unittest.mock import call
 
-import numpy as np
-
 from ok_bot import constants, logger, singleton
 from ok_bot.mock import AsyncMock
 from ok_bot.report import Report
@@ -105,16 +103,18 @@ class TestArbitrageExecution(unittest.TestCase):
             report.slow_close_order_id = 10002
             report.fast_open_order_id = 10003
             report.fast_close_order_id = 10004
-            net_profit = await report.generate()
+            net_profit = await report.report_profit()
 
             # Cross-validation (there's floating point error)
-            np.testing.assert_almost_equal(
+            self.assertAlmostEqual(
                 expected_net_profit_way_1(),
-                expected_net_profit_way_2()
+                expected_net_profit_way_2(),
+                places=6
             )
-            np.testing.assert_almost_equal(
+            self.assertAlmostEqual(
                 net_profit,
-                expected_net_profit_way_1()
+                expected_net_profit_way_1(),
+                places=6
             )
 
             singleton.rest_api.get_order_info.assert_has_calls([

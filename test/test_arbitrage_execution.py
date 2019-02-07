@@ -52,6 +52,7 @@ class TestArbitrageExecution(unittest.TestCase):
             OPEN_POSITION_STATUS__SUCCEEDED(10004))
 
         mock_report = AsyncMock()
+        mock_report.report_profit.return_value = 0.001  # net_profit
         MockReport.return_value = mock_report
 
         async def _testing_coroutine():
@@ -72,7 +73,7 @@ class TestArbitrageExecution(unittest.TestCase):
             self.assertTrue(result)
 
             # Assert reports
-            mock_report.generate.assert_called_once()
+            mock_report.report_profit.assert_called_once()
             self.assertEqual(quarter_instrument,
                              mock_report.slow_instrument_id)
             self.assertEqual(week_instrument,

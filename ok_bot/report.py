@@ -21,7 +21,7 @@ class Report:
         # Result table
         self.table = pd.DataFrame()
 
-    async def generate(self):
+    async def report_profit(self):
         """Returns the net profit (in unit of coins)"""
         if self.slow_open_order_id:
             self.table = self.table.append(
@@ -78,7 +78,10 @@ class Report:
             len(self.table) == 4 and all_types == set([1, 2, 3, 4])
         )
 
-        if two_opposite_orders or four_different_orders:
+        if not two_opposite_orders and not four_different_orders:
+            self.logger.fatal('[REPORT] ORPHAN ORDERS!')
+            raise RuntimeError('[REPORT] ORPHAN ORDERS!')
+        else:
             net_profit = 0.0
             for index, row in self.table.iterrows():
                 contract_val = row['contract_val']
@@ -101,13 +104,8 @@ class Report:
                 elif type == constants.ORDER_TYPE_CODE__CLOSE_SHORT:
                     net_profit += margin_coins
                 net_profit += fee
-
-            self.logger.info('[REPORT] net_profit: %.8f %s',
-                             net_profit, singleton.coin_currency)
             return net_profit
-        else:
-            self.logger.fatal('[REPORT] ORPHAN ORDERS!')
-            raise RuntimeError('[REPORT] ORPHAN ORDERS!')
+
 
     async def _retrieve_order_info_and_log_to_db(self,
                                                  index,
