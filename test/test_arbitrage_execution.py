@@ -1,6 +1,5 @@
-import asyncio
+import warnings
 import logging
-import time
 import unittest
 from unittest.mock import MagicMock, call, patch
 
@@ -75,10 +74,6 @@ class TestArbitrageExecution(unittest.TestCase):
 
             # Assert reports
             mock_report.report_profit.assert_called_once()
-            self.assertEqual(quarter_instrument,
-                             mock_report.slow_instrument_id)
-            self.assertEqual(week_instrument,
-                             mock_report.fast_instrument_id)
             self.assertEqual(10002, mock_report.slow_open_order_id)
             self.assertEqual(10004, mock_report.slow_close_order_id)
             self.assertEqual(10001, mock_report.fast_open_order_id)
