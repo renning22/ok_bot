@@ -72,7 +72,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
 
     def tearDown(self):
         singleton.db.shutdown(wait=True)
-        for task in asyncio.Task.all_tasks():
+        for task in asyncio.all_tasks(singleton.loop):
             task.cancel()
 
     async def query_plan_after_ready(self):
