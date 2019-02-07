@@ -79,5 +79,4 @@ def initialize_objects_with_dev_db(currency):
 
 
 def start_loop():
-    websocket.start_read_loop()
-    loop.run_forever()
+    loop.run_until_complete(websocket._read_loop())

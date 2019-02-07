@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import unittest
-import asyncio
-import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import numpy as np
 
 from ok_bot import constants, logger, singleton, trigger_strategy
 from ok_bot.arbitrage_execution import LONG, SHORT
@@ -91,7 +92,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # Produce plan when there's enough profit estimation and amount margin
         amount_margin.return_value = 10000
         estimate_profit.return_value = 10000
-        singleton.websocket.start_read_loop()
+        asyncio.ensure_future(singleton.websocket._read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
@@ -99,7 +100,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # No plan when not enough amount margin
         amount_margin.return_value = 0
         estimate_profit.return_value = 10000
-        singleton.websocket.start_read_loop()
+        asyncio.ensure_future(singleton.websocket._read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
@@ -107,7 +108,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         # No plan when profit estimation is negative
         amount_margin.return_value = 10000
         estimate_profit.return_value = -1
-        singleton.websocket.start_read_loop()
+        asyncio.ensure_future(singleton.websocket._read_loop())
         plan = singleton.loop.run_until_complete(
             self.query_plan_after_ready()
         )
