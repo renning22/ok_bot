@@ -13,8 +13,8 @@ from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                         REST_API_ERROR_CODE__NOT_ENOUGH_POSITION_TO_CLOSE,
                         SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .logger import create_transaction_logger, init_global_logger
-from .order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
-                             OpenPositionStatus, OrderExecutor)
+from .order_executor import OpenPositionStatus, OrderExecutor
+from .report import Report
 from .util import amount_margin
 
 ArbitrageLeg = collections.namedtuple(
@@ -115,8 +115,13 @@ class ArbitrageTransaction:
         self.slow_leg = slow_leg
         self.fast_leg = fast_leg
         self.close_price_gap_threshold = close_price_gap_threshold
-        self.logger = create_transaction_logger(str(self.id))
+        self.estimate_net_profit = estimate_net_profit
+        self.logger = create_transaction_logger(self.id)
         self._start_time_sec = time.time()
+        self.report = Report(transaction_id=self.id,
+                             slow_instrument_id=slow_leg.instrument_id,
+                             fast_instrument_id=fast_leg.instrument_id,
+                             logger=self.logger)
         self._db_transaction_status_updater = (
             lambda status:
                 singleton.db.async_update_transaction(
@@ -165,10 +170,10 @@ class ArbitrageTransaction:
         while True:
             close_status = await self.close_position(
                 leg, CLOSE_POSITION_ORDER_TIMEOUT_SECOND)
-            if close_status == OPEN_POSITION_STATUS__SUCCEEDED:
+            if close_status.succeeded:
                 self.logger.info(
                     '[CLOSE POSITION GUARANTEED] succeeded: %s', leg)
-                return
+                return close_status
             else:
                 self.logger.warning(
                     '[CLOSE POSITION GUARANTEED] failed with %s, will retry %s',
@@ -181,41 +186,59 @@ class ArbitrageTransaction:
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
         result = await self._process()
-        self.logger.info('=== arbitrage transaction ended ===')
+
+        # We don't want to block new arbitrage spawned during report generating.
         singleton.trader.on_going_arbitrage_count -= 1
+        net_profit = await self.report.report_profit()
+
+        self.logger.info('[SUMMARY] id:%s\n'
+                         'net_profit: %.8f %s (estimate: %.8f)',
+                         self.id,
+                         net_profit,
+                         singleton.coin_currency,
+                         self.estimate_net_profit)
+        self.logger.info('=== arbitrage transaction ended ===')
         return result
 
     async def _process(self):
         self._db_transaction_status_updater('opening_slow_leg')
-        slow_leg_order_status = await self.open_position(
+        slow_open_order = await self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if slow_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
+        if not slow_open_order.succeeded:
             self.logger.info(
                 f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
-                f'({slow_leg_order_status})')
+                f'({slow_open_order})')
             self._db_transaction_status_updater('ended_slow_leg_failed')
             return False
+        else:
+            self.report.slow_open_order_id = slow_open_order.order_id
+
         self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
                          f'will open position for fast leg')
 
         self._db_transaction_status_updater('opening_fast_leg')
-        fast_leg_order_status = await self.open_position(
+        fast_open_order = await self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
-        if fast_leg_order_status != OPEN_POSITION_STATUS__SUCCEEDED:
+        if not fast_open_order.succeeded:
             self.logger.info(f'[FAST FAILED] failed to open fast leg '
                              f'{self.fast_leg} '
-                             f'({fast_leg_order_status}), '
+                             f'({fast_open_order}), '
                              'will close slow leg position before aborting the '
                              'rest of this transaction')
             self._db_transaction_status_updater('ended_fast_leg_failed')
-            await self.close_position_guaranteed(self.slow_leg)
+            slow_close_order = await self.close_position_guaranteed(
+                self.slow_leg)
+            assert slow_close_order.succeeded
+            self.report.slow_close_order_id = slow_close_order.order_id
             self.logger.info(
                 f'slow leg position {self.slow_leg} has been closed')
             return False
+        else:
+            self.report.fast_open_order_id = fast_open_order.order_id
 
         self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
                          f'fulfilled, will wait '
@@ -236,9 +259,14 @@ class ArbitrageTransaction:
                                  f'margin({converge}), closing both legs')
                 self._db_transaction_status_updater('ended_normally')
 
-        fast_close_task = self.close_position_guaranteed(self.fast_leg)
-        slow_close_task = self.close_position_guaranteed(self.slow_leg)
-        await asyncio.gather(fast_close_task, slow_close_task)
+        fast_close_order, slow_close_order = await asyncio.gather(
+            self.close_position_guaranteed(self.fast_leg),
+            self.close_position_guaranteed(self.slow_leg)
+        )
+        assert fast_close_order.succeeded
+        assert slow_close_order.succeeded
+        self.report.fast_close_order_id = fast_close_order.order_id
+        self.report.slow_close_order_id = slow_close_order.order_id
         return True
 
 
@@ -252,11 +280,11 @@ async def _test_coroutine():
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
                               volume=Quant(1),
-                              price=Quant(105.0)),
+                              price=Quant(99.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
                               volume=1,
-                              price=110.0),
+                              price=95.0),
         close_price_gap_threshold=1,
     )
     await transaction.process()

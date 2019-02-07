@@ -10,7 +10,7 @@ from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                               FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
-from ok_bot.mock import MockBookListerner_constantPriceGenerator
+from ok_bot.mock import AsyncMock, MockBookListerner_constantPriceGenerator
 from ok_bot.order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
                                    OrderExecutor)
 
@@ -18,13 +18,9 @@ _FAKE_MARKET_PRICE = 100.0
 _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 
 
-class AsyncMock(MagicMock):
-    async def __call__(self, *args, **kwargs):
-        return super().__call__(*args, **kwargs)
-
-
 @patch('uuid.uuid4', return_value='11111111-1111-1111-1111-111111111111')
 @patch('ok_bot.arbitrage_execution.OrderExecutor')
+@patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
         logger.init_global_logger(log_level=logging.INFO)
@@ -43,17 +39,21 @@ class TestArbitrageExecution(unittest.TestCase):
             singleton.book_listener.shutdown_broadcast_loop())
         singleton.db.shutdown(wait=True)
 
-    def test_arbitrage_converge(self, MockOrderExecutor, mock_uuid4):
+    def test_arbitrage_converge(self, MockReport, MockOrderExecutor, mock_uuid4):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10001))
         mock_order_executor.open_short_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10002))
         mock_order_executor.close_long_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10003))
         mock_order_executor.close_short_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED)
+            OPEN_POSITION_STATUS__SUCCEEDED(10004))
+
+        mock_report = AsyncMock()
+        mock_report.report_profit.return_value = 0.001  # net_profit
+        MockReport.return_value = mock_report
 
         async def _testing_coroutine():
             week_instrument = 'ETH-USD-190201'
@@ -68,9 +68,21 @@ class TestArbitrageExecution(unittest.TestCase):
                                       volume=1,
                                       price=80.0),
                 close_price_gap_threshold=1,
+                estimate_net_profit=0.002
             )
             result = await transaction.process()
             self.assertTrue(result)
+
+            # Assert reports
+            mock_report.report_profit.assert_called_once()
+            self.assertEqual(quarter_instrument,
+                             mock_report.slow_instrument_id)
+            self.assertEqual(week_instrument,
+                             mock_report.fast_instrument_id)
+            self.assertEqual(10002, mock_report.slow_open_order_id)
+            self.assertEqual(10004, mock_report.slow_close_order_id)
+            self.assertEqual(10001, mock_report.fast_open_order_id)
+            self.assertEqual(10003, mock_report.fast_close_order_id)
 
             MockOrderExecutor.assert_has_calls([
                 call(instrument_id=quarter_instrument,
