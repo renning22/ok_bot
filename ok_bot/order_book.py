@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pprint
 from collections import namedtuple
 
 import numpy as np
@@ -37,13 +38,10 @@ class MarketDepth:
         return self.bid_stack_
 
     def __str__(self):
-        ret = 'Market Depth:\n'
-        for order in self.ask_stack_[::-1]:
-            ret += f'{order.price} {order.volume}\n'
-        ret += '> ' * 20 + '< ' * 20 + '\n'
-        for order in self.bid_stack_[::-1]:
-            ret += f'{order.price} {order.volume}\n'
-        return ret
+        return pprint.pformat({
+            'Ask': self.ask_stack_,
+            'Bid': self.bid_stack_,
+        })
 
     def update(self, ask_prices, ask_vols, bid_prices, bid_vols):
         self.bid_stack_ = [AvailableOrder(price=price, volume=volume)
