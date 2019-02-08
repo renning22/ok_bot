@@ -305,7 +305,7 @@ def _testing():
     init_global_logger()
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
-    asyncio.ensure_future(_testing_coroutine(
+    singleton.loop.create_task(_testing_coroutine(
         instrument_id=singleton.schema.all_instrument_ids[0]))
     singleton.start_loop()
 

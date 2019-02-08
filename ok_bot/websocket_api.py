@@ -305,7 +305,7 @@ def _testing_non_blocking():
     from . import singleton, logger
     from datetime import datetime
 
-    logger.init_global_logger(log_level=logging.INFO)
+    logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
 
     async def ping(url):
         await singleton.websocket.ready
@@ -321,9 +321,9 @@ def _testing_non_blocking():
             await asyncio.sleep(5)
 
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    asyncio.ensure_future(ping('http://www.google.com'))
-    asyncio.ensure_future(ping('http://www.baidu.com'))
-    asyncio.ensure_future(ping('http://www.okex.com'))
+    singleton.loop.create_task(ping('http://www.google.com'))
+    singleton.loop.create_task(ping('http://www.baidu.com'))
+    singleton.loop.create_task(ping('http://www.okex.com'))
 
     singleton.start_loop()
 

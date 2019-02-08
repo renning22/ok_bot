@@ -294,5 +294,5 @@ async def _test_coroutine():
 if __name__ == '__main__':
     init_global_logger(log_level=logging.INFO)
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    asyncio.ensure_future(_test_coroutine())
+    singleton.loop.create_task(_test_coroutine())
     singleton.start_loop()
