@@ -10,12 +10,11 @@ from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                         FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND,
-                        REST_API_ERROR_CODE__NOT_ENOUGH_POSITION_TO_CLOSE,
                         SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .logger import create_transaction_logger, init_global_logger
 from .order_executor import OpenPositionStatus, OrderExecutor
 from .report import Report
-from .util import amount_margin
+from .util import calculate_amount_margin
 
 ArbitrageLeg = collections.namedtuple(
     'ArbitrageLeg',
@@ -71,38 +70,28 @@ class WaitingPriceConverge:
         if self._future.done():
             return
 
-        if instrument_id == self._bid_stack_instrument:
-            self._bid_stack = list(zip(bid_prices, bid_vols))
-        else:
-            assert instrument_id == self._ask_stack_instrument
-            self._ask_stack = list(zip(ask_prices, ask_vols))
-
-        should_close, amount_margin = self._should_close_arbitrage()
-        if should_close:
-            self._future.set_result(amount_margin)
-
-    def _should_close_arbitrage(self):
-        if self._ask_stack is None or self._bid_stack is None:
-            return False, -1
-
-        available_amount = amount_margin(
-            self._ask_stack,
-            self._bid_stack,
+        cur_amount_margin = calculate_amount_margin(
+            singleton.order_book.market_depth[self._ask_stack_instrument].ask(),
+            singleton.order_book.market_depth[self._bid_stack_instrument].bid(),
             lambda ask_price, bid_price:
-            ask_price - bid_price <= self._transaction.close_price_gap_threshold)
+            ask_price - bid_price <= self._transaction.close_price_gap_threshold
+        )
 
         self.logger.log_every_n_seconds(
             logging.INFO,
             '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
             'available_amount: %d',
             10,
-            self._ask_stack[0][0] - self._bid_stack[0][0],
+            singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price()
+            - singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
-            available_amount
+            cur_amount_margin
         )
-        return (available_amount >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
-                available_amount)
 
+        if cur_amount_margin >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE:
+            self._future.set_result(cur_amount_margin)
 
 class ArbitrageTransaction:
     def __init__(self,
@@ -181,12 +170,16 @@ class ArbitrageTransaction:
                     '[CLOSE POSITION GUARANTEED] failed with %s, will retry %s',
                     close_status, leg)
 
+    def log_market_depth(self):
+        pass
+
     async def process(self):
         self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(f'fast leg: {self.fast_leg}')
+        self.log_market_depth()
         result = await self._process()
 
         # We don't want to block new arbitrage spawned during report generating.
