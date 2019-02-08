@@ -85,12 +85,12 @@ class FeatTestPercentageTriggerStrategy(TestCase):
             long_instrument_id, short_instrument_id, product)
 
     @patch('ok_bot.trigger_strategy.estimate_profit', return_value=10000)
-    @patch('ok_bot.util.amount_margin', return_value=10000)
+    @patch('ok_bot.util.calculate_amount_margin', return_value=10000)
     @patch('ok_bot.arbitrage_execution.ArbitrageTransaction')
     def test_strategy_trigger_in_basic_cases(
-            self, arbitrage, amount_margin, estimate_profit):
+            self, arbitrage, calculate_amount_margin, estimate_profit):
         # Produce plan when there's enough profit estimation and amount margin
-        amount_margin.return_value = 10000
+        calculate_amount_margin.return_value = 10000
         estimate_profit.return_value = 10000
         singleton.loop.create_task(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(
@@ -98,7 +98,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         )
         self.assertIsNotNone(plan)
         # No plan when not enough amount margin
-        amount_margin.return_value = 0
+        calculate_amount_margin.return_value = 0
         estimate_profit.return_value = 10000
         singleton.loop.create_task(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(
@@ -106,7 +106,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         )
         self.assertIsNone(plan)
         # No plan when profit estimation is negative
-        amount_margin.return_value = 10000
+        calculate_amount_margin.return_value = 10000
         estimate_profit.return_value = -1
         singleton.loop.create_task(singleton.websocket.read_loop())
         plan = singleton.loop.run_until_complete(

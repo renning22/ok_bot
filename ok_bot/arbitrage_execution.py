@@ -71,8 +71,8 @@ class WaitingPriceConverge:
             return
 
         cur_amount_margin = calculate_amount_margin(
-            singleton.order_book.market_depth[self._ask_stack_instrument].ask(),
-            singleton.order_book.market_depth[self._bid_stack_instrument].bid(),
+            singleton.order_book.market_depth(self._ask_stack_instrument).ask(),
+            singleton.order_book.market_depth(self._bid_stack_instrument).bid(),
             lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold
         )
@@ -170,16 +170,16 @@ class ArbitrageTransaction:
                     '[CLOSE POSITION GUARANTEED] failed with %s, will retry %s',
                     close_status, leg)
 
-    def log_market_depth(self):
-        pass
-
     async def process(self):
         self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
         self.logger.info(f'slow leg: {self.slow_leg}')
+        self.logger.info(
+            singleton.order_book.market_depth(self.slow_leg.instrument_id))
         self.logger.info(f'fast leg: {self.fast_leg}')
-        self.log_market_depth()
+        self.logger.info(
+            singleton.order_book.market_depth(self.fast_leg.instrument_id))
         result = await self._process()
 
         # We don't want to block new arbitrage spawned during report generating.

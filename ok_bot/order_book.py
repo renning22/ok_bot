@@ -13,8 +13,7 @@ from .schema import Schema
 _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
-
-AvailableOrder = namedtuple('AvailableOrder'
+AvailableOrder = namedtuple('AvailableOrder',
                             ['price', 'volume'])
 
 
@@ -37,6 +36,15 @@ class MarketDepth:
     def bid(self):
         return self.bid_stack_
 
+    def __str__(self):
+        ret = 'Market Depth:\n'
+        for order in self.ask_stack_[::-1]:
+            ret += f'{order.price} {order.volume}\n'
+        ret += '> ' * 20 + '< ' * 20 + '\n'
+        for order in self.bid_stack_[::-1]:
+            ret += f'{order.price} {order.volume}\n'
+        return ret
+
     def update(self, ask_prices, ask_vols, bid_prices, bid_vols):
         self.bid_stack_ = [AvailableOrder(price=price, volume=volume)
                            for price, volume in list(zip(ask_prices, ask_vols))]
@@ -52,7 +60,7 @@ class OrderBook:
         # order book data
         self.table = pd.DataFrame()
         self.last_record = {}
-        self.market_depth_ = {}
+        self._market_depth = {}
 
         self.update_book = self._update_book__ramp_up_mode
         for instrument_id in singleton.schema.all_instrument_ids:
@@ -116,7 +124,7 @@ class OrderBook:
                       bid_prices,
                       bid_vols,
                       timestamp):
-        self.market_depth_[instrument_id] = MarketDepth(
+        self._market_depth[instrument_id] = MarketDepth(
             ask_prices, ask_vols, bid_prices, bid_vols)
 
         self.update_book(instrument_id,
@@ -126,7 +134,7 @@ class OrderBook:
                          bid_vols)
 
     def market_depth(self, instrument_id):
-        return market_depth_[instrument_id]
+        return self._market_depth[instrument_id]
 
     def _sink_piece_of_fresh_data_to_last_record(self,
                                                  instrument_id,

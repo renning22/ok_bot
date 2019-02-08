@@ -15,6 +15,7 @@ def calculate_amount_margin(ask_stack, bid_stack, condition):
                 continue
             amount = min(ask_volume, bid_volume)
             ask_volume -= amount
-            bid_copy[i].volume -= amount
+            bid_copy[i] = AvailableOrder(price=bid_copy[i].price,
+                                         volume=bid_copy[i].volume)
             available_amount += amount
     return available_amount

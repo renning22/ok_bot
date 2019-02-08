@@ -29,7 +29,6 @@ class TestArbitrageExecution(unittest.TestCase):
             price=_FAKE_MARKET_PRICE,
             vol=MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE)
         singleton.order_listener = None
-        singleton.order_book = None
         singleton.trader = MagicMock()
         singleton.websocket = None
 
@@ -57,6 +56,10 @@ class TestArbitrageExecution(unittest.TestCase):
         async def _testing_coroutine():
             week_instrument = 'ETH-USD-190201'
             quarter_instrument = 'ETH-USD-190329'
+            singleton.book_listener.subscribe(week_instrument,
+                                              singleton.order_book)
+            singleton.book_listener.subscribe(quarter_instrument,
+                                              singleton.order_book)
             transaction = ArbitrageTransaction(
                 slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                                       side=SHORT,
