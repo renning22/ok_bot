@@ -38,16 +38,17 @@ class MarketDepth:
         return self.bid_stack_
 
     def __str__(self):
-        return pprint.pformat({
-            'Ask': self.ask_stack_,
-            'Bid': self.bid_stack_,
-        })
+        ret = '\nASK:\n'
+        ret += pprint.pformat(list(reversed(self.ask_stack_)))
+        ret += '\n#####################################################\nBID:\n'
+        ret += pprint.pformat(self.bid_stack_)
+        return ret
 
     def update(self, ask_prices, ask_vols, bid_prices, bid_vols):
         self.bid_stack_ = [AvailableOrder(price=price, volume=volume)
-                           for price, volume in list(zip(ask_prices, ask_vols))]
-        self.ask_stack_ = [AvailableOrder(price=price, volume=volume)
                            for price, volume in list(zip(bid_prices, bid_vols))]
+        self.ask_stack_ = [AvailableOrder(price=price, volume=volume)
+                           for price, volume in list(zip(ask_prices, ask_vols))]
 
 
 class OrderBook:
