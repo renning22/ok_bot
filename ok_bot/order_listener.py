@@ -140,7 +140,7 @@ def _testing():
     logging.info('instruments: %s',
                  singleton.schema.all_instrument_ids)
     instrument_id = singleton.schema.all_instrument_ids[0]
-    asyncio.ensure_future(_testing_coroutine(
+    singleton.loop.create_task(_testing_coroutine(
         instrument_id=instrument_id))
     singleton.start_loop()
 

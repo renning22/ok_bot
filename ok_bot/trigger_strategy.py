@@ -91,11 +91,14 @@ def make_arbitrage_plan(slow_instrument_id,
     if slow_side == LONG:
         amount = 0
         slow_price = (
-            singleton.order_book.market_depth[slow_instrument_id][0][0][0])
-        for price, vol in singleton.order_book.market_depth[slow_instrument_id][0]:
+            singleton.order_book.market_depth(
+                slow_instrument_id).best_ask_price)
+        for available_order in singleton.order_book.market_depth(
+                slow_instrument_id).ask():
+            price = available_order.price
+            vol = available_order.volume
             amount += vol
-            if amount >= \
-                    constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+            if amount >= constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
                 slow_price = price
                 break
         fast_price = slow_price + open_price_gap
@@ -103,11 +106,14 @@ def make_arbitrage_plan(slow_instrument_id,
         assert slow_side == SHORT
         amount = 0
         slow_price = (
-            singleton.order_book.market_depth[slow_instrument_id][1][0][0])
-        for price, vol in singleton.order_book.market_depth[slow_instrument_id][1]:
+            singleton.order_book.market_depth(
+                slow_instrument_id).best_bid_price)
+        for available_order in singleton.order_book.market_depth(
+                slow_instrument_id).bid():
+            price = available_order.price
+            vol = available_order.volume
             amount += vol
-            if amount >= \
-                    constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
+            if amount >= constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
                 slow_price = price
                 break
         fast_price = slow_price - open_price_gap
@@ -159,9 +165,11 @@ class PercentageTriggerStrategy(TriggerStrategy):
         current_spread = singleton.order_book.current_spread(product)
         profit_est = estimate_profit({
             # Best ask
-            LONG: singleton.order_book.market_depth[long_instrument][0][0][0],
+            LONG: singleton.order_book.market_depth(
+                long_instrument).best_ask_price(),
             # Best bid
-            SHORT: singleton.order_book.market_depth[short_instrument][1][0][0],
+            SHORT: singleton.order_book.market_depth(
+                short_instrument).best_bid_price(),
         }, close_price_gap)
         if profit_est < constants.MIN_ESTIMATE_PROFIT:
             logging.log_every_n_seconds(
@@ -172,9 +180,9 @@ class PercentageTriggerStrategy(TriggerStrategy):
             )
             return None
 
-        available_amount = util.amount_margin(
-            ask_stack=singleton.order_book.market_depth[long_instrument][0],
-            bid_stack=singleton.order_book.market_depth[short_instrument][1],
+        available_amount = util.calculate_amount_margin(
+            ask_stack=singleton.order_book.market_depth(long_instrument).ask(),
+            bid_stack=singleton.order_book.market_depth(short_instrument).bid(),
             condition=lambda ask_price,
             bid_price: bid_price - ask_price >= current_spread)
 

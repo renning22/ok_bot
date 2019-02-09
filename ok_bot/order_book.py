@@ -1,5 +1,7 @@
 import datetime
 import logging
+import pprint
+from collections import namedtuple
 
 import numpy as np
 import pandas as pd
@@ -12,6 +14,41 @@ from .schema import Schema
 _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
+AvailableOrder = namedtuple('AvailableOrder',
+                            ['price', 'volume'])
+
+
+class MarketDepth:
+    # ask_prices and bid_prices are sorted in book_listener
+    def __init__(self, ask_prices, ask_vols, bid_prices, bid_vols):
+        self.bid_stack_ = []
+        self.ask_stack_ = []
+        self.update(ask_prices, ask_vols, bid_prices, bid_vols)
+
+    def best_ask_price(self):
+        return self.ask_stack_[0].price
+
+    def best_bid_price(self):
+        return self.bid_stack_[0].price
+
+    def ask(self):
+        return self.ask_stack_
+
+    def bid(self):
+        return self.bid_stack_
+
+    def __str__(self):
+        return pprint.pformat({
+            'Ask': self.ask_stack_,
+            'Bid': self.bid_stack_,
+        })
+
+    def update(self, ask_prices, ask_vols, bid_prices, bid_vols):
+        self.bid_stack_ = [AvailableOrder(price=price, volume=volume)
+                           for price, volume in list(zip(ask_prices, ask_vols))]
+        self.ask_stack_ = [AvailableOrder(price=price, volume=volume)
+                           for price, volume in list(zip(bid_prices, bid_vols))]
+
 
 class OrderBook:
     def __init__(self):
@@ -21,7 +58,7 @@ class OrderBook:
         # order book data
         self.table = pd.DataFrame()
         self.last_record = {}
-        self.market_depth = {}
+        self._market_depth = {}
 
         self.update_book = self._update_book__ramp_up_mode
         for instrument_id in singleton.schema.all_instrument_ids:
@@ -44,10 +81,6 @@ class OrderBook:
             if product == cross_product:
                 return (self.ask_price(long_instrument) + self.bid_price(short_instrument)) / 2
         raise RuntimeError(f'no such {cross_product}')
-
-    def market_depth(self, instrument_id):
-        return [list(zip(ask_prices, ask_vols)),
-                list(zip(bid_prices, bid_vols))]
 
     def price_speed(self, instrument_id, ask_or_bid):
         assert ask_or_bid in ['ask', 'bid']
@@ -89,13 +122,17 @@ class OrderBook:
                       bid_prices,
                       bid_vols,
                       timestamp):
-        self.market_depth[instrument_id] = [list(zip(ask_prices, ask_vols)),
-                                            list(zip(bid_prices, bid_vols))]
+        self._market_depth[instrument_id] = MarketDepth(
+            ask_prices, ask_vols, bid_prices, bid_vols)
+
         self.update_book(instrument_id,
                          ask_prices,
                          ask_vols,
                          bid_prices,
                          bid_vols)
+
+    def market_depth(self, instrument_id):
+        return self._market_depth[instrument_id]
 
     def _sink_piece_of_fresh_data_to_last_record(self,
                                                  instrument_id,
