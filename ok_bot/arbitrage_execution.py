@@ -93,6 +93,7 @@ class WaitingPriceConverge:
         if cur_amount_margin >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE:
             self._future.set_result(cur_amount_margin)
 
+
 class ArbitrageTransaction:
     def __init__(self,
                  slow_leg,
