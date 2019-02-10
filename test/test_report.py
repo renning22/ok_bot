@@ -114,7 +114,7 @@ class TestArbitrageExecution(unittest.TestCase):
             self.assertAlmostEqual(
                 net_profit,
                 expected_net_profit_way_1(),
-                delta=1e-4
+                delta=1e-16
             )
 
             singleton.rest_api.get_order_info.assert_has_calls([

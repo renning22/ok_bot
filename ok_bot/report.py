@@ -5,8 +5,8 @@ from . import constants, singleton
 
 def get_order_gain(order):
     val = order['filled_qty'] * order['contract_val'] / order['price_avg']
-    if order['type'] in (constants.ORDER_TYPE_CODE__OPEN_LONG,
-                         constants.ORDER_TYPE_CODE__CLOSE_SHORT):
+    if order['type'] in (constants.ORDER_TYPE_CODE__CLOSE_LONG,
+                         constants.ORDER_TYPE_CODE__OPEN_SHORT):
         val *= -1.0
     return val + order['fee']
 
