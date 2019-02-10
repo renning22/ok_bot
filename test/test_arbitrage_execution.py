@@ -1,6 +1,6 @@
-import warnings
 import logging
 import unittest
+import warnings
 from unittest.mock import MagicMock, call, patch
 
 from ok_bot import logger, singleton
@@ -22,7 +22,7 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 @patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
