@@ -3,6 +3,14 @@ import pandas as pd
 from . import constants, singleton
 
 
+def get_order_gain(order):
+    val = order['filled_qty'] * order['contract_val'] / order['price_avg']
+    if order['type'] in (constants.ORDER_TYPE_CODE__OPEN_LONG,
+                         constants.ORDER_TYPE_CODE__CLOSE_SHORT):
+        val *= -1.0
+    return val + order['fee']
+
+
 class Report:
     def __init__(self,
                  transaction_id,
@@ -63,6 +71,7 @@ class Report:
         self.table['price_avg'] = self.table['price_avg'].astype('float64')
         self.table['status'] = self.table['status'].astype('int64')
         self.table['type'] = self.table['type'].astype('int64')
+        self.table['gain'] = self.table.apply(get_order_gain, axis=1)
 
         self.logger.info('[REPORT] orders:\n%s', self.table)
 
@@ -82,27 +91,7 @@ class Report:
             self.logger.fatal('[REPORT] ORPHAN ORDERS!')
             raise RuntimeError('[REPORT] ORPHAN ORDERS!')
         else:
-            net_profit = 0.0
-            for index, row in self.table.iterrows():
-                contract_val = row['contract_val']
-                fee = row['fee']
-                filled_qty = row['filled_qty']
-                leverage = row['leverage']
-                price_avg = row['price_avg']
-                type = row['type']
-
-                # margin_coins (before leveraged)
-                margin_coins = contract_val * filled_qty / price_avg
-                if type == constants.ORDER_TYPE_CODE__OPEN_LONG:
-                    net_profit += margin_coins
-                elif type == constants.ORDER_TYPE_CODE__CLOSE_LONG:
-                    net_profit -= margin_coins
-                elif type == constants.ORDER_TYPE_CODE__OPEN_SHORT:
-                    net_profit -= margin_coins
-                elif type == constants.ORDER_TYPE_CODE__CLOSE_SHORT:
-                    net_profit += margin_coins
-                net_profit += fee
-            return net_profit
+            return self.table['gain'].sum()
 
     async def _retrieve_order_info_and_log_to_db(self,
                                                  index,
