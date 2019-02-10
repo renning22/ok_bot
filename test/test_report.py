@@ -13,11 +13,11 @@ def expected_net_profit_way_1():
     long_margin_after = 10 / 102.222
     short_margin_after = 10 / 104.444
     total_fee = 4 * -0.01
-    return sum([
-        long_margin - long_margin_after,
-        short_margin_after - short_margin,
-        total_fee,
-    ])
+    return (
+        long_margin - long_margin_after +
+        short_margin_after - short_margin +
+        total_fee
+    )
 
 
 # def expected_net_profit_way_2():
@@ -35,7 +35,7 @@ def expected_net_profit_way_1():
 
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = AsyncMock()
         singleton.rest_api.get_order_info.side_effect = [
@@ -114,7 +114,7 @@ class TestArbitrageExecution(unittest.TestCase):
             self.assertAlmostEqual(
                 net_profit,
                 expected_net_profit_way_1(),
-                places=6
+                delta=1e-16
             )
 
             singleton.rest_api.get_order_info.assert_has_calls([
