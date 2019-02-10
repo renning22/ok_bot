@@ -8,10 +8,10 @@ import numpy as np
 
 from ok_bot import constants, logger, singleton, trigger_strategy
 from ok_bot.arbitrage_execution import LONG, SHORT
-from ok_bot.trigger_strategy import (PercentageTriggerStrategy,
-                                     make_arbitrage_plan,
-                                     calculate_amount_margin)
 from ok_bot.mock import AsyncMock
+from ok_bot.trigger_strategy import (PercentageTriggerStrategy,
+                                     calculate_amount_margin,
+                                     make_arbitrage_plan)
 
 
 class TestPercentageTriggerStrategy(TestCase):
@@ -163,7 +163,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
             margin = calculate_amount_margin(market_depth.ask(),
                                              market_depth.bid(),
                                              lambda ask, bid: ask >= bid)
-            self.assertEquals(margin, min(
+            self.assertEqual(margin, min(
                 sum([order.volume for order in market_depth.ask()]),
                 sum([order.volume for order in market_depth.bid()])
             ))

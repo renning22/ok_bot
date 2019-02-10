@@ -14,8 +14,14 @@ from .schema import Schema
 _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
-AvailableOrder = namedtuple('AvailableOrder',
-                            ['price', 'volume'])
+
+class AvailableOrder:
+    def __init__(self, price, volume):
+        self.price = price
+        self.volume = volume
+
+    def __repr__(self):
+        return f'{self.price:8.6} {self.volume:6}'
 
 
 class MarketDepth:
@@ -38,10 +44,11 @@ class MarketDepth:
         return self.bid_stack_
 
     def __str__(self):
-        ret = '\nASK:\n'
+        ret = '\n------ market_depth ------\n'
         ret += pprint.pformat(list(reversed(self.ask_stack_)))
-        ret += '\n#####################################################\nBID:\n'
+        ret += '\n'
         ret += pprint.pformat(self.bid_stack_)
+        ret += '\n--------------------------'
         return ret
 
     def update(self, ask_prices, ask_vols, bid_prices, bid_vols):
@@ -186,8 +193,8 @@ class OrderBook:
         self.table = self.table.append(
             self._convert_last_record_to_table_row(), sort=True)
         # remove old rows
-        self.table = self.table.loc[self.table.index
-                                    >= self.table.index[-1] - _TIME_WINDOW]
+        self.table = self.table.loc[self.table.index >=
+                                    self.table.index[-1] - _TIME_WINDOW]
 
         # Callback
         self._trader.new_tick_received(

@@ -1,6 +1,6 @@
-import warnings
 import logging
 import unittest
+import warnings
 from unittest.mock import MagicMock, call, patch
 
 from ok_bot import logger, singleton
