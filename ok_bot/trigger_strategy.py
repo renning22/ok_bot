@@ -1,11 +1,13 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import namedtuple
+from typing import List, Callable
 
 import numpy as np
 
-from . import constants, logger, singleton, util
-from .arbitrage_execution import LONG, SHORT
+from . import constants, logger, singleton
+from .order_book import AvailableOrder
+from .constants import LONG, SHORT
 
 ArbitragePlan = namedtuple('ArbitragePlan',
                            [
@@ -19,6 +21,27 @@ ArbitragePlan = namedtuple('ArbitragePlan',
                                'close_price_gap',
                                'estimate_net_profit',
                            ])
+
+
+def calculate_amount_margin(ask_stack: List[AvailableOrder],
+                            bid_stack: List[AvailableOrder],
+                            condition: Callable) -> int:
+    available_amount = 0
+    bid_copy = [AvailableOrder(price=order.price, volume=order.volume)
+                for order in bid_stack]
+    for ask_order in ask_stack:
+        ask_price, ask_volume = ask_order.price, ask_order.volume
+        for i, bid_order in enumerate(bid_copy):
+            bid_price, bid_volume = bid_order.price, bid_order.volume
+            if not condition(ask_price,
+                             bid_price) or ask_volume <= 0 or bid_volume <= 0:
+                continue
+            amount = min(ask_volume, bid_volume)
+            ask_volume -= amount
+            bid_copy[i] = AvailableOrder(price=bid_copy[i].price,
+                                         volume=bid_copy[i].volume)
+            available_amount += amount
+    return available_amount
 
 
 def close_arbitrage_gap_threshold(long_instrument_id,
@@ -87,7 +110,7 @@ def make_arbitrage_plan(slow_instrument_id,
                         slow_side,
                         fast_side,
                         open_price_gap,
-                        close_price_gap):
+                        close_price_gap) -> ArbitragePlan:
     if slow_side == LONG:
         amount = 0
         slow_price = (
@@ -180,7 +203,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
             )
             return None
 
-        available_amount = util.calculate_amount_margin(
+        available_amount = calculate_amount_margin(
             ask_stack=singleton.order_book.market_depth(long_instrument).ask(),
             bid_stack=singleton.order_book.market_depth(short_instrument).bid(),
             condition=lambda ask_price,

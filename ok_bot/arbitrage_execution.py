@@ -14,7 +14,7 @@ from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
 from .logger import create_transaction_logger, init_global_logger
 from .order_executor import OpenPositionStatus, OrderExecutor
 from .report import Report
-from .util import calculate_amount_margin
+from .trigger_strategy import calculate_amount_margin
 
 ArbitrageLeg = collections.namedtuple(
     'ArbitrageLeg',
