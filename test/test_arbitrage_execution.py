@@ -22,7 +22,7 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 @patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
+        logger.init_global_logger(log_level=logging.INFO)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(

@@ -2,7 +2,6 @@ import datetime
 import logging
 import pprint
 from collections import namedtuple
-from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -16,9 +15,10 @@ _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
 
-class AvailableOrder(NamedTuple):
-    price: Quant
-    volume: int
+class AvailableOrder:
+    def __init__(self, price, volume):
+        self.price = price
+        self.volume = volume
 
     def __repr__(self):
         return f'{self.price:8.6} {self.volume:6}'
