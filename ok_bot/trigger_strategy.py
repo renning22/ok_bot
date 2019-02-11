@@ -338,7 +338,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             '\nestimate_net_profit: %.3f'
             '\nzscore: %.3f'
             '\nclose_price_gap: %.3f',
-            60 * 10,
+            60 * 60,
             long_instrument,
             short_instrument,
             current_price_average,
