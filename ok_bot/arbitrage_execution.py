@@ -9,8 +9,8 @@ from . import singleton
 from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                         FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
                         MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
-                        PRICE_CONVERGE_TIMEOUT_IN_SECOND,
-                        SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
+                        PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
+                        SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .logger import create_transaction_logger, init_global_logger
 from .order_executor import OpenPositionStatus, OrderExecutor
 from .report import Report
@@ -71,8 +71,10 @@ class WaitingPriceConverge:
             return
 
         cur_amount_margin = calculate_amount_margin(
-            singleton.order_book.market_depth(self._ask_stack_instrument).ask(),
-            singleton.order_book.market_depth(self._bid_stack_instrument).bid(),
+            singleton.order_book.market_depth(
+                self._ask_stack_instrument).ask(),
+            singleton.order_book.market_depth(
+                self._bid_stack_instrument).bid(),
             lambda ask_price, bid_price:
             ask_price - bid_price <= self._transaction.close_price_gap_threshold
         )
@@ -81,10 +83,10 @@ class WaitingPriceConverge:
             logging.INFO,
             '[WAITING PRICE CONVERGE] current_gap:%.3f, max_gap: %.3f, '
             'available_amount: %d',
-            10,
+            30,
             singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_ask_price()
-            - singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price() -
+            singleton.order_book.market_depth(
                 self._ask_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
