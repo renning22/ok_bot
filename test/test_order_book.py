@@ -1,10 +1,10 @@
-import unittest
 import asyncio
+import unittest
 from unittest.mock import Mock
 
+from ok_bot import singleton
 from ok_bot.logger import init_global_logger
 from ok_bot.mock import AsyncMock
-from ok_bot import singleton
 
 
 class TestOrderBook(unittest.TestCase):
@@ -26,10 +26,8 @@ class TestOrderBook(unittest.TestCase):
             market_depth = singleton.order_book.market_depth(instrument)
             ask = market_depth.ask()
             bid = market_depth.bid()
-            for i in range(1, len(ask)):
-                self.assertLess(ask[i-1].price, ask[i].price)
-            for i in range(1, len(bid)):
-                self.assertGreater(bid[i-1].price, bid[i].price)
+            self.assertEqual(sorted(ask), ask)
+            self.assertEqual(sorted(bid, reverse=True), bid)
 
         singleton.loop.create_task(singleton.websocket.read_loop())
         singleton.loop.run_until_complete(_test())

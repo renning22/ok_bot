@@ -9,6 +9,7 @@ import numpy as np
 from ok_bot import constants, logger, singleton, trigger_strategy
 from ok_bot.arbitrage_execution import LONG, SHORT
 from ok_bot.mock import AsyncMock
+from ok_bot.order_book import MarketDepth
 from ok_bot.trigger_strategy import (PercentageTriggerStrategy,
                                      calculate_amount_margin,
                                      make_arbitrage_plan)
@@ -153,23 +154,29 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         singleton.loop.run_until_complete(_test())
 
     def test_calculate_amount_margin(self):
-        async def _test():
-            await singleton.order_book.ready
-            week = singleton.schema.all_instrument_ids[0]
-            market_depth = singleton.order_book.market_depth(week)
-            margin = calculate_amount_margin(market_depth.ask(),
-                                             market_depth.bid(),
-                                             lambda ask, bid: ask < bid)
-            self.assertEqual(margin, 0)
-            margin = calculate_amount_margin(market_depth.ask(),
-                                             market_depth.bid(),
-                                             lambda ask, bid: ask >= bid)
-            self.assertEqual(margin, min(
-                sum([order.volume for order in market_depth.ask()]),
-                sum([order.volume for order in market_depth.bid()])
-            ))
+        market_depth = MarketDepth(
+            ask_prices=[121.103, 121.123, 121.143, 121.145, 121.147],
+            ask_vols=[16, 590, 10, 2, 19],
+            bid_prices=[121.091, 121.079, 121.078, 121.077],
+            bid_vols=[1, 65, 8, 94, 2]
+        )
 
-        singleton.loop.run_until_complete(_test())
+        self.assertEqual(sorted(market_depth.ask_stack_),
+                         market_depth.ask_stack_)
+        self.assertEqual(sorted(market_depth.bid_stack_, reverse=True),
+                         market_depth.bid_stack_)
+
+        margin = calculate_amount_margin(market_depth.ask(),
+                                         market_depth.bid(),
+                                         lambda ask, bid: ask < bid)
+        self.assertEqual(margin, 0)
+        margin = calculate_amount_margin(market_depth.ask(),
+                                         market_depth.bid(),
+                                         lambda ask, bid: ask >= bid)
+        self.assertEqual(margin, min(
+            sum([order.volume for order in market_depth.ask()]),
+            sum([order.volume for order in market_depth.bid()])
+        ))
 
 
 if __name__ == '__main__':
