@@ -36,8 +36,6 @@ class WaitingPriceConverge:
         else:
             raise Exception(f'Slow leg: {self._slow_leg.side}, '
                             f'fast leg: {self._fast_leg.side}')
-        self._ask_stack = None
-        self._bid_stack = None
         self.logger = transaction.logger
         self._future = singleton.loop.create_future()
 
@@ -85,14 +83,31 @@ class WaitingPriceConverge:
             'available_amount: %d',
             30,
             singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_ask_price() -
-            singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price()
+            - singleton.order_book.market_depth(
                 self._ask_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
         )
 
         if cur_amount_margin >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE:
+            self.logger.info(
+                '[WAITING PRICE SUCCEEDED] current_gap:%.3f, max_gap: %.3f, available_amount: %d',
+                singleton.order_book.market_depth(
+                    self._ask_stack_instrument).best_ask_price()
+                - singleton.order_book.market_depth(
+                    self._ask_stack_instrument).best_bid_price(),
+                self._transaction.close_price_gap_threshold,
+                cur_amount_margin
+            )
+            self.logger.info(
+                'slow-side orderbook: %s%s',
+                self._slow_leg.side,
+                singleton.order_book.market_depth(self._slow_leg.instrument_id))
+            self.logger.info(
+                'fast-side orderbook: %s%s',
+                self._fast_leg.side,
+                singleton.order_book.market_depth(self._fast_leg.instrument_id))
             self._future.set_result(cur_amount_margin)
 
 
@@ -177,11 +192,11 @@ class ArbitrageTransaction:
         self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
         self.logger.info(f'id: {self.id}')
-        self.logger.info(f'slow leg: {self.slow_leg}')
         self.logger.info(
+            'slow leg:\n%s%s', self.slow_leg,
             singleton.order_book.market_depth(self.slow_leg.instrument_id))
-        self.logger.info(f'fast leg: {self.fast_leg}')
         self.logger.info(
+            'fast leg:\n%s%s', self.fast_leg,
             singleton.order_book.market_depth(self.fast_leg.instrument_id))
         result = await self._process()
 
@@ -200,48 +215,41 @@ class ArbitrageTransaction:
 
     async def _process(self):
         self._db_transaction_status_updater('opening_slow_leg')
+        self.logger.info('[OPENING SLOW]')
         slow_open_order = await self.open_position(
             self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
         if not slow_open_order.succeeded:
-            self.logger.info(
-                f'[SLOW FAILED] failed to open slow leg {self.slow_leg} '
-                f'({slow_open_order})')
+            self.logger.info(f'[SLOW FAILED] {slow_open_order}')
             self._db_transaction_status_updater('ended_slow_leg_failed')
             return False
         else:
+            self.logger.info(f'[SLOW FULFILLED] {slow_open_order.order_id}')
             self.report.slow_open_order_id = slow_open_order.order_id
 
-        self.logger.info(f'[SLOW FULFILLED] {self.slow_leg} was fulfilled, '
-                         f'will open position for fast leg')
-
         self._db_transaction_status_updater('opening_fast_leg')
+        self.logger.info('[OPENING FAST]')
         fast_open_order = await self.open_position(
             self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
         )
 
         if not fast_open_order.succeeded:
-            self.logger.info(f'[FAST FAILED] failed to open fast leg '
-                             f'{self.fast_leg} '
-                             f'({fast_open_order}), '
-                             'will close slow leg position before aborting the '
-                             'rest of this transaction')
+            self.logger.info(f'[FAST FAILED] {fast_open_order}')
             self._db_transaction_status_updater('ended_fast_leg_failed')
             slow_close_order = await self.close_position_guaranteed(
                 self.slow_leg)
             assert slow_close_order.succeeded
-            self.report.slow_close_order_id = slow_close_order.order_id
             self.logger.info(
-                f'slow leg position {self.slow_leg} has been closed')
+                f'[SLOW POSITION CLOSED] {slow_close_order.order_id}')
+            self.report.slow_close_order_id = slow_close_order.order_id
             return False
         else:
+            self.logger.info(f'[FAST FULFILLED] {fast_open_order.order_id}')
             self.report.fast_open_order_id = fast_open_order.order_id
 
-        self.logger.info(f'[BOTH FULFILLED] fast leg {self.fast_leg} order '
-                         f'fulfilled, will wait '
-                         f'for converge for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} '
-                         f'seconds')
+        self.logger.info(
+            f'[BOTH FULFILLED] wait for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
         self._db_transaction_status_updater('waiting_converge')
 
         async with WaitingPriceConverge(
@@ -249,12 +257,10 @@ class ArbitrageTransaction:
                 timeout_sec=PRICE_CONVERGE_TIMEOUT_IN_SECOND) as converge:
             if converge is None:
                 # timeout, close the position
-                self.logger.info('[CONVERGE TIMEOUT] prices failed to converge '
-                                 'in time, closing both legs')
+                self.logger.info('[CONVERGE TIMEOUT]')
                 self._db_transaction_status_updater('ended_converge_timeout')
             else:
-                self.logger.info(f'[CONVERGED] prices converged with enough '
-                                 f'margin({converge}), closing both legs')
+                self.logger.info(f'[CONVERGED] margin: {converge}')
                 self._db_transaction_status_updater('ended_normally')
 
         fast_close_order, slow_close_order = await asyncio.gather(
@@ -263,6 +269,9 @@ class ArbitrageTransaction:
         )
         assert fast_close_order.succeeded
         assert slow_close_order.succeeded
+
+        self.logger.info(f'[ALL POSITION CLOSED]')
+
         self.report.fast_close_order_id = fast_close_order.order_id
         self.report.slow_close_order_id = slow_close_order.order_id
         return True
