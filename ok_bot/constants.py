@@ -13,7 +13,7 @@ INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 
 # Unit: USD per contract per transaction.
 # -0.001 means we expect losing 0.1 cent per transaction.
-SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0.01
+SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0.0001
 
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.
@@ -32,7 +32,7 @@ FEE_RATE = 0.0003
 # actually fulfilled and then the opportunity is gone for the fast leg. We end
 # up losing the fee in open/close the slow side.
 SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 2
-FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 20
+FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 5
 CLOSE_POSITION_ORDER_TIMEOUT_SECOND = 5
 
 CLOSE_THRESHOLDS = {
@@ -43,7 +43,7 @@ CLOSE_THRESHOLDS = {
 # When to close arbitrage
 MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE = 5
 MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE = 5
-PRICE_CONVERGE_TIMEOUT_IN_SECOND = 60 * 60  # 60 minutes
+PRICE_CONVERGE_TIMEOUT_IN_SECOND = 60 * 10  # 10 minutes
 
 LONG = 'LONG'
 SHORT = 'SHORT'
