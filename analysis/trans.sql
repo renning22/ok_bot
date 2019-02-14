@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS finished_arbitrage_orders;
 CREATE TABLE finished_arbitrage_orders AS
 SELECT
   T.transaction_id
+  , T.last_update_time
   , O.type as order_type
   , O.status
   , O.filled_qty
@@ -23,25 +24,24 @@ DROP TABLE IF EXISTS arbitrage_gains;
 CREATE TABLE arbitrage_gains AS
 SELECT
   transaction_id
-  , sum(filled_qty / price_avg * 
+  , printf("%.6f", sum(10.0 * filled_qty / price_avg * 
       (CASE order_type
-        WHEN 1 THEN -1
-        WHEN 4 THEN -1
+        WHEN 2 THEN -1
+        WHEN 3 THEN -1
         ELSE 1
        END)
-    ) AS pre_fee_gain
-  , sum(filled_qty / price_avg * 
+    ))AS pre_fee_gain
+  , printf("%.6f", sum(10.0 * filled_qty / price_avg * 
       (CASE order_type
-        WHEN 1 THEN -1
-        WHEN 4 THEN -1
+        WHEN 2 THEN -1
+        WHEN 3 THEN -1
         ELSE 1
        END)
        + fee
-    ) AS gain
-  , sum(fee) AS fee
+    )) AS gain
+  , printf("%.6f", sum(fee)) AS fee
 FROM
   finished_arbitrage_orders
 GROUP BY
   transaction_id
-LIMIT 10
 ;
