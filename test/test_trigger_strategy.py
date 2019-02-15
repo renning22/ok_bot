@@ -72,6 +72,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
+        singleton.order_book.zscore = Mock(return_value=5.0)
         self.strategy = PercentageTriggerStrategy()
         singleton.loop.create_task(singleton.websocket.read_loop())
 
