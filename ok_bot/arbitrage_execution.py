@@ -92,7 +92,8 @@ class WaitingPriceConverge:
 
         if cur_amount_margin >= MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE:
             self.logger.info(
-                '[WAITING PRICE SUCCEEDED] current_gap:%.3f, max_gap: %.3f, available_amount: %d',
+                '[WAITING PRICE SUCCEEDED] current_gap:%.3f,'
+                ' max_gap: %.3f, available_amount: %d',
                 singleton.order_book.market_depth(
                     self._ask_stack_instrument).best_ask_price()
                 - singleton.order_book.market_depth(
@@ -191,7 +192,8 @@ class ArbitrageTransaction:
     async def process(self):
         self._db_transaction_status_updater('started')
         self.logger.info('=== arbitrage transaction started ===')
-        self.logger.info(f'id: {self.id}')
+        self.logger.info(
+            f'id: {self.id}, max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
             'slow leg:\n%s%s', self.slow_leg,
             singleton.order_book.market_depth(self.slow_leg.instrument_id))
