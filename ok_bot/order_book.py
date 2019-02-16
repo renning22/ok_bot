@@ -23,6 +23,9 @@ class AvailableOrder:
     def __repr__(self):
         return f'{self.price:8.6} {self.volume:6}'
 
+    def __lt__(self, other):
+        return (self.price, self.volume) < (other.price, other.volume)
+
 
 class MarketDepth:
     # ask_prices and bid_prices are sorted in book_listener
