@@ -181,11 +181,15 @@ class PercentageTriggerStrategy(TriggerStrategy):
                         long_instrument,
                         short_instrument,
                         product):
-
+        zscore = singleton.order_book.zscore(product)
+        if zscore < constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD:
+            logging.info(f'zscore{zscore:.3f} is too small')
+            return None
         history_gap = singleton.order_book.historical_mean_spread(product)
-        close_price_gap = history_gap + close_arbitrage_gap_threshold(
-            long_instrument, short_instrument) * abs(history_gap)
         current_spread = singleton.order_book.current_spread(product)
+        deviation = current_spread - history_gap
+        close_price_gap = (
+                history_gap + deviation * constants.SIMPLE_STRATEGY_RESILIANCE)
         profit_est = estimate_profit({
             # Best ask
             LONG: singleton.order_book.market_depth(
