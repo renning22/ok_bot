@@ -178,6 +178,25 @@ class FeatTestPercentageTriggerStrategy(TestCase):
             sum([order.volume for order in market_depth.bid()])
         ))
 
+    def test_calculate_amount_margin__live_data(self):
+        async def _test():
+            await singleton.order_book.ready
+            week = singleton.schema.all_instrument_ids[0]
+            market_depth = singleton.order_book.market_depth(week)
+            margin = calculate_amount_margin(market_depth.ask(),
+                                             market_depth.bid(),
+                                             lambda ask, bid: ask < bid)
+            self.assertEqual(margin, 0)
+            margin = calculate_amount_margin(market_depth.ask(),
+                                             market_depth.bid(),
+                                             lambda ask, bid: ask >= bid)
+            self.assertEqual(margin, min(
+                sum([order.volume for order in market_depth.ask()]),
+                sum([order.volume for order in market_depth.bid()])
+            ))
+
+        singleton.loop.run_until_complete(_test())
+
 
 if __name__ == '__main__':
     unittest.main()
