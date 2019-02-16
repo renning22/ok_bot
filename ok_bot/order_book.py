@@ -24,7 +24,7 @@ class AvailableOrder:
         return f'{self.price:8.6} {self.volume:6}'
 
     def __lt__(self, other):
-        return self.price < other.price
+        return (self.price, self.volume) < (other.price, other.volume)
 
 
 class MarketDepth:
