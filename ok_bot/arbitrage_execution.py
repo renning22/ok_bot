@@ -85,7 +85,7 @@ class WaitingPriceConverge:
             singleton.order_book.market_depth(
                 self._ask_stack_instrument).best_ask_price()
             - singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_bid_price(),
+                self._bid_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
         )
@@ -97,7 +97,7 @@ class WaitingPriceConverge:
                 singleton.order_book.market_depth(
                     self._ask_stack_instrument).best_ask_price()
                 - singleton.order_book.market_depth(
-                    self._ask_stack_instrument).best_bid_price(),
+                    self._bid_stack_instrument).best_bid_price(),
                 self._transaction.close_price_gap_threshold,
                 cur_amount_margin
             )
