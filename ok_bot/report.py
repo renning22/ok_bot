@@ -73,7 +73,7 @@ class Report:
         self.table['type'] = self.table['type'].astype('int64')
         self.table['gain'] = self.table.apply(get_order_gain, axis=1)
 
-        self.logger.info('[REPORT] orders:\n%s', self.table)
+        self.logger.info('[REPORT] orders:\n%s', self.table.to_string())
 
         all_types = set(self.table['type'])
 
