@@ -25,17 +25,17 @@ class WaitingPriceConverge:
     def __init__(self, transaction, timeout_sec):
         self._transaction = transaction
         self._timeout_sec = timeout_sec
-        self._slow_leg = transaction.slow_leg
-        self._fast_leg = transaction.fast_leg
-        if self._slow_leg.side == SHORT and self._fast_leg.side == LONG:
+        self.slow_leg = transaction.slow_leg
+        self.fast_leg = transaction.fast_leg
+        if self.slow_leg.side == SHORT and self.fast_leg.side == LONG:
             self._ask_stack_instrument, self._bid_stack_instrument = \
-                self._slow_leg.instrument_id,  self._fast_leg.instrument_id
-        elif self._slow_leg.side == LONG and self._fast_leg.side == SHORT:
+                self.slow_leg.instrument_id,  self.fast_leg.instrument_id
+        elif self.slow_leg.side == LONG and self.fast_leg.side == SHORT:
             self._ask_stack_instrument, self._bid_stack_instrument = \
-                self._fast_leg.instrument_id, self._slow_leg.instrument_id
+                self.fast_leg.instrument_id, self.slow_leg.instrument_id
         else:
-            raise Exception(f'Slow leg: {self._slow_leg.side}, '
-                            f'fast leg: {self._fast_leg.side}')
+            raise Exception(f'Slow leg: {self.slow_leg.side}, '
+                            f'fast leg: {self.fast_leg.side}')
         self.logger = transaction.logger
         self._future = singleton.loop.create_future()
 
@@ -103,12 +103,12 @@ class WaitingPriceConverge:
             )
             self.logger.info(
                 'slow-side orderbook: %s%s',
-                self._slow_leg.side,
-                singleton.order_book.market_depth(self._slow_leg.instrument_id))
+                self.slow_leg.side,
+                singleton.order_book.market_depth(self.slow_leg.instrument_id))
             self.logger.info(
                 'fast-side orderbook: %s%s',
-                self._fast_leg.side,
-                singleton.order_book.market_depth(self._fast_leg.instrument_id))
+                self.fast_leg.side,
+                singleton.order_book.market_depth(self.fast_leg.instrument_id))
             self._future.set_result(cur_amount_margin)
 
 
@@ -264,6 +264,20 @@ class ArbitrageTransaction:
             else:
                 self.logger.info(f'[CONVERGED] margin: {converge}')
                 self._db_transaction_status_updater('ended_normally')
+                # Log current speed from each side. I suspect the slow/fast
+                # will always reverse when converged.
+                close_slow_speed = singleton.order_book.price_speed(
+                    self.slow_leg.instrument_id,
+                    {LONG: 'bid', SHORT: 'ask'}[self.slow_leg.side]
+                )
+                close_fast_speed = singleton.order_book.price_speed(
+                    self.fast_leg.instrument_id,
+                    {LONG: 'bid', SHORT: 'ask'}[self.fast_leg.side]
+                )
+                self.logger.info(f'Price speed reversed: '
+                                 f'{close_slow_speed > close_fast_speed},'
+                                 f'current slow speed: {close_slow_speed:.3f}'
+                                 f'current fast speed: {close_fast_speed:.3f}')
 
         fast_close_order, slow_close_order = await asyncio.gather(
             self.close_position_guaranteed(self.fast_leg),
