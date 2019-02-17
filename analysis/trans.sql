@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS arbitrage_gains;
 CREATE TABLE arbitrage_gains AS
 SELECT
   transaction_id
+  , min(last_update_time) as start_time
   , printf("%.6f", sum(10.0 * filled_qty / price_avg * 
       (CASE order_type
         WHEN 2 THEN -1
