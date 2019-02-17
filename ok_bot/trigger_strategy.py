@@ -183,7 +183,12 @@ class PercentageTriggerStrategy(TriggerStrategy):
                         product):
         zscore = singleton.order_book.zscore(product)
         if zscore < constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD:
-            logging.info(f'zscore{zscore:.3f} is too small')
+            logging.log_every_n_seconds(
+                logging.INFO,
+                'zscore is too small: %.3f',
+                60,
+                zscore
+            )
             return None
         history_gap = singleton.order_book.historical_mean_spread(product)
         current_spread = singleton.order_book.current_spread(product)
