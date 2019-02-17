@@ -275,8 +275,8 @@ class ArbitrageTransaction:
                     {LONG: 'bid', SHORT: 'ask'}[self.fast_leg.side]
                 )
                 self.logger.info(f'Price speed reversed: '
-                                 f'{close_slow_speed > close_fast_speed},'
-                                 f'current slow speed: {close_slow_speed:.3f}'
+                                 f'{close_slow_speed > close_fast_speed}, '
+                                 f'current slow speed: {close_slow_speed:.3f}, '
                                  f'current fast speed: {close_fast_speed:.3f}')
 
         fast_close_order, slow_close_order = await asyncio.gather(

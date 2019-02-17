@@ -22,7 +22,7 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 @patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
@@ -37,7 +37,8 @@ class TestArbitrageExecution(unittest.TestCase):
             singleton.book_listener.shutdown_broadcast_loop())
         singleton.db.shutdown(wait=True)
 
-    def test_arbitrage_converge(self, MockReport, MockOrderExecutor, mock_uuid4):
+    def test_arbitrage_converge(self, MockReport, MockOrderExecutor,
+                                mock_uuid4):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
@@ -72,6 +73,11 @@ class TestArbitrageExecution(unittest.TestCase):
                 close_price_gap_threshold=1,
                 estimate_net_profit=0.002
             )
+            #
+            singleton.order_book.table['ETH-USD-190329_ask_price'] = \
+                [_FAKE_MARKET_PRICE + 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
+            singleton.order_book.table['ETH-USD-190201_bid_price'] = \
+                [_FAKE_MARKET_PRICE - 2.0] * 10+ [_FAKE_MARKET_PRICE, ]
             result = await transaction.process()
             self.assertTrue(result)
 
