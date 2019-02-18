@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import concurrent
+import datetime
 import logging
 import time
 import uuid
@@ -40,6 +41,9 @@ class WaitingPriceConverge:
         self._future = singleton.loop.create_future()
 
     async def __aenter__(self):
+        if self._timeout_sec <= 0:
+            return None  # None means timeout
+
         singleton.book_listener.subscribe(
             self._transaction.slow_leg.instrument_id, self)
         singleton.book_listener.subscribe(
@@ -163,17 +167,28 @@ class ArbitrageTransaction:
     def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) \
             -> OpenPositionStatus:
         assert leg.side in [LONG, SHORT]
+        if leg.side == LONG:
+            price = singleton.order_book.market_depth(
+                leg.instrument_id).best_bid_price()
+        else:
+            price = singleton.order_book.market_depth(
+                leg.instrument_id).best_ask_price()
+
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
             amount=leg.volume,
-            price=-1,
+            price=price,
             timeout_sec=timeout_in_sec,
-            is_market_order=True,
+            is_market_order=False,
             logger=self.logger,
             transaction_id=self.id)
         if leg.side == LONG:
+            self.logger.info('[Close Attempt] closing long position with %.3f',
+                             price)
             return order_executor.close_long_order()
         else:
+            self.logger.info('[Close Attempt] closing short position with %.3f',
+                             price)
             return order_executor.close_short_order()
 
     async def close_position_guaranteed(self, leg):
@@ -251,12 +266,14 @@ class ArbitrageTransaction:
             self.report.fast_open_order_id = fast_open_order.order_id
 
         self.logger.info(
-            f'[BOTH FULFILLED] wait for {PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
+            f'[BOTH FULFILLED] wait for '
+            f'{PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
         self._db_transaction_status_updater('waiting_converge')
 
         async with WaitingPriceConverge(
                 transaction=self,
-                timeout_sec=PRICE_CONVERGE_TIMEOUT_IN_SECOND) as converge:
+                timeout_sec=PRICE_CONVERGE_TIMEOUT_IN_SECOND
+        ) as converge:
             if converge is None:
                 # timeout, close the position
                 self.logger.info('[CONVERGE TIMEOUT]')
