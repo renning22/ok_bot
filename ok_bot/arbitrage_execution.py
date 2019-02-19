@@ -35,7 +35,7 @@ class WaitingPriceConverge:
             self._ask_stack_instrument, self._bid_stack_instrument = \
                 self.fast_leg.instrument_id, self.slow_leg.instrument_id
         else:
-            raise Exception(f'Slow leg: {self.slow_leg.side}, '
+            raise Exception(f'slow leg: {self.slow_leg.side}, '
                             f'fast leg: {self.fast_leg.side}')
         self.logger = transaction.logger
         self._future = singleton.loop.create_future()
@@ -87,8 +87,8 @@ class WaitingPriceConverge:
             'available_amount: %d',
             30,
             singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_ask_price()
-            - singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price() -
+            singleton.order_book.market_depth(
                 self._bid_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
@@ -99,8 +99,8 @@ class WaitingPriceConverge:
                 '[WAITING PRICE SUCCEEDED] current_gap:%.3f,'
                 ' max_gap: %.3f, available_amount: %d',
                 singleton.order_book.market_depth(
-                    self._ask_stack_instrument).best_ask_price()
-                - singleton.order_book.market_depth(
+                    self._ask_stack_instrument).best_ask_price() -
+                singleton.order_book.market_depth(
                     self._bid_stack_instrument).best_bid_price(),
                 self._transaction.close_price_gap_threshold,
                 cur_amount_margin
@@ -183,11 +183,11 @@ class ArbitrageTransaction:
             logger=self.logger,
             transaction_id=self.id)
         if leg.side == LONG:
-            self.logger.info('[Close Attempt] closing long position with %.3f',
+            self.logger.info('[CLOSE ATTEMPT] closing long position with %.3f',
                              price)
             return order_executor.close_long_order()
         else:
-            self.logger.info('[Close Attempt] closing short position with %.3f',
+            self.logger.info('[CLOSE ATTEMPT] closing short position with %.3f',
                              price)
             return order_executor.close_short_order()
 
@@ -206,9 +206,9 @@ class ArbitrageTransaction:
 
     async def process(self):
         self._db_transaction_status_updater('started')
-        self.logger.info('=== arbitrage transaction started ===')
-        self.logger.info(
-            f'id: {self.id}, max gap: {self.close_price_gap_threshold:.4f}')
+        self.logger.info(f'=== arbitrage transaction started === {self.id}')
+        self.logger.info(f'{datetime.datetime.now()}, '
+                         f'max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
             'slow leg:\n%s%s', self.slow_leg,
             singleton.order_book.market_depth(self.slow_leg.instrument_id))
@@ -221,13 +221,11 @@ class ArbitrageTransaction:
         singleton.trader.on_going_arbitrage_count -= 1
         net_profit = await self.report.report_profit()
 
-        self.logger.info('[SUMMARY] id:%s\n'
-                         'net_profit: %.8f %s (estimate: %.8f)',
-                         self.id,
+        self.logger.info('[SUMMARY] net_profit: %.8f %s (estimate: %.8f)',
                          net_profit,
                          singleton.coin_currency,
                          self.estimate_net_profit)
-        self.logger.info('=== arbitrage transaction ended ===')
+        self.logger.info(f'=== arbitrage transaction ended === {self.id}')
         return result
 
     async def _process(self):
