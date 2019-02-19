@@ -77,7 +77,7 @@ class TestArbitrageExecution(unittest.TestCase):
             singleton.order_book.table['ETH-USD-190329_ask_price'] = \
                 [_FAKE_MARKET_PRICE + 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
             singleton.order_book.table['ETH-USD-190201_bid_price'] = \
-                [_FAKE_MARKET_PRICE - 2.0] * 10+ [_FAKE_MARKET_PRICE, ]
+                [_FAKE_MARKET_PRICE - 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
             result = await transaction.process()
             self.assertTrue(result)
 
