@@ -220,7 +220,7 @@ class OrderExecutor:
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
-            f'via {rest_request_functor.__name__}')
+            f'({rest_request_functor.__name__})')
         singleton.db.async_update_order(
             order_id=self._order_id,
             transaction_id=self._transaction_id,
