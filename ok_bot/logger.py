@@ -84,6 +84,7 @@ class SlackHandler(logging.Handler):
 def create_transaction_logger(id):
     logger = logging.getLogger().getChild(str(id))
     fh = logging.FileHandler(f'transaction/{id}.log')
+    fh.setFormatter(logging.getLogger().handlers[0].formatter)
     logger.addHandler(fh)
     if _logging_transaction_to_slack:
         logger.addHandler(SlackHandler('INFO'))
