@@ -83,10 +83,9 @@ class OrderRevoker:
             self._logger.warning('[REVOKE ORDER NOT EXIST] %s', self._order_id)
             return False
         else:
-            self._logger.critical(
+            self._logger.warning(
                 f'unexpected revoking order response:\n{pprint.pformat(ret)}')
-            raise RuntimeError(
-                f'unexpected revoking order response:\n{pprint.pformat(ret)}')
+            return False
 
 
 class OrderAwaiter:

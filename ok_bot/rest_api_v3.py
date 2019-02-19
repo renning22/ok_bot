@@ -57,6 +57,9 @@ class RestApiV3:
           request URL
         * Limit: 40 times / 2s
         """
+        assert not is_market_order,\
+            "Market order in OKEX is always inferior to limit order " \
+            "and should never be placed"
         # amount must be integer otherwise OKEX will
         # complain about 'illegal parameter'
         amount = int(amount)
