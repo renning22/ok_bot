@@ -6,8 +6,8 @@ from collections import namedtuple
 
 from . import constants, singleton
 
-OpenPositionStatus = namedtuple(
-    'OpenPositionStatus',
+OrderExecutionResult = namedtuple(
+    'OrderExecutionResult',
     [
         'succeeded',
         'message',
@@ -16,19 +16,24 @@ OpenPositionStatus = namedtuple(
 
 
 def OPEN_POSITION_STATUS__SUCCEEDED(order_id):
-    return OpenPositionStatus(
+    return OrderExecutionResult(
         succeeded=True,
         message='order fulfilled',
         order_id=order_id)
 
 
-OPEN_POSITION_STATUS__UNKNOWN = OpenPositionStatus(
+def OPEN_POSITION_STATUS__REST_API(error_code: int):
+    return OrderExecutionResult(
+        succeeded=False,
+        message=f'failed to open order, error code: {error_code}',
+        order_id=None)
+
+
+OPEN_POSITION_STATUS__UNKNOWN = OrderExecutionResult(
     succeeded=False, message='unknown', order_id=None)
-OPEN_POSITION_STATUS__REST_API = OpenPositionStatus(
-    succeeded=False, message='rest api http error', order_id=None)
-OPEN_POSITION_STATUS__TIMEOUT = OpenPositionStatus(
+OPEN_POSITION_STATUS__TIMEOUT = OrderExecutionResult(
     succeeded=False, message='failed to fulfill in time', order_id=None)
-OPEN_POSITION_STATUS__CANCELLED = OpenPositionStatus(
+OPEN_POSITION_STATUS__CANCELLED = OrderExecutionResult(
     succeeded=False, message='order cancelled', order_id=None)
 
 
@@ -184,23 +189,23 @@ class OrderExecutor:
         self._transaction_id = transaction_id
         self._order_id = None
 
-    def open_long_position(self) -> OpenPositionStatus:
-        """Returns Future[OpenPositionStatus]"""
+    def open_long_position(self) -> OrderExecutionResult:
+        """Returns Future[OrderExecutionResult]"""
         return self._place_order(singleton.rest_api.open_long_order)
 
-    def open_short_position(self) -> OpenPositionStatus:
-        """Returns Future[OpenPositionStatus]"""
+    def open_short_position(self) -> OrderExecutionResult:
+        """Returns Future[OrderExecutionResult]"""
         return self._place_order(singleton.rest_api.open_short_order)
 
-    def close_long_order(self) -> OpenPositionStatus:
-        """Returns Future[OpenPositionStatus]"""
+    def close_long_order(self) -> OrderExecutionResult:
+        """Returns Future[OrderExecutionResult]"""
         return self._place_order(singleton.rest_api.close_long_order)
 
-    def close_short_order(self) -> OpenPositionStatus:
-        """Returns Future[OpenPositionStatus]"""
+    def close_short_order(self) -> OrderExecutionResult:
+        """Returns Future[OrderExecutionResult]"""
         return self._place_order(singleton.rest_api.close_short_order)
 
-    async def _place_order(self, rest_request_functor) -> OpenPositionStatus:
+    async def _place_order(self, rest_request_functor) -> OrderExecutionResult:
         # TODO: add timeout_sec for rest api wait() as well.
         self._order_id, error_code = await rest_request_functor(
             self._instrument_id,
@@ -215,7 +220,7 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return OPEN_POSITION_STATUS__REST_API
+            return OPEN_POSITION_STATUS__REST_API(error_code)
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
