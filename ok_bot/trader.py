@@ -53,9 +53,9 @@ class Trader:
         for long_instrument, short_instrument, product in \
                 singleton.schema.markets_cartesian_product:
             if instrument_id in [long_instrument, short_instrument]:
-                self._process_pair(long_instrument, short_instrument, product)
+                self.process_pair(long_instrument, short_instrument, product)
 
-    def _process_pair(self, long_instrument, short_instrument, product):
+    def process_pair(self, long_instrument, short_instrument, product):
         """
         Check if we should long `long_instrument` and short
         `short_instrument`. It's positive when long_instrument has big price

@@ -171,7 +171,7 @@ class TriggerStrategy(ABC):
     def is_there_a_plan(self,
                         long_instrument,
                         short_instrument,
-                        product):
+                        product) -> ArbitragePlan:
         """Returns ArbitragePlan or None"""
         raise NotImplemented
 
@@ -180,7 +180,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
     def is_there_a_plan(self,
                         long_instrument,
                         short_instrument,
-                        product):
+                        product) -> ArbitragePlan:
         zscore = singleton.order_book.zscore(product)
         if zscore < constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD:
             logging.log_every_n_seconds(
@@ -295,7 +295,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
     def is_there_a_plan(self,
                         long_instrument,
                         short_instrument,
-                        product):
+                        product) -> ArbitragePlan:
         # zscore is a normalized measure of how large the last sample is
         # deviated from center amongst population.
         zscore = singleton.order_book.zscore(product)
