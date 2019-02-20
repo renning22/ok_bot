@@ -141,7 +141,7 @@ class OrderAwaiter:
         self._future.set_result(ORDER_AWAIT_STATUS__FULFILLED)
         assert self._order_id == order_id
         self._logger.info(
-            '[WEBSOCKET] %s order_fulfilled\n'
+            '[WEBSOCKET] %s order_fulfilled, '
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
             order_id, price, price_avg, size, filled_qty, fee)
         singleton.db.async_update_order(
@@ -277,7 +277,7 @@ class OrderExecutor:
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
                 self._logger.info(
                     f'[FULFILLED] {self._order_id} ({self._instrument_id}) '
-                    ' pending order has been fulfilled')
+                    'pending order has been fulfilled')
                 return ORDER_EXECUTION_RESULT__SUCCEEDED(self._order_id)
             else:
                 self._logger.critical(
