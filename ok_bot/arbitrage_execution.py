@@ -57,13 +57,13 @@ class WaitingPriceConverge:
         else:
             return res
 
-    async def __aexit__(self, type, value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):
         singleton.book_listener.unsubscribe(
             self._transaction.slow_leg.instrument_id, self)
         singleton.book_listener.unsubscribe(
             self._transaction.fast_leg.instrument_id, self)
 
-        if type is not None:
+        if exc_type is not None:
             self.logger.critical(
                 'exception within WaitingPriceConverge', exc_info=True)
 
