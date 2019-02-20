@@ -63,6 +63,10 @@ class WaitingPriceConverge:
         singleton.book_listener.unsubscribe(
             self._transaction.fast_leg.instrument_id, self)
 
+        if type is not None:
+            self.logger.critical(
+                'exception within WaitingPriceConverge', exc_info=True)
+
     def tick_received(self, instrument_id,
                       ask_prices, ask_vols, bid_prices, bid_vols,
                       timestamp):
@@ -221,10 +225,10 @@ class ArbitrageTransaction:
         singleton.trader.on_going_arbitrage_count -= 1
         net_profit = await self.report.report_profit()
 
-        self.logger.info('[SUMMARY] net_profit: %.8f %s (estimate: %.8f)',
-                         net_profit,
-                         singleton.coin_currency,
-                         self.estimate_net_profit)
+        self.logger.critical('[SUMMARY] net_profit: %.8f %s (estimate: %.8f)',
+                             net_profit,
+                             singleton.coin_currency,
+                             self.estimate_net_profit)
         self.logger.info(f'=== arbitrage transaction ended === {self.id}')
         return result
 
