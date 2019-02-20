@@ -101,11 +101,11 @@ class Trader:
                     plan.fast_instrument_id).bid()[0].volume
             )
         else:
-            fast_amount, slow_amount = (
+            slow_amount, fast_amount = (
                 singleton.order_book.market_depth(
-                    plan.slow_instrument_id).ask()[0].volume,
+                    plan.slow_instrument_id).bid()[0].volume,
                 singleton.order_book.market_depth(
-                    plan.fast_instrument_id).bid()[0].volume
+                    plan.fast_instrument_id).ask()[0].volume
             )
 
         available_amount_from_book = min(slow_amount, fast_amount)

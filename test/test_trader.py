@@ -2,7 +2,7 @@ import asyncio
 import logging
 import unittest
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from ok_bot import constants, logger, singleton
 from ok_bot.mock import AsyncMock
@@ -13,7 +13,7 @@ from ok_bot.order_book import AvailableOrder
 
 class TestTrader(TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
@@ -67,7 +67,6 @@ class TestTrader(TestCase):
         market_depth_mock.bid = Mock(
             return_value=[AvailableOrder(100, 500), ]
         )
-
         singleton.trader.process_pair(
             long_instrument, short_instrument, product)
         self.assertEquals(singleton.trader.kick_off_arbitrage.call_count, 15)
