@@ -110,11 +110,10 @@ class WaitingPriceConverge:
                 cur_amount_margin
             )
             self.logger.info(
-                'slow-side orderbook: %s%s',
+                '\nslow leg: %s%s\n'
+                'fast leg: %s%s',
                 self.slow_leg.side,
-                singleton.order_book.market_depth(self.slow_leg.instrument_id))
-            self.logger.info(
-                'fast-side orderbook: %s%s',
+                singleton.order_book.market_depth(self.slow_leg.instrument_id),
                 self.fast_leg.side,
                 singleton.order_book.market_depth(self.fast_leg.instrument_id))
             self._future.set_result(cur_amount_margin)
@@ -152,8 +151,7 @@ class ArbitrageTransaction:
                     status=status)
         )
 
-    def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int)\
-            -> OrderExecutionResult:
+    def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int) -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
@@ -168,8 +166,7 @@ class ArbitrageTransaction:
         else:
             return order_executor.open_short_position()
 
-    def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) \
-            -> OrderExecutionResult:
+    def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         if leg.side == LONG:
             price = singleton.order_book.market_depth(
@@ -214,11 +211,13 @@ class ArbitrageTransaction:
         self.logger.info(f'{datetime.datetime.now()}, '
                          f'max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
-            'slow leg:\n%s%s', self.slow_leg,
-            singleton.order_book.market_depth(self.slow_leg.instrument_id))
-        self.logger.info(
-            'fast leg:\n%s%s', self.fast_leg,
+            '\nslow leg: %s%s\n'
+            'fast leg: %s%s',
+            self.slow_leg,
+            singleton.order_book.market_depth(self.slow_leg.instrument_id),
+            self.fast_leg,
             singleton.order_book.market_depth(self.fast_leg.instrument_id))
+
         result = await self._process()
 
         # We don't want to block new arbitrage spawned during report generating.
