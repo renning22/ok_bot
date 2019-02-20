@@ -1,9 +1,9 @@
 import getpass
+import importlib
 import logging
 import os
 import socket
 import time
-import importlib
 import timeit
 
 from . import slack
@@ -87,7 +87,7 @@ def create_transaction_logger(id):
     fh.setFormatter(logging.getLogger().handlers[0].formatter)
     logger.addHandler(fh)
     if _logging_transaction_to_slack:
-        logger.addHandler(SlackHandler('INFO'))
+        logger.addHandler(SlackHandler('CRITICAL'))
     return TransactionAdapter(logger, {})
 
 
