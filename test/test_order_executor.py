@@ -60,7 +60,7 @@ class TestOrderExecutor(unittest.TestCase):
             order_status = await executor.open_long_position()
             logging.info('result: %s', order_status)
             self.assertIs(
-                order_status, order_executor.OPEN_POSITION_STATUS__CANCELLED)
+                order_status, order_executor.ORDER_EXECUTION_RESULT__CANCELLED)
 
         singleton.loop = asyncio.get_event_loop()
         singleton.loop.run_until_complete(_testing_coroutine())

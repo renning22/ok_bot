@@ -10,7 +10,7 @@ from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from ok_bot.mock import AsyncMock, MockBookListerner_constantPriceGenerator
-from ok_bot.order_executor import (OPEN_POSITION_STATUS__SUCCEEDED,
+from ok_bot.order_executor import (ORDER_EXECUTION_RESULT__SUCCEEDED,
                                    OrderExecutor)
 
 _FAKE_MARKET_PRICE = 100.0
@@ -42,13 +42,13 @@ class TestArbitrageExecution(unittest.TestCase):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED(10001))
+            ORDER_EXECUTION_RESULT__SUCCEEDED(10001))
         mock_order_executor.open_short_position.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED(10002))
+            ORDER_EXECUTION_RESULT__SUCCEEDED(10002))
         mock_order_executor.close_long_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED(10003))
+            ORDER_EXECUTION_RESULT__SUCCEEDED(10003))
         mock_order_executor.close_short_order.return_value = (
-            OPEN_POSITION_STATUS__SUCCEEDED(10004))
+            ORDER_EXECUTION_RESULT__SUCCEEDED(10004))
 
         mock_report = AsyncMock()
         mock_report.report_profit.return_value = 0.001  # net_profit
