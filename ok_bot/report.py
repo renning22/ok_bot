@@ -34,28 +34,28 @@ class Report:
         if self.slow_open_order_id:
             self.table = self.table.append(
                 await self._retrieve_order_info_and_log_to_db(
-                    'slow_open_order',
+                    'slow_open',
                     self.slow_open_order_id,
                     self.slow_instrument_id)
             )
         if self.slow_close_order_id:
             self.table = self.table.append(
                 await self._retrieve_order_info_and_log_to_db(
-                    'slow_close_order',
+                    'slow_close',
                     self.slow_close_order_id,
                     self.slow_instrument_id)
             )
         if self.fast_open_order_id:
             self.table = self.table.append(
                 await self._retrieve_order_info_and_log_to_db(
-                    'fast_open_order',
+                    'fast_open',
                     self.fast_open_order_id,
                     self.fast_instrument_id)
             )
         if self.fast_close_order_id:
             self.table = self.table.append(
                 await self._retrieve_order_info_and_log_to_db(
-                    'fast_close_order',
+                    'fast_close',
                     self.fast_close_order_id,
                     self.fast_instrument_id)
             )
