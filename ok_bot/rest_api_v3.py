@@ -39,7 +39,8 @@ class RestApiV3:
                 ret.append(instrument['instrument_id'])
         return sorted(ret)
 
-    def create_order(self, client_oid, instrument_id, order_type, amount, price, is_market_order=False, leverage=10):
+    def create_order(self, client_oid, instrument_id, order_type, amount, price,
+                     is_market_order=False, leverage=20):
         """
         :param client_oid: the order ID customized by client side
         :param instrument_id: for example: "TC-USD-180213"
