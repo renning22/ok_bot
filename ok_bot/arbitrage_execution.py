@@ -13,7 +13,7 @@ from .constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                         PRICE_CONVERGE_TIMEOUT_IN_SECOND, SHORT,
                         SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from .logger import create_transaction_logger, init_global_logger
-from .order_executor import OpenPositionStatus, OrderExecutor
+from .order_executor import OrderExecutionResult, OrderExecutor
 from .report import Report
 from .trigger_strategy import calculate_amount_margin
 
@@ -149,7 +149,7 @@ class ArbitrageTransaction:
         )
 
     def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int)\
-            -> OpenPositionStatus:
+            -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
@@ -165,7 +165,7 @@ class ArbitrageTransaction:
             return order_executor.open_short_position()
 
     def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) \
-            -> OpenPositionStatus:
+            -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         if leg.side == LONG:
             price = singleton.order_book.market_depth(
