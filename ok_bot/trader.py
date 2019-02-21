@@ -53,9 +53,9 @@ class Trader:
         for long_instrument, short_instrument, product in \
                 singleton.schema.markets_cartesian_product:
             if instrument_id in [long_instrument, short_instrument]:
-                self._process_pair(long_instrument, short_instrument, product)
+                self.process_pair(long_instrument, short_instrument, product)
 
-    def _process_pair(self, long_instrument, short_instrument, product):
+    def process_pair(self, long_instrument, short_instrument, product):
         """
         Check if we should long `long_instrument` and short
         `short_instrument`. It's positive when long_instrument has big price
@@ -87,12 +87,32 @@ class Trader:
             )
             return
 
-        arbitrage_plan = self.trigger_strategy.is_there_a_plan(
+        plan = self.trigger_strategy.is_there_a_plan(
             long_instrument=long_instrument,
             short_instrument=short_instrument,
             product=product)
-        if arbitrage_plan:
-            self.kick_off_arbitrage(arbitrage_plan)
+        if plan is None:
+            return
+        if plan.slow_side == constants.LONG:
+            slow_amount, fast_amount = (
+                singleton.order_book.market_depth(
+                    plan.slow_instrument_id).ask()[0].volume,
+                singleton.order_book.market_depth(
+                    plan.fast_instrument_id).bid()[0].volume
+            )
+        else:
+            slow_amount, fast_amount = (
+                singleton.order_book.market_depth(
+                    plan.slow_instrument_id).bid()[0].volume,
+                singleton.order_book.market_depth(
+                    plan.fast_instrument_id).ask()[0].volume
+            )
+
+        available_amount_from_book = min(slow_amount, fast_amount)
+        for _ in range(
+                min(self.max_parallel_transaction_num,
+                    int(available_amount_from_book * constants.AMOUNT_SHRINK))):
+            self.kick_off_arbitrage(plan)
 
     def kick_off_arbitrage(self, arbitrage_plan):
         transaction = ArbitrageTransaction(

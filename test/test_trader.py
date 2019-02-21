@@ -2,15 +2,18 @@ import asyncio
 import logging
 import unittest
 from unittest import TestCase
+from unittest.mock import Mock
 
-from ok_bot import constants, logger, singleton, trader
+from ok_bot import constants, logger, singleton
 from ok_bot.mock import AsyncMock
 from ok_bot.order_executor import OrderExecutor
+from ok_bot.trigger_strategy import ArbitragePlan
+from ok_bot.order_book import AvailableOrder
 
 
 class TestTrader(TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
 
@@ -37,6 +40,49 @@ class TestTrader(TestCase):
             self.assertFalse(singleton.trader.is_in_cooldown)
 
         singleton.loop.run_until_complete(_testing_coroutine())
+
+    def test_concurrent_trans_on_single_tick(self):
+        singleton.trader.kick_off_arbitrage = Mock()
+        singleton.trader.max_parallel_transaction_num = 15
+        long_instrument, short_instrument, product = \
+            singleton.schema.markets_cartesian_product[0]
+        singleton.trader.trigger_strategy.is_there_a_plan = Mock(
+            return_value=ArbitragePlan(
+                volume=1,
+                slow_instrument_id=long_instrument,
+                fast_instrument_id=short_instrument,
+                slow_side=constants.LONG,
+                fast_side=constants.SHORT,
+                slow_price=100,
+                fast_price=200,
+                close_price_gap=50,
+                estimate_net_profit=10,
+            )
+        )
+        market_depth_mock = Mock()
+        singleton.order_book.market_depth = Mock(return_value=market_depth_mock)
+        market_depth_mock.ask = Mock(
+            return_value=[AvailableOrder(100, 500), ]
+        )
+        market_depth_mock.bid = Mock(
+            return_value=[AvailableOrder(100, 500), ]
+        )
+        singleton.trader.process_pair(
+            long_instrument, short_instrument, product)
+        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count, 15)
+
+        market_depth_mock = Mock()
+        singleton.order_book.market_depth = Mock(return_value=market_depth_mock)
+        market_depth_mock.ask = Mock(
+            return_value=[AvailableOrder(100, 10), ]
+        )
+        market_depth_mock.bid = Mock(
+            return_value=[AvailableOrder(100, 500), ]
+        )
+        singleton.trader.process_pair(
+            long_instrument, short_instrument, product)
+        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count - 15,
+                         int(10 * constants.AMOUNT_SHRINK))
 
 
 if __name__ == '__main__':
