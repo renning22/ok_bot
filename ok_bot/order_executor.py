@@ -293,7 +293,7 @@ async def _testing_coroutine(instrument_id):
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=100,
+                             price=140,
                              timeout_sec=5,
                              is_market_order=False,
                              logger=logging,
@@ -306,7 +306,7 @@ async def _testing_coroutine(instrument_id):
 
 def _testing():
     from .logger import init_global_logger
-    init_global_logger()
+    init_global_logger(log_level=logging.INFO, log_to_stderr=True)
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
     singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     singleton.loop.create_task(_testing_coroutine(
