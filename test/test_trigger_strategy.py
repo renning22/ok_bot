@@ -132,7 +132,9 @@ class FeatTestPercentageTriggerStrategy(TestCase):
                 slow_side=LONG,
                 fast_side=SHORT,
                 open_price_gap=gap,
-                close_price_gap=gap * 0.5
+                close_price_gap=gap * 0.5,
+                est_profit=5e-4,
+                z_score=6.0,
             )
             self.assertGreaterEqual(plan.slow_price,
                                     singleton.order_book.market_depth(
@@ -146,7 +148,9 @@ class FeatTestPercentageTriggerStrategy(TestCase):
                 slow_side=SHORT,
                 fast_side=LONG,
                 open_price_gap=gap,
-                close_price_gap=gap * 0.5
+                close_price_gap=gap * 0.5,
+                est_profit=5e-4,
+                z_score=6.0,
             )
             self.assertLessEqual(plan.slow_price,
                                  singleton.order_book.market_depth(

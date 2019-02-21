@@ -71,7 +71,8 @@ class TestArbitrageExecution(unittest.TestCase):
                                       volume=1,
                                       price=80.0),
                 close_price_gap_threshold=1,
-                estimate_net_profit=0.002
+                estimate_net_profit=0.002,
+                z_score=6.0
             )
             #
             singleton.order_book.table['ETH-USD-190329_ask_price'] = \

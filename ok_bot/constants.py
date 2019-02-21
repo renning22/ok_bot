@@ -18,7 +18,7 @@ SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0.0001
 
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.
-SIMPLE_STRATEGY_ZSCORE_THRESHOLD = 3.0
+SIMPLE_STRATEGY_ZSCORE_THRESHOLD = 1.0
 
 # Bounds back distance.
 SIMPLE_STRATEGY_RESILIANCE = 0.60
