@@ -20,6 +20,7 @@ ArbitragePlan = namedtuple('ArbitragePlan',
                                'fast_price',
                                'close_price_gap',
                                'estimate_net_profit',
+                               'z_score',
                            ])
 
 
@@ -110,7 +111,9 @@ def make_arbitrage_plan(slow_instrument_id,
                         slow_side,
                         fast_side,
                         open_price_gap,
-                        close_price_gap) -> ArbitragePlan:
+                        close_price_gap,
+                        est_profit,
+                        z_score) -> ArbitragePlan:
     if slow_side == LONG:
         amount = 0
         slow_price = (
@@ -141,18 +144,6 @@ def make_arbitrage_plan(slow_instrument_id,
                 break
         fast_price = slow_price - open_price_gap
 
-    est_profit = estimate_profit(
-        {
-            slow_side: slow_price,
-            fast_side: fast_price,
-        },
-        close_price_gap
-    )
-
-    if est_profit < constants.MIN_ESTIMATE_PROFIT:
-        logging.info(f'Profit estimat is {est_profit}, not enough')
-        return None
-
     return ArbitragePlan(
         volume=constants.TRADING_VOLUME,
         slow_instrument_id=slow_instrument_id,
@@ -162,7 +153,8 @@ def make_arbitrage_plan(slow_instrument_id,
         slow_price=slow_price,
         fast_price=fast_price,
         close_price_gap=close_price_gap,
-        estimate_net_profit=est_profit
+        estimate_net_profit=est_profit,
+        z_score=z_score
     )
 
 
@@ -181,15 +173,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
                         long_instrument,
                         short_instrument,
                         product) -> ArbitragePlan:
-        zscore = singleton.order_book.zscore(product)
-        if zscore < constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD:
-            logging.log_every_n_seconds(
-                logging.INFO,
-                'zscore is too small: %.3f',
-                60,
-                zscore
-            )
-            return None
+        z_score = singleton.order_book.zscore(product)
         history_gap = singleton.order_book.historical_mean_spread(product)
         current_spread = singleton.order_book.current_spread(product)
         deviation = current_spread - history_gap
@@ -203,12 +187,13 @@ class PercentageTriggerStrategy(TriggerStrategy):
             SHORT: singleton.order_book.market_depth(
                 short_instrument).best_bid_price(),
         }, close_price_gap)
-        if profit_est < constants.MIN_ESTIMATE_PROFIT:
+        if z_score < constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD or\
+                profit_est < constants.MIN_ESTIMATE_PROFIT:
             logging.log_every_n_seconds(
-                logging.INFO,
-                '[gap small] %s gap: %.3f history_gap: %.3f profit est: %f',
-                60,
-                product, current_spread, history_gap, profit_est
+                logging.CRITICAL,
+                '[heartbeat] %s z-score: %.2f profit est: %f',
+                60 * 30,  # Every 30 min
+                product, z_score, profit_est
             )
             return None
 
@@ -219,47 +204,47 @@ class PercentageTriggerStrategy(TriggerStrategy):
             condition=lambda ask_price,
             bid_price: bid_price - ask_price >= current_spread)
 
-        logging.log_every_n_seconds(
-            logging.INFO,
-            '[gap enough] %s spread: %.3f history_gap: %.3f available: %d',
-            60,
-            product, current_spread, history_gap, available_amount
-        )
-
         if available_amount < \
                 constants.MIN_AVAILABLE_AMOUNT_FOR_OPENING_ARBITRAGE:
             logging.info('[amount margin too small] skip')
             return None
-        else:
-            # trigger arbitrage
-            long_instrument_speed = singleton.order_book.price_speed(
-                long_instrument,
-                'ask')
-            short_instrument_speed = singleton.order_book.price_speed(
-                short_instrument, 'bid')
-            logging.info(
-                f'Long instrument speed: {long_instrument_speed:.3f}, '
-                f'short instrument speed: '
-                f'{short_instrument_speed:.3f}'
+
+        logging.critical('[Detected] z-score: %.2f, profit est: %f, amount: %d',
+                         z_score, profit_est, available_amount)
+
+        # Built arbitrage plan
+        long_instrument_speed = singleton.order_book.price_speed(
+            long_instrument,
+            'ask')
+        short_instrument_speed = singleton.order_book.price_speed(
+            short_instrument, 'bid')
+        logging.info(
+            f'Long instrument speed: {long_instrument_speed:.3f}, '
+            f'short instrument speed: '
+            f'{short_instrument_speed:.3f}'
+        )
+        if long_instrument_speed > short_instrument_speed:
+            return make_arbitrage_plan(
+                slow_instrument_id=short_instrument,
+                fast_instrument_id=long_instrument,
+                slow_side=SHORT,
+                fast_side=LONG,
+                open_price_gap=current_spread,
+                close_price_gap=close_price_gap,
+                est_profit=profit_est,
+                z_score=z_score,
             )
-            if long_instrument_speed > short_instrument_speed:
-                return make_arbitrage_plan(
-                    slow_instrument_id=short_instrument,
-                    fast_instrument_id=long_instrument,
-                    slow_side=SHORT,
-                    fast_side=LONG,
-                    open_price_gap=current_spread,
-                    close_price_gap=close_price_gap
-                )
-            else:
-                return make_arbitrage_plan(
-                    slow_instrument_id=long_instrument,
-                    fast_instrument_id=short_instrument,
-                    slow_side=LONG,
-                    fast_side=SHORT,
-                    open_price_gap=current_spread,
-                    close_price_gap=close_price_gap
-                )
+        else:
+            return make_arbitrage_plan(
+                slow_instrument_id=long_instrument,
+                fast_instrument_id=short_instrument,
+                slow_side=LONG,
+                fast_side=SHORT,
+                open_price_gap=current_spread,
+                close_price_gap=close_price_gap,
+                est_profit=profit_est,
+                z_score=z_score,
+            )
 
 
 class SimpleTriggerStrategy(TriggerStrategy):
