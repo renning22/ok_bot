@@ -109,8 +109,9 @@ class Trader:
             )
 
         available_amount_from_book = min(slow_amount, fast_amount)
-        for _ in range(min(self.max_parallel_transaction_num,
-                           available_amount_from_book * constants.AMOUNT_SHRINK)):
+        for _ in range(
+                min(self.max_parallel_transaction_num,
+                    int(available_amount_from_book * constants.AMOUNT_SHRINK))):
             self.kick_off_arbitrage(plan)
 
     def kick_off_arbitrage(self, arbitrage_plan):

@@ -69,7 +69,20 @@ class TestTrader(TestCase):
         )
         singleton.trader.process_pair(
             long_instrument, short_instrument, product)
-        self.assertEquals(singleton.trader.kick_off_arbitrage.call_count, 15)
+        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count, 15)
+
+        market_depth_mock = Mock()
+        singleton.order_book.market_depth = Mock(return_value=market_depth_mock)
+        market_depth_mock.ask = Mock(
+            return_value=[AvailableOrder(100, 10), ]
+        )
+        market_depth_mock.bid = Mock(
+            return_value=[AvailableOrder(100, 500), ]
+        )
+        singleton.trader.process_pair(
+            long_instrument, short_instrument, product)
+        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count - 15,
+                         int(10 * constants.AMOUNT_SHRINK))
 
 
 if __name__ == '__main__':
