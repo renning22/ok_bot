@@ -56,7 +56,8 @@ class TestTrader(TestCase):
                 slow_price=100,
                 fast_price=200,
                 close_price_gap=50,
-                estimate_net_profit=10,
+                estimate_net_profit=50,
+                z_score=6.0
             )
         )
         market_depth_mock = Mock()

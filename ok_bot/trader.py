@@ -129,7 +129,8 @@ class Trader:
                 price=arbitrage_plan.fast_price
             ),
             close_price_gap_threshold=arbitrage_plan.close_price_gap,
-            estimate_net_profit=arbitrage_plan.estimate_net_profit
+            estimate_net_profit=arbitrage_plan.estimate_net_profit,
+            z_score=arbitrage_plan.z_score,
         )
         # Run transaction asynchronously. Main tick_received loop doesn't have
         # to await on it.
