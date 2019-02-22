@@ -392,7 +392,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 slow_price=slow_price,
                 fast_price=fast_price,
                 close_price_gap=close_price_gap,
-                estimate_net_profit=estimate_net_profit
+                estimate_net_profit=estimate_net_profit,
+                z_score=zscore
             )
         else:
             return None
