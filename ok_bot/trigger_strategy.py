@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from typing import Callable, List
 
 import numpy as np
@@ -8,6 +8,7 @@ import numpy as np
 from . import constants, logger, singleton
 from .constants import LONG, SHORT
 from .order_book import AvailableOrder
+from .stats import Stats
 
 ArbitragePlan = namedtuple('ArbitragePlan',
                            [
@@ -74,8 +75,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin
-           + usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin +
+           usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -178,7 +179,7 @@ class PercentageTriggerStrategy(TriggerStrategy):
         current_spread = singleton.order_book.current_spread(product)
         deviation = current_spread - history_gap
         close_price_gap = (
-                history_gap + deviation * constants.SIMPLE_STRATEGY_RESILIANCE)
+            history_gap + deviation * constants.SIMPLE_STRATEGY_RESILIANCE)
         profit_est = estimate_profit({
             # Best ask
             LONG: singleton.order_book.market_depth(
@@ -277,6 +278,10 @@ class SimpleTriggerStrategy(TriggerStrategy):
       total_fee = 4 * 0.030% * (short_price + long_price) / 2
     """
 
+    def __init__(self):
+        self.stats_time_window_sec = 60 * 30  # 30 min
+        self.stats = defaultdict(lambda: Stats(self.stats_time_window_sec))
+
     def is_there_a_plan(self,
                         long_instrument,
                         short_instrument,
@@ -298,8 +303,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
 
         # USD per transaction per USD.
         estimate_profit_per_tran_per_usd = (
-            estimate_total_price_diff_after_resiliance /
-            current_price_average)
+            estimate_total_price_diff_after_resiliance
+            / current_price_average)
 
         usd_per_contract = constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
 
@@ -312,8 +317,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
             4 * constants.FEE_RATE * usd_per_contract)
 
         # USD per transaction per contract.
-        estimate_net_profit = (estimate_profit_per_transaction -
-                               estimate_fee_per_transaction)
+        estimate_net_profit = (estimate_profit_per_transaction
+                               - estimate_fee_per_transaction)
 
         # If esiamte_net_profit > 0, current spread is the minimum profitable
         # gap.
@@ -323,30 +328,18 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
+        self.stats[(long_instrument, short_instrument)].add(deviation)
         logging.log_every_n_seconds(
             logging.CRITICAL,
-            '\nlong:%s , short:%s'
-            '\ncurrent_price_average: %.3f'
-            '\nestimate_total_price_diff_after_resiliance: %.3f'
-            '\nestimate_profit_per_transaction: %.3f'
-            '\nestimate_fee_per_transaction: %.3f'
-            '\nestimate_net_profit: %.3f'
-            '\nzscore: %.3f'
-            '\nclose_price_gap: %.3f',
-            60 * 60,
+            'long:%s , short:%s\n%s',
+            self.stats_time_window_sec,
             long_instrument,
             short_instrument,
-            current_price_average,
-            estimate_total_price_diff_after_resiliance,
-            estimate_profit_per_transaction,
-            estimate_fee_per_transaction,
-            estimate_net_profit,
-            zscore,
-            close_price_gap
+            self.stats[(long_instrument, short_instrument)].histogram()
         )
 
-        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD and
-                zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD
+                and zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
             long_instrument_speed = singleton.order_book.price_speed(
                 long_instrument, 'ask')
             short_instrument_speed = singleton.order_book.price_speed(
