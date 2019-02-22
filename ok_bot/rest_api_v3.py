@@ -79,7 +79,7 @@ class RestApiV3:
                 return None, -1
         except Exception as ex:
             logging.error(f'Failed to place order: {ex}')
-            return None, ex.code
+            return None, -1
 
     def open_long_order(self, instrument_id, amount, price,
                         custom_order_id=None, is_market_order=False):
