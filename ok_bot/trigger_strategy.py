@@ -372,7 +372,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\nestimate_fee_per_transaction: %.3f'
                 '\nestimate_net_profit: %.3f'
                 '\nzscore: %.3f'
-                '\nclose_price_gap: %.3f',
+                '\nclose_price_gap: %.3f'
+                '\n%s',
                 long_instrument,
                 short_instrument,
                 current_price_average,
@@ -381,7 +382,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 estimate_fee_per_transaction,
                 estimate_net_profit,
                 zscore,
-                close_price_gap
+                close_price_gap,
+                self.stats[(long_instrument, short_instrument)].histogram()
             )
             return ArbitragePlan(
                 volume=constants.TRADING_VOLUME,

@@ -27,7 +27,7 @@ class Stats:
         self.truncate()
         return str(self.data)
 
-    def histogram(self):
+    def histogram(self, mark_last=True):
         self.truncate()
         if self.data.empty:
             return ''
@@ -48,12 +48,16 @@ class Stats:
             dist[bin] += 1
         max_dist = max(dist)
 
-        result = ''
+        result_lines = []
         for bin, count in enumerate(dist):
+            bin_left = intervals[bin]
+            bin_right = intervals[bin] + step
+            mark = (' <--' if mark_last and self.data[-1] >=
+                    bin_left and self.data[-1] < bin_right else '')
             star_count = int((count / max_dist) * 10)
-            result += '{:8.3f} [{:5d}]: {}\n'.format(
-                intervals[bin] + step / 2, count, '∎' * star_count)
-        return result
+            result_lines.append('{:8.3f} [{:5d}]: {:10s}{}'.format(
+                (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
+        return '\n'.join(reversed(result_lines))
 
 
 if __name__ == '__main__':
@@ -64,7 +68,7 @@ if __name__ == '__main__':
 
     s = Stats()
     for i in range(1):
-        for _ in range(100):
+        for _ in range(1000):
             s.add(Quant(random.gauss(50, 20)))
         print(s.histogram())
         send_unblock(s.histogram())
