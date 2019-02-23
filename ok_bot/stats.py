@@ -47,13 +47,14 @@ class Stats:
                 bin += 1
             dist[bin] += 1
         max_dist = max(dist)
+        last_sample = float(self.data[-1])
 
         result_lines = []
         for bin, count in enumerate(dist):
             bin_left = intervals[bin]
             bin_right = intervals[bin] + step
-            mark = (' <--' if mark_last and self.data[-1] >=
-                    bin_left and self.data[-1] < bin_right else '')
+            mark = (' <--' if mark_last and last_sample >=
+                    bin_left and last_sample < bin_right else '')
             star_count = int((count / max_dist) * 10)
             result_lines.append('{:8.3f} [{:5d}]: {:10s}{}'.format(
                 (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
