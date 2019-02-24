@@ -55,6 +55,7 @@ class TestArbitrageExecution(unittest.TestCase):
 
         mock_report = AsyncMock()
         mock_report.report_profit.return_value = 0.001  # net_profit
+        mock_report.__str__ = MagicMock(return_value='mock_report')
         MockReport.return_value = mock_report
 
         async def _testing_coroutine():

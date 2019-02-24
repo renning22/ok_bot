@@ -177,6 +177,7 @@ class OrderBook:
             logging.info('have all the necessary prices in every market, '
                          'ramping up finished')
             self.update_book = self._update_book__regular
+            self.ready.set_result(True)
 
     def _update_book__regular(self,
                               instrument_id,
@@ -202,8 +203,6 @@ class OrderBook:
         # Callback
         self._trader.new_tick_received(
             instrument_id, ask_prices, ask_vols, bid_prices, bid_vols)
-        if not self.ready.done():
-            self.ready.set_result(True)
 
     def _convert_last_record_to_table_row(self):
         # TODO(luanjunyi): consider removing the handicap data from table. Use table only

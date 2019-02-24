@@ -20,10 +20,6 @@ class OrderExecutionResult:
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
 
 
-ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
-ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
-
-
 class OrderRevoker:
     def __init__(self, order_id, instrument_id, logger):
         self._order_id = order_id
@@ -38,7 +34,7 @@ class OrderRevoker:
             order_info = await singleton.rest_api.get_order_info(
                 self._order_id, self._instrument_id)
             self._logger.info(
-                '[GET ORDER INFO] order info from rest api:\n%s',
+                '[ORDER INFO AFTER REVOKE]\n%s',
                 pprint.pformat(order_info))
 
             final_status = int(order_info.get('status', None))
@@ -73,6 +69,7 @@ class OrderRevoker:
 
 class OrderAwaiter:
     def __init__(self, order_id, logger, timeout_sec, transaction_id=None):
+        """Returns None if timeout otherwise fulfilled quantity."""
         self._order_id = order_id
         self._future = singleton.loop.create_future()
         self._logger = logger
@@ -104,7 +101,7 @@ class OrderAwaiter:
         assert self._order_id == order_id
         if self._future.done():
             return
-        self._future.set_result(ORDER_AWAIT_STATUS__CANCELLED)
+        self._future.set_result(0)
         self._logger.info('[WEBSOCKET] %s order_cancelled', order_id)
 
     def order_fulfilled(self,
@@ -114,10 +111,10 @@ class OrderAwaiter:
                         fee,
                         price,
                         price_avg):
+        assert self._order_id == order_id
         if self._future.done():
             return
-        self._future.set_result(ORDER_AWAIT_STATUS__FULFILLED)
-        assert self._order_id == order_id
+        self._future.set_result(filled_qty)
         self._logger.info(
             '[WEBSOCKET] %s order_fulfilled, '
             'price: %s, price_avg: %s, size: %s, filled_qty: %s, fee: %s',
@@ -229,13 +226,13 @@ class OrderExecutor:
             timestamp=None
         )
 
-        fulfilled_quantity = 0
-        async with OrderAwaiter(
-                order_id=self._order_id,
-                logger=self._logger,
-                timeout_sec=self._timeout_sec,
-                transaction_id=self._transaction_id) as status:
-            if status is None:
+        order_awaiter = OrderAwaiter(
+            order_id=self._order_id,
+            logger=self._logger,
+            timeout_sec=self._timeout_sec,
+            transaction_id=self._transaction_id)
+        async with order_awaiter as websocket_reported_fulfilled_quantity:
+            if websocket_reported_fulfilled_quantity is None:
                 self._logger.info(
                     f'[TIMEOUT] {self._order_id} ({self._instrument_id}) '
                     'cancelling the pending order')
@@ -243,8 +240,8 @@ class OrderExecutor:
                     order_id=self._order_id,
                     instrument_id=self._instrument_id,
                     logger=self._logger).revoke_guaranteed()
-                assert (fulfilled_quantity
-                        >= 0 and fulfilled_quantity <= self._amount)
+                assert (fulfilled_quantity >=
+                        0 and fulfilled_quantity <= self._amount)
                 if fulfilled_quantity == self._amount:
                     self._logger.info(
                         f'[TIMEOUT -> FULFILLED] {fulfilled_quantity}, '
@@ -260,20 +257,8 @@ class OrderExecutor:
                     self._logger.info(
                         f'[TIMEOUT -> PARTIALLY FULFILLED] {fulfilled_quantity}, '
                         f'{self._order_id} ({self._instrument_id}) ')
-            elif status == ORDER_AWAIT_STATUS__CANCELLED:
-                self._logger.info(
-                    f'[CANCELLED] {self._order_id} ({self._instrument_id}) '
-                    'pending order has been canceled')
-            elif status == ORDER_AWAIT_STATUS__FULFILLED:
-                self._logger.info(
-                    f'[FULFILLED] {self._order_id} ({self._instrument_id}) '
-                    'pending order has been fulfilled')
             else:
-                self._logger.critical(
-                    f'[EXCEPTION] {self._order_id} ({self._instrument_id}) '
-                    'pending order encountered unexpected ORDER_AWAIT_STATUS '
-                    f'{result}')
-                raise RuntimeError(f'unexpected ORDER_AWAIT_STATUS: {result}')
+                fulfilled_quantity = websocket_reported_fulfilled_quantity
 
         return OrderExecutionResult(
             order_id=self._order_id,
