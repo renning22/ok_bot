@@ -4,8 +4,7 @@ import logging
 import numpy as np
 
 from . import constants, logger, singleton, trigger_strategy
-from .arbitrage_execution import (ArbitrageLeg,
-                                  ArbitrageTransaction)
+from .arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
 
 
 class Trader:
@@ -109,10 +108,20 @@ class Trader:
             )
 
         available_amount_from_book = min(slow_amount, fast_amount)
-        for _ in range(
-                min(self.max_parallel_transaction_num - self.on_going_arbitrage_count,
-                    int(available_amount_from_book * constants.AMOUNT_SHRINK))):
-            self.kick_off_arbitrage(plan)
+        parallel_quota = (self.max_parallel_transaction_num
+                          - self.on_going_arbitrage_count)
+        available_amount_quota = int(
+            available_amount_from_book * constants.AMOUNT_SHRINK)
+        num_of_kick_offs = min(parallel_quota, available_amount_quota)
+
+        if num_of_kick_offs <= 0:
+            logging.critical(
+                '[SKIP KICK OFF] no quota, '
+                'parallel_quota: %s, available_amount_quota: %s',
+                parallel_quota, available_amount_quota)
+        else:
+            for _ in range(num_of_kick_offs):
+                self.kick_off_arbitrage(plan)
 
     def kick_off_arbitrage(self, arbitrage_plan):
         transaction = ArbitrageTransaction(
