@@ -108,10 +108,10 @@ class Trader:
             )
 
         available_amount_from_book = min(slow_amount, fast_amount)
-        parallel_quota = (self.max_parallel_transaction_num
-                          - self.on_going_arbitrage_count)
         available_amount_quota = int(
             available_amount_from_book * constants.AMOUNT_SHRINK)
+        parallel_quota = (self.max_parallel_transaction_num
+                          - self.on_going_arbitrage_count)
         num_of_kick_offs = min(parallel_quota, available_amount_quota)
 
         if num_of_kick_offs <= 0:

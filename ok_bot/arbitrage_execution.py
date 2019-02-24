@@ -209,7 +209,7 @@ class ArbitrageTransaction:
 
     async def process(self):
         self._db_transaction_status_updater('started')
-        self.logger.info(f'=== arbitrage transaction started ===')
+        self.logger.info(f'=== arbitrage transaction started === {self.id}')
         self.logger.info(f'{datetime.datetime.now()}, '
                          f'max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
@@ -234,7 +234,7 @@ class ArbitrageTransaction:
             self.estimate_net_profit,
             self.z_score,
             self.report)
-        self.logger.info(f'=== arbitrage transaction ended ===')
+        self.logger.info(f'=== arbitrage transaction ended === {self.id}')
         return result
 
     async def _process(self):
@@ -320,6 +320,7 @@ class ArbitrageTransaction:
 async def _test_coroutine():
     from .quant import Quant
     await singleton.order_book.ready
+    logging.info('OrderBook ramping up finished')
     week_instrument = singleton.schema.all_instrument_ids[0]
     quarter_instrument = singleton.schema.all_instrument_ids[-1]
     transaction = ArbitrageTransaction(

@@ -14,7 +14,9 @@ class OrderExecutionResult:
 
     @property
     def succeeded(self):
-        return self.fulfilled_quantity == self.amount
+        return ((self.order_id is not None) and
+                (self.amount > 0) and
+                (self.fulfilled_quantity == self.amount))
 
     def __str__(self):
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
@@ -46,6 +48,10 @@ class OrderRevoker:
                 return int(order_info.get('filled_qty', None))
             elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
                 logging.info('[CANCEL IN PROCESS]: sleep 1 sec')
+                await asyncio.sleep(1)
+            else:
+                logging.warning(
+                    '[UNKNOWN ORDER STATUS] %s, sleep 1 sec', final_status)
                 await asyncio.sleep(1)
 
     async def _send_revoke_request(self):
@@ -240,8 +246,7 @@ class OrderExecutor:
                     order_id=self._order_id,
                     instrument_id=self._instrument_id,
                     logger=self._logger).revoke_guaranteed()
-                assert (fulfilled_quantity >=
-                        0 and fulfilled_quantity <= self._amount)
+                assert 0 <= fulfilled_quantity <= self._amount
                 if fulfilled_quantity == self._amount:
                     self._logger.info(
                         f'[TIMEOUT -> FULFILLED] {fulfilled_quantity}, '

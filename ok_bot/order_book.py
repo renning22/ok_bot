@@ -177,7 +177,8 @@ class OrderBook:
             logging.info('have all the necessary prices in every market, '
                          'ramping up finished')
             self.update_book = self._update_book__regular
-            self.ready.set_result(True)
+            if not self.ready.done():
+                self.ready.set_result(True)
 
     def _update_book__regular(self,
                               instrument_id,
