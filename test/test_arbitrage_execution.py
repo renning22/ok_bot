@@ -10,8 +10,7 @@ from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                               MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE,
                               SHORT, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND)
 from ok_bot.mock import AsyncMock, MockBookListerner_constantPriceGenerator
-from ok_bot.order_executor import (ORDER_EXECUTION_RESULT__SUCCEEDED,
-                                   OrderExecutor)
+from ok_bot.order_executor import OrderExecutionResult, OrderExecutor
 
 _FAKE_MARKET_PRICE = 100.0
 _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
@@ -42,13 +41,17 @@ class TestArbitrageExecution(unittest.TestCase):
         mock_order_executor = AsyncMock()
         MockOrderExecutor.return_value = mock_order_executor
         mock_order_executor.open_long_position.return_value = (
-            ORDER_EXECUTION_RESULT__SUCCEEDED(10001))
+            OrderExecutionResult(order_id=10001, amount=1,
+                                 fulfilled_quantity=1))
         mock_order_executor.open_short_position.return_value = (
-            ORDER_EXECUTION_RESULT__SUCCEEDED(10002))
+            OrderExecutionResult(order_id=10002, amount=1,
+                                 fulfilled_quantity=1))
         mock_order_executor.close_long_order.return_value = (
-            ORDER_EXECUTION_RESULT__SUCCEEDED(10003))
+            OrderExecutionResult(order_id=10003, amount=1,
+                                 fulfilled_quantity=1))
         mock_order_executor.close_short_order.return_value = (
-            ORDER_EXECUTION_RESULT__SUCCEEDED(10004))
+            OrderExecutionResult(order_id=10004, amount=1,
+                                 fulfilled_quantity=1))
 
         mock_report = AsyncMock()
         mock_report.report_profit.return_value = 0.001  # net_profit
@@ -75,10 +78,10 @@ class TestArbitrageExecution(unittest.TestCase):
                 z_score=6.0
             )
             #
-            singleton.order_book.table['ETH-USD-190329_ask_price'] = \
-                [_FAKE_MARKET_PRICE + 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
-            singleton.order_book.table['ETH-USD-190201_bid_price'] = \
-                [_FAKE_MARKET_PRICE - 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
+            singleton.order_book.table['ETH-USD-190329_ask_price'] = [
+                _FAKE_MARKET_PRICE + 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
+            singleton.order_book.table['ETH-USD-190201_bid_price'] = [
+                _FAKE_MARKET_PRICE - 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
             result = await transaction.process()
             self.assertTrue(result)
 
