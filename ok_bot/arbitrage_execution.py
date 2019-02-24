@@ -91,8 +91,8 @@ class WaitingPriceConverge:
             'available_amount: %d',
             30,
             singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_ask_price() -
-            singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price()
+            - singleton.order_book.market_depth(
                 self._bid_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
@@ -103,8 +103,8 @@ class WaitingPriceConverge:
                 '[WAITING PRICE SUCCEEDED] current_gap:%.3f,'
                 ' max_gap: %.3f, available_amount: %d',
                 singleton.order_book.market_depth(
-                    self._ask_stack_instrument).best_ask_price() -
-                singleton.order_book.market_depth(
+                    self._ask_stack_instrument).best_ask_price()
+                - singleton.order_book.market_depth(
                     self._bid_stack_instrument).best_bid_price(),
                 self._transaction.close_price_gap_threshold,
                 cur_amount_margin
@@ -209,7 +209,7 @@ class ArbitrageTransaction:
 
     async def process(self):
         self._db_transaction_status_updater('started')
-        self.logger.info(f'=== arbitrage transaction started === {self.id}')
+        self.logger.info(f'=== arbitrage transaction started ===')
         self.logger.info(f'{datetime.datetime.now()}, '
                          f'max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
@@ -226,13 +226,15 @@ class ArbitrageTransaction:
         singleton.trader.on_going_arbitrage_count -= 1
         net_profit = await self.report.report_profit()
 
-        self.logger.critical('[SUMMARY] net_profit: %.8f %s (estimate: %.8f),'
-                             ' z-score: %.2f',
-                             net_profit,
-                             singleton.coin_currency,
-                             self.estimate_net_profit,
-                             self.z_score)
-        self.logger.info(f'=== arbitrage transaction ended === {self.id}')
+        self.logger.critical(
+            '[SUMMARY %s] net_profit=%.8f %s (estimate=%.8f), z-score=%.2f\n%s',
+            self.id,
+            net_profit,
+            singleton.coin_currency,
+            self.estimate_net_profit,
+            self.z_score,
+            self.report)
+        self.logger.info(f'=== arbitrage transaction ended ===')
         return result
 
     async def _process(self):
@@ -317,25 +319,26 @@ class ArbitrageTransaction:
 
 async def _test_coroutine():
     from .quant import Quant
-    await singleton.websocket.ready
-    logging.info('WebSocket subscription finished')
+    await singleton.order_book.ready
     week_instrument = singleton.schema.all_instrument_ids[0]
     quarter_instrument = singleton.schema.all_instrument_ids[-1]
     transaction = ArbitrageTransaction(
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
-                              volume=Quant(1),
-                              price=Quant(99.0)),
+                              volume=Quant(2),
+                              price=Quant(165.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
-                              volume=1,
-                              price=95.0),
+                              volume=Quant(2),
+                              price=Quant(160.0)),
         close_price_gap_threshold=1,
+        estimate_net_profit=0,
+        z_score=0,
     )
     await transaction.process()
 
 if __name__ == '__main__':
-    init_global_logger(log_level=logging.INFO)
+    init_global_logger(log_level=logging.INFO, log_to_stderr=True)
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
     singleton.loop.create_task(_test_coroutine())
     singleton.start_loop()

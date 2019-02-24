@@ -29,6 +29,11 @@ class Report:
         # Result table
         self.table = pd.DataFrame()
 
+    def __str__(self):
+        if self.table.empty:
+            return '[no orders]'
+        return self.table.to_string()
+
     async def report_profit(self):
         """Returns the net profit (in unit of coins)"""
         if self.slow_open_order_id:
@@ -72,8 +77,6 @@ class Report:
         self.table['status'] = self.table['status'].astype('int64')
         self.table['type'] = self.table['type'].astype('int64')
         self.table['gain'] = self.table.apply(get_order_gain, axis=1)
-
-        self.logger.critical('[REPORT] orders:\n%s', self.table.to_string())
 
         all_types = set(self.table['type'])
 
