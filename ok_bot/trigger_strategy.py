@@ -328,14 +328,14 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
-        self.stats[(long_instrument, short_instrument)].add(deviation)
+        self.stats[long_instrument, short_instrument].add(deviation)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long:%s , short:%s\n%s',
             self.stats_time_window_sec,
             long_instrument,
             short_instrument,
-            self.stats[(long_instrument, short_instrument)].histogram()
+            self.stats[long_instrument, short_instrument].histogram()
         )
 
         if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD
@@ -383,7 +383,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 estimate_net_profit,
                 zscore,
                 close_price_gap,
-                self.stats[(long_instrument, short_instrument)].histogram()
+                self.stats[long_instrument, short_instrument].histogram()
             )
             return ArbitragePlan(
                 volume=constants.TRADING_VOLUME,

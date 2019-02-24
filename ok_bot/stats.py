@@ -32,29 +32,28 @@ class Stats:
         if self.data.empty:
             return ''
 
-        values = sorted(self.data.values.astype(np.float64))
-        min_v = min(values)
-        max_v = max(values)
+        values = sorted(self.data.values)
+        min_v = values[0]
+        max_v = values[-1]
 
         quantiles = min(self.data.size, 10)
-        intervals, step = np.linspace(
-            min_v, max_v, num=quantiles, retstep=True)
+        step = (max_v - min_v) / quantiles
 
         bin = 0
         dist = [0] * quantiles
         for i in values:
-            if i >= intervals[bin] + step:
+            while i >= bin * step + step:
                 bin += 1
             dist[bin] += 1
         max_dist = max(dist)
-        last_sample = float(self.data[-1])
+        last_sample = self.data[-1]
 
         result_lines = []
         for bin, count in enumerate(dist):
-            bin_left = intervals[bin]
-            bin_right = intervals[bin] + step
-            mark = (' <--' if mark_last and last_sample >=
-                    bin_left and last_sample < bin_right else '')
+            bin_left = bin * step
+            bin_right = bin_left + step
+            mark = (' <--' if mark_last and last_sample
+                    >= bin_left and last_sample < bin_right else '')
             star_count = int((count / max_dist) * 10)
             result_lines.append('{:8.3f} [{:5d}]: {:10s}{}'.format(
                 (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
@@ -71,6 +70,7 @@ if __name__ == '__main__':
     for i in range(1):
         for _ in range(1000):
             s.add(Quant(random.gauss(50, 20)))
+        s.add(100)
         print(s.histogram())
-        send_unblock(s.histogram())
+        # send_unblock(s.histogram())
         time.sleep(1)
