@@ -42,7 +42,7 @@ class Stats:
         bin = 0
         dist = [0] * quantiles
         for i in values:
-            while i >= bin * step + step:
+            while (bin + 1 < quantiles) and (i >= bin * step + step):
                 bin += 1
             dist[bin] += 1
         max_dist = max(dist)
