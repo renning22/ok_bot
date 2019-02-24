@@ -2,39 +2,22 @@ import asyncio
 import concurrent
 import logging
 import pprint
-from collections import namedtuple
 
 from . import constants, singleton
 
-OrderExecutionResult = namedtuple(
-    'OrderExecutionResult',
-    [
-        'succeeded',
-        'message',
-        'order_id',
-    ])
 
+class OrderExecutionResult:
+    def __init__(self, order_id=None, amount=None, fulfilled_quantity=None):
+        self.order_id = order_id
+        self.amount = amount
+        self.fulfilled_quantity = fulfilled_quantity
 
-def ORDER_EXECUTION_RESULT__SUCCEEDED(order_id):
-    return OrderExecutionResult(
-        succeeded=True,
-        message='order fulfilled',
-        order_id=order_id)
+    @property
+    def succeeded(self):
+        return self.fulfilled_quantity == self.amount
 
-
-def ORDER_EXECUTION_RESULT__REST_API(error_code: int):
-    return OrderExecutionResult(
-        succeeded=False,
-        message=f'failed to open order, error code: {error_code}',
-        order_id=None)
-
-
-ORDER_EXECUTION_RESULT__UNKNOWN = OrderExecutionResult(
-    succeeded=False, message='unknown', order_id=None)
-ORDER_EXECUTION_RESULT__TIMEOUT = OrderExecutionResult(
-    succeeded=False, message='failed to fulfill in time', order_id=None)
-ORDER_EXECUTION_RESULT__CANCELLED = OrderExecutionResult(
-    succeeded=False, message='order cancelled', order_id=None)
+    def __str__(self):
+        return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
 
 
 ORDER_AWAIT_STATUS__FULFILLED = 'fulfilled'
@@ -42,37 +25,32 @@ ORDER_AWAIT_STATUS__CANCELLED = 'cancelled'
 
 
 class OrderRevoker:
-    # Return values
-    REVOKED_COMPLETELY = 'REVOKED_COMPLETELY'
-    FULFILLED_BEFORE_REVOKE = 'FULFILLED_BEFORE_REVOKE'
-
     def __init__(self, order_id, instrument_id, logger):
         self._order_id = order_id
         self._instrument_id = instrument_id
         self._logger = logger
 
     async def revoke_guaranteed(self):
+        """Returns fulfilled quantity"""
         while True:
-            revoke_successful = await self._send_revoke_request()
-            if revoke_successful:
-                return OrderRevoker.REVOKED_COMPLETELY
-
-            await asyncio.sleep(1)
+            await self._send_revoke_request()
 
             order_info = await singleton.rest_api.get_order_info(
                 self._order_id, self._instrument_id)
             self._logger.info(
-                '[REVOKE GUARANTEED] order info from rest api:\n%s',
+                '[GET ORDER INFO] order info from rest api:\n%s',
                 pprint.pformat(order_info))
+
             final_status = int(order_info.get('status', None))
             if final_status == constants.ORDER_STATUS_CODE__CANCELLED:
-                return OrderRevoker.REVOKED_COMPLETELY
+                return 0
             elif final_status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-                raise NotImplemented('PARTIALLY_FILLED should never happen')
+                return int(order_info.get('filled_qty', None))
             elif final_status == constants.ORDER_STATUS_CODE__FULFILLED:
-                return OrderRevoker.FULFILLED_BEFORE_REVOKE
+                return int(order_info.get('filled_qty', None))
             elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
-                pass
+                logging.info('[CANCEL IN PROCESS]: sleep 1 sec')
+                await asyncio.sleep(1)
 
     async def _send_revoke_request(self):
         """Returns True if the http response confirms the request was done."""
@@ -164,11 +142,23 @@ class OrderAwaiter:
                                filled_qty,
                                price_avg):
         assert self._order_id == order_id
-        self._logger.warning(
+        self._logger.info(
             '[WEBSOCKET] %s order_partially_filled\n'
             'price_avg: %s, size: %s, filled_qty: %s',
             order_id, price_avg, size, filled_qty)
-        raise NotImplementedError('Order should never be partially fulfilled')
+        singleton.db.async_update_order(
+            order_id=order_id,
+            transaction_id=self._transaction_id,
+            comment='websocket_partially_filled',
+            status=constants.ORDER_STATUS_CODE__PARTIALLY_FILLED,
+            size=int(size),
+            filled_qty=int(filled_qty),
+            price=str(price),
+            price_avg=str(price_avg),
+            fee=str(fee),
+            type=None,
+            timestamp=None
+        )
 
 
 class OrderExecutor:
@@ -181,7 +171,7 @@ class OrderExecutor:
                  logger,
                  transaction_id=None):
         self._instrument_id = instrument_id
-        self._amount = amount
+        self._amount = int(amount)
         self._price = price
         self._timeout_sec = timeout_sec
         self._is_market_order = is_market_order
@@ -220,7 +210,7 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return ORDER_EXECUTION_RESULT__REST_API(error_code)
+            return OrderExecutionResult()
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
@@ -230,7 +220,7 @@ class OrderExecutor:
             transaction_id=self._transaction_id,
             comment='request_sent',
             status=None,
-            size=int(self._amount),
+            size=self._amount,
             filled_qty=None,
             price=str(self._price),
             price_avg=None,
@@ -239,6 +229,7 @@ class OrderExecutor:
             timestamp=None
         )
 
+        fulfilled_quantity = 0
         async with OrderAwaiter(
                 order_id=self._order_id,
                 logger=self._logger,
@@ -248,43 +239,46 @@ class OrderExecutor:
                 self._logger.info(
                     f'[TIMEOUT] {self._order_id} ({self._instrument_id}) '
                     'cancelling the pending order')
-
-                revoker = OrderRevoker(order_id=self._order_id,
-                                       instrument_id=self._instrument_id,
-                                       logger=self._logger)
-                revoke_status = await revoker.revoke_guaranteed()
-                if revoke_status == OrderRevoker.FULFILLED_BEFORE_REVOKE:
+                fulfilled_quantity = await OrderRevoker(
+                    order_id=self._order_id,
+                    instrument_id=self._instrument_id,
+                    logger=self._logger).revoke_guaranteed()
+                assert (fulfilled_quantity
+                        >= 0 and fulfilled_quantity <= self._amount)
+                if fulfilled_quantity == self._amount:
                     self._logger.info(
-                        f'[TIMEOUT -> FULFILLED] '
+                        f'[TIMEOUT -> FULFILLED] {fulfilled_quantity}, '
                         f'{self._order_id} ({self._instrument_id}) '
                         'order was resolved as fulfilled by REST API')
-                    return ORDER_EXECUTION_RESULT__SUCCEEDED(self._order_id)
-                elif revoke_status == OrderRevoker.REVOKED_COMPLETELY:
+                elif fulfilled_quantity == 0:
                     self._logger.info(
                         f'[TIMEOUT CONFIRMED] '
                         f'{self._order_id} ({self._instrument_id}) '
                         'order was confirmed as cancelled by REST API, '
                         'will return timeout')
-                    return ORDER_EXECUTION_RESULT__TIMEOUT
                 else:
-                    raise RuntimeError(
-                        f'unexpected revoke_status: {revoke_status}')
+                    self._logger.info(
+                        f'[TIMEOUT -> PARTIALLY FULFILLED] {fulfilled_quantity}, '
+                        f'{self._order_id} ({self._instrument_id}) ')
             elif status == ORDER_AWAIT_STATUS__CANCELLED:
                 self._logger.info(
                     f'[CANCELLED] {self._order_id} ({self._instrument_id}) '
                     'pending order has been canceled')
-                return ORDER_EXECUTION_RESULT__CANCELLED
             elif status == ORDER_AWAIT_STATUS__FULFILLED:
                 self._logger.info(
                     f'[FULFILLED] {self._order_id} ({self._instrument_id}) '
                     'pending order has been fulfilled')
-                return ORDER_EXECUTION_RESULT__SUCCEEDED(self._order_id)
             else:
                 self._logger.critical(
                     f'[EXCEPTION] {self._order_id} ({self._instrument_id}) '
                     'pending order encountered unexpected ORDER_AWAIT_STATUS '
                     f'{result}')
                 raise RuntimeError(f'unexpected ORDER_AWAIT_STATUS: {result}')
+
+        return OrderExecutionResult(
+            order_id=self._order_id,
+            amount=self._amount,
+            fulfilled_quantity=fulfilled_quantity)
 
 
 async def _testing_coroutine(instrument_id):
@@ -294,7 +288,7 @@ async def _testing_coroutine(instrument_id):
     executor = OrderExecutor(instrument_id,
                              amount=1,
                              price=140,
-                             timeout_sec=5,
+                             timeout_sec=0.1,
                              is_market_order=False,
                              logger=logging,
                              transaction_id='fake_transaction_id')

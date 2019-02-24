@@ -59,8 +59,10 @@ class TestOrderExecutor(unittest.TestCase):
             logging.info('open_long_position has been called')
             order_status = await executor.open_long_position()
             logging.info('result: %s', order_status)
-            self.assertIs(
-                order_status, order_executor.ORDER_EXECUTION_RESULT__CANCELLED)
+
+            self.assertEqual(order_status.order_id, _FAKE_ORDER_ID)
+            self.assertEqual(order_status.amount, _SIZE)
+            self.assertEqual(order_status.fulfilled_quantity, 0)
 
         singleton.loop = asyncio.get_event_loop()
         singleton.loop.run_until_complete(_testing_coroutine())
