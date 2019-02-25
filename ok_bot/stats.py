@@ -53,7 +53,7 @@ class Stats:
             bin_left = min_v + bin * step
             bin_right = bin_left + step
             mark = (' <--' if mark_last and bin_left <=
-                    last_sample < bin_right else '')
+                    last_sample <= bin_right else '')
             star_count = int((count / max_dist) * 10)
             result_lines.append('{:10.6f} [{:5d}]: {:10s}{}'.format(
                 (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
