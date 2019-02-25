@@ -12,9 +12,9 @@ MIN_ESTIMATE_PROFIT = 1e-5
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 AMOUNT_SHRINK = 0.33
 
-# Unit: USD per contract per transaction.
-# -0.001 means we expect losing 0.1 cent per transaction.
-SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0.0001
+# Unit: Coin per contract per transaction.
+# e.g. 0.1 means we expect to gain 0.1 ETH per transaction.
+SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0
 
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.

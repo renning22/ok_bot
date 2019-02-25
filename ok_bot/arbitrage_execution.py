@@ -220,7 +220,10 @@ class ArbitrageTransaction:
         net_profit = await self.report.report_profit()
 
         self.logger.critical(
-            '[SUMMARY %s] net_profit=%.8f %s (estimate=%.8f), z-score=%.2f\n%s',
+            '[SUMMARY %s]\n'
+            'net_profit: %.8f %s (estimate=%.8f)\n'
+            'z-score: %.2f\n'
+            '%s',
             self.id,
             net_profit,
             singleton.coin_currency,
