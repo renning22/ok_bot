@@ -4,11 +4,11 @@ import unittest
 from unittest import TestCase
 from unittest.mock import Mock
 
-from ok_bot import constants, logger, singleton
+from ok_bot import constants, logger, rest_api_v3, singleton
 from ok_bot.mock import AsyncMock
+from ok_bot.order_book import AvailableOrder
 from ok_bot.order_executor import OrderExecutor
 from ok_bot.trigger_strategy import ArbitragePlan
-from ok_bot.order_book import AvailableOrder
 
 
 class TestTrader(TestCase):
@@ -16,9 +16,23 @@ class TestTrader(TestCase):
         logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
+        singleton.rest_api.open_long_order.__name__ = Mock(
+            return_value='open_long_order')
+        singleton.rest_api.open_long_order.return_value = \
+            (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
+
+        self._read_loop = singleton.loop.create_task(
+            singleton.websocket.read_loop())
+
+    def tearDown(self):
+        self._read_loop.cancel()
+        singleton.db.shutdown(wait=True)
 
     def test_cool_down(self):
         async def _testing_coroutine():
+            await singleton.order_book.ready
+            logging.info('Orderbook ramping up finished')
+
             order_exe = OrderExecutor(
                 singleton.schema.all_instrument_ids[0],
                 amount=1,
@@ -28,8 +42,6 @@ class TestTrader(TestCase):
                 logger=logging.getLogger()
             )
             constants.INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 10
-            singleton.rest_api.open_long_order.return_value = \
-                (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
             result = await order_exe.open_long_position()
             logging.info('open_long_position result: %s', result)
             logging.info('start sleeping')
@@ -61,7 +73,8 @@ class TestTrader(TestCase):
             )
         )
         market_depth_mock = Mock()
-        singleton.order_book.market_depth = Mock(return_value=market_depth_mock)
+        singleton.order_book.market_depth = Mock(
+            return_value=market_depth_mock)
         market_depth_mock.ask = Mock(
             return_value=[AvailableOrder(100, 500), ]
         )
@@ -70,10 +83,12 @@ class TestTrader(TestCase):
         )
         singleton.trader.process_pair(
             long_instrument, short_instrument, product)
-        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count, 15)
+        self.assertEqual(
+            singleton.trader.kick_off_arbitrage.call_count, 15)
 
         market_depth_mock = Mock()
-        singleton.order_book.market_depth = Mock(return_value=market_depth_mock)
+        singleton.order_book.market_depth = Mock(
+            return_value=market_depth_mock)
         market_depth_mock.ask = Mock(
             return_value=[AvailableOrder(100, 10), ]
         )
@@ -82,8 +97,9 @@ class TestTrader(TestCase):
         )
         singleton.trader.process_pair(
             long_instrument, short_instrument, product)
-        self.assertEqual(singleton.trader.kick_off_arbitrage.call_count - 15,
-                         int(10 * constants.AMOUNT_SHRINK))
+        self.assertEqual(
+            singleton.trader.kick_off_arbitrage.call_count - 15,
+            int(10 * constants.AMOUNT_SHRINK))
 
 
 if __name__ == '__main__':

@@ -109,13 +109,6 @@ class WaitingPriceConverge:
                 self._transaction.close_price_gap_threshold,
                 cur_amount_margin
             )
-            self.logger.info(
-                '\nslow leg: %s%s\n'
-                'fast leg: %s%s',
-                self.slow_leg.side,
-                singleton.order_book.market_depth(self.slow_leg.instrument_id),
-                self.fast_leg.side,
-                singleton.order_book.market_depth(self.fast_leg.instrument_id))
             self._future.set_result(cur_amount_margin)
 
 

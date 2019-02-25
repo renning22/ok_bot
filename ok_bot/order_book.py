@@ -54,7 +54,7 @@ class MarketDepth:
         self.now_local = time.time()
         self.now_server = self.now_local + singleton.schema.time_diff_sec
         ret = '------ market_depth ------\n'
-        ret += 'freshness local: {:.2f}, server: {:.2f}\n'.format(
+        ret += 'freshness local: {:.2f} sec, server: {:.2f} sec\n'.format(
             self.now_local - self.timestamp_local,
             self.now_server - self.timestamp_server)
         ret += pprint.pformat(list(reversed(self.ask_stack_)))

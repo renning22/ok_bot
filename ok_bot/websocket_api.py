@@ -11,7 +11,7 @@ from concurrent.futures import CancelledError
 
 import websockets
 
-from . import api_v3_key_reader, singleton
+from . import api_v3_key_reader, server_time, singleton
 from .quant import Quant
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
@@ -64,7 +64,7 @@ class WebsocketApi:
             return res
 
     async def _create_and_login(self):
-        timestamp = str(singleton.rest_api.get_server_timestamp())
+        timestamp = str(server_time.get_server_timestamp())
         login_str = _create_login_params(
             str(timestamp),
             api_v3_key_reader.API_KEY,
