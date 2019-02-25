@@ -202,10 +202,10 @@ class OrderExecutor:
 
     async def _place_order(self, rest_request_functor) -> OrderExecutionResult:
         self._logger.info(
-            '[SENDING ORDER REQUEST] %s, price: %s, amount: %s\n%s',
-            rest_request_functor.__name__,
+            '[SENDING ORDER REQUEST]\nprice: %s, amount: %s, %s\n%s',
             self._price,
             self._amount,
+            rest_request_functor.__name__,
             singleton.order_book.market_depth(self._instrument_id)
         )
 
@@ -282,12 +282,12 @@ class OrderExecutor:
 
 
 async def _testing_coroutine(instrument_id):
-    await singleton.websocket.ready
-    logging.info('start')
+    await singleton.order_book.ready
+    logging.info('Orderbook ramping up finished')
 
     executor = OrderExecutor(instrument_id,
                              amount=1,
-                             price=140,
+                             price=130,
                              timeout_sec=0.1,
                              is_market_order=False,
                              logger=logging,
@@ -302,7 +302,6 @@ def _testing():
     from .logger import init_global_logger
     init_global_logger(log_level=logging.INFO, log_to_stderr=True)
     singleton.initialize_objects_with_mock_trader_and_dev_db(currency='ETH')
-    singleton.websocket.book_listener = None  # test heartbeat in websocket_api
     singleton.loop.create_task(_testing_coroutine(
         instrument_id=singleton.schema.all_instrument_ids[0]))
     singleton.start_loop()
