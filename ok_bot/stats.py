@@ -42,7 +42,7 @@ class Stats:
         bin = 0
         dist = [0] * quantiles
         for i in values:
-            while (bin + 1 < quantiles) and (i >= bin * step + step):
+            while (bin + 1 < quantiles) and (i >= min_v + bin * step + step):
                 bin += 1
             dist[bin] += 1
         max_dist = max(dist)
@@ -50,10 +50,10 @@ class Stats:
 
         result_lines = []
         for bin, count in enumerate(dist):
-            bin_left = bin * step
+            bin_left = min_v + bin * step
             bin_right = bin_left + step
-            mark = (' <--' if mark_last and last_sample
-                    >= bin_left and last_sample < bin_right else '')
+            mark = (' <--' if mark_last and bin_left <=
+                    last_sample < bin_right else '')
             star_count = int((count / max_dist) * 10)
             result_lines.append('{:8.3f} [{:5d}]: {:10s}{}'.format(
                 (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
@@ -70,7 +70,8 @@ if __name__ == '__main__':
     for i in range(1):
         for _ in range(1000):
             s.add(Quant(random.gauss(50, 20)))
-        s.add(100)
+        s.add(Quant(100.00))
+        s.add(Quant(-100.00))
         print(s.histogram())
         # send_unblock(s.histogram())
         time.sleep(1)
