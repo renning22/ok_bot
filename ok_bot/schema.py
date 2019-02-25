@@ -1,5 +1,5 @@
 import logging
-import pprint
+import time
 
 from . import singleton
 
@@ -15,6 +15,14 @@ class Schema:
         self._markets_cartesian_product = self._init_markets_cartesian_product()
         self._all_necessary_source_columns =\
             self._init_all_necessary_source_columns()
+
+        self._server_timestamp = singleton.rest_api.get_server_timestamp()
+        self._local_timestamp = time.time()
+        self._time_diff_sec = self._server_timestamp - self._local_timestamp
+
+    @property
+    def time_diff_sec(self):
+        return self._time_diff_sec
 
     @staticmethod
     def make_column_name(instrument_id, ask_or_bid, price_or_vol):
@@ -78,14 +86,18 @@ class Schema:
 
 
 def _testing():
-    from .rest_api_v3 import RestApiV3
     from .logger import init_global_logger
-    init_global_logger()
+    from .rest_api_v3 import RestApiV3
+    import pprint
+    init_global_logger(log_level=logging.INFO, log_to_stderr=True)
     singleton.rest_api = RestApiV3()
     schema = Schema('BTC')
     logging.info('\n%s', pprint.pformat(schema.all_instrument_ids))
     logging.info('\n%s', pprint.pformat(schema.markets_cartesian_product))
     logging.info('\n%s', pprint.pformat(schema.all_necessary_source_columns))
+    logging.info('server_timestamp: %s', schema._server_timestamp)
+    logging.info('local_timestamp: %s', schema._local_timestamp)
+    logging.info('delta: %s', schema.time_diff_sec)
 
 
 if __name__ == '__main__':

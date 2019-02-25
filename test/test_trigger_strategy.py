@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import unittest
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -73,6 +74,8 @@ class FeatTestPercentageTriggerStrategy(TestCase):
         logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
         singleton.rest_api = AsyncMock()
+        singleton.rest_api.get_server_timestamp = Mock(
+            return_value=time.time())
         singleton.order_book.zscore = Mock(return_value=5.0)
         self.strategy = PercentageTriggerStrategy()
         singleton.loop.create_task(singleton.websocket.read_loop())
@@ -162,7 +165,8 @@ class FeatTestPercentageTriggerStrategy(TestCase):
             ask_prices=[121.103, 121.123, 121.143, 121.145, 121.147],
             ask_vols=[16, 590, 10, 2, 19],
             bid_prices=[121.091, 121.079, 121.078, 121.077],
-            bid_vols=[1, 65, 8, 94, 2]
+            bid_vols=[1, 65, 8, 94, 2],
+            timestamp=time.time()
         )
 
         self.assertEqual(sorted(market_depth.ask_stack_),

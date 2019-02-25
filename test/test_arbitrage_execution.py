@@ -1,9 +1,10 @@
 import logging
+import time
 import unittest
 import warnings
 from unittest.mock import MagicMock, call, patch
 
-from ok_bot import logger, singleton
+from ok_bot import logger, order_book, singleton
 from ok_bot.arbitrage_execution import ArbitrageLeg, ArbitrageTransaction
 from ok_bot.constants import (CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                               FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND, LONG,
@@ -21,15 +22,23 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 @patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-        singleton.rest_api = None
+        singleton.rest_api = MagicMock()
+        singleton.rest_api.get_server_timestamp.return_value = time.time()
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
             price=_FAKE_MARKET_PRICE,
             vol=MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE)
         singleton.order_listener = None
         singleton.trader = MagicMock()
         singleton.websocket = None
+
+        # OrderBook will re-subscribe on all_instrument_ids from schema
+        # automatically. (see __init__)
+        singleton.order_book = order_book.OrderBook()
+
+        self.week_instrument = singleton.schema.all_instrument_ids[0]
+        self.quarter_instrument = singleton.schema.all_instrument_ids[-1]
 
     def tearDown(self):
         singleton.loop.run_until_complete(
@@ -59,18 +68,14 @@ class TestArbitrageExecution(unittest.TestCase):
         MockReport.return_value = mock_report
 
         async def _testing_coroutine():
-            week_instrument = 'ETH-USD-190201'
-            quarter_instrument = 'ETH-USD-190329'
-            singleton.book_listener.subscribe(week_instrument,
-                                              singleton.order_book)
-            singleton.book_listener.subscribe(quarter_instrument,
-                                              singleton.order_book)
+            await singleton.order_book.ready
+            logging.info('Orderbook ramping up finished')
             transaction = ArbitrageTransaction(
-                slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
+                slow_leg=ArbitrageLeg(instrument_id=self.quarter_instrument,
                                       side=SHORT,
                                       volume=1,
                                       price=100.0),
-                fast_leg=ArbitrageLeg(instrument_id=week_instrument,
+                fast_leg=ArbitrageLeg(instrument_id=self.week_instrument,
                                       side=LONG,
                                       volume=1,
                                       price=80.0),
@@ -78,11 +83,6 @@ class TestArbitrageExecution(unittest.TestCase):
                 estimate_net_profit=0.002,
                 z_score=6.0
             )
-            #
-            singleton.order_book.table['ETH-USD-190329_ask_price'] = [
-                _FAKE_MARKET_PRICE + 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
-            singleton.order_book.table['ETH-USD-190201_bid_price'] = [
-                _FAKE_MARKET_PRICE - 2.0] * 10 + [_FAKE_MARKET_PRICE, ]
             result = await transaction.process()
             self.assertTrue(result)
 
@@ -94,7 +94,7 @@ class TestArbitrageExecution(unittest.TestCase):
             self.assertEqual(10003, mock_report.fast_close_order_id)
 
             MockOrderExecutor.assert_has_calls([
-                call(instrument_id=quarter_instrument,
+                call(instrument_id=self.quarter_instrument,
                      amount=1,
                      price=100.0,
                      timeout_sec=SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
@@ -102,7 +102,7 @@ class TestArbitrageExecution(unittest.TestCase):
                      logger=transaction.logger,
                      transaction_id=transaction.id),
                 call().open_short_position(),
-                call(instrument_id=week_instrument,
+                call(instrument_id=self.week_instrument,
                      amount=1,
                      price=80.0,
                      timeout_sec=FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
@@ -110,7 +110,7 @@ class TestArbitrageExecution(unittest.TestCase):
                      logger=transaction.logger,
                      transaction_id=transaction.id),
                 call().open_long_position(),
-                call(instrument_id=week_instrument,
+                call(instrument_id=self.week_instrument,
                      amount=1,
                      price=100.0,
                      timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
@@ -118,7 +118,7 @@ class TestArbitrageExecution(unittest.TestCase):
                      logger=transaction.logger,
                      transaction_id=transaction.id),
                 call().close_long_order(),
-                call(instrument_id=quarter_instrument,
+                call(instrument_id=self.quarter_instrument,
                      amount=1,
                      price=100.0,
                      timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
