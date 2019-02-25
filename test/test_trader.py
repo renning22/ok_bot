@@ -4,7 +4,7 @@ import unittest
 from unittest import TestCase
 from unittest.mock import Mock
 
-from ok_bot import constants, logger, rest_api_v3, singleton
+from ok_bot import constants, logger, singleton
 from ok_bot.mock import AsyncMock
 from ok_bot.order_book import AvailableOrder
 from ok_bot.order_executor import OrderExecutor
@@ -21,12 +21,12 @@ class TestTrader(TestCase):
         singleton.rest_api.open_long_order.return_value = \
             (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
 
-        self._read_loop = singleton.loop.create_task(
-            singleton.websocket.read_loop())
+        singleton.loop.create_task(singleton.websocket.read_loop())
 
     def tearDown(self):
-        self._read_loop.cancel()
         singleton.db.shutdown(wait=True)
+        for task in asyncio.all_tasks(singleton.loop):
+            task.cancel()
 
     def test_cool_down(self):
         async def _testing_coroutine():

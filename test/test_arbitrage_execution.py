@@ -1,6 +1,5 @@
 import logging
 import unittest
-import warnings
 from unittest.mock import MagicMock, call, patch
 
 from ok_bot import logger, order_book, singleton
@@ -23,7 +22,7 @@ class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
         logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-        singleton.rest_api = MagicMock()
+        singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
             price=_FAKE_MARKET_PRICE,
             vol=MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE)
