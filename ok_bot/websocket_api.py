@@ -9,31 +9,12 @@ import pprint
 import zlib
 from concurrent.futures import CancelledError
 
-import dateutil.parser as dp
-import requests
 import websockets
 
 from . import api_v3_key_reader, singleton
 from .quant import Quant
 
 OK_WEBSOCKET_ADDRESS = 'wss://real.okex.com:10442/ws/v3'
-OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
-
-
-def _get_server_time_iso():
-    response = requests.get(OK_TIMESERVER_ADDRESS)
-    if response.status_code == 200:
-        return response.json()['iso']
-    else:
-        logging.critical('failed to request server time')
-        return ''
-
-
-def _get_server_timestamp():
-    server_time = _get_server_time_iso()
-    parsed_t = dp.parse(server_time)
-    timestamp = parsed_t.timestamp()
-    return timestamp
 
 
 def _create_login_params(timestamp, api_key, passphrase, secret_key):
@@ -83,7 +64,7 @@ class WebsocketApi:
             return res
 
     async def _create_and_login(self):
-        timestamp = str(_get_server_timestamp())
+        timestamp = str(singleton.rest_api.get_server_timestamp())
         login_str = _create_login_params(
             str(timestamp),
             api_v3_key_reader.API_KEY,
@@ -304,6 +285,7 @@ class WebsocketApi:
 def _testing_non_blocking():
     from . import singleton, logger
     from datetime import datetime
+    import requests
 
     logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
 
