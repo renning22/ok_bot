@@ -14,9 +14,11 @@ class OrderExecutionResult:
 
     @property
     def succeeded(self):
-        return ((self.order_id is not None) and
-                (self.amount > 0) and
-                (self.fulfilled_quantity == self.amount))
+        return (self.order_id is not None
+                and self.amount is not None
+                and self.fulfilled_quantity is not None
+                and self.amount > 0
+                and self.fulfilled_quantity == self.amount)
 
     def __str__(self):
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
