@@ -1,11 +1,11 @@
 import asyncio
-import datetime
 import logging
 import pprint
-import time
 from unittest.mock import MagicMock
 
 import numpy as np
+
+from . import server_time
 
 
 class AsyncMock(MagicMock):
@@ -101,7 +101,7 @@ class MockBookListerner_constantPriceGenerator:
                 ask_vols=[self._vol],
                 bid_prices=[self._price],
                 bid_vols=[self._vol],
-                timestamp=datetime.datetime.now().isoformat())
+                timestamp=server_time.get_server_time_iso())
         )
 
     def unsubscribe(self, instrument_id, subscriber):

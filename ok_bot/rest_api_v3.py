@@ -5,14 +5,9 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-import dateutil.parser as dp
-import requests
-
 from . import constants, singleton
 from .api_v3.okex_sdk.futures_api import FutureAPI
 from .api_v3_key_reader import API_KEY, KEY_SECRET, PASS_PHRASE
-
-OK_TIMESERVER_ADDRESS = 'http://www.okex.com/api/general/v3/time'
 
 
 class RestApiV3:
@@ -25,17 +20,6 @@ class RestApiV3:
         # and the number of workers should be higher than the number of workers
         # for ProcessPoolExecutor.
         self._executor = ThreadPoolExecutor(max_workers=None)
-
-    def get_server_time_iso(self):
-        response = requests.get(OK_TIMESERVER_ADDRESS)
-        if response.status_code == 200:
-            return response.json()['iso']
-        raise RuntimeError('failed to request server time')
-
-    def get_server_timestamp(self):
-        server_time = self.get_server_time_iso()
-        parsed_t = dp.parse(server_time)
-        return parsed_t.timestamp()
 
     def ticker(self, instrument_id):
         # use print to show it's non-blocking

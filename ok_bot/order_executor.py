@@ -14,11 +14,11 @@ class OrderExecutionResult:
 
     @property
     def succeeded(self):
-        return (self.order_id is not None
-                and self.amount is not None
-                and self.fulfilled_quantity is not None
-                and self.amount > 0
-                and self.fulfilled_quantity == self.amount)
+        return (self.order_id is not None and
+                self.amount is not None and
+                self.fulfilled_quantity is not None and
+                self.amount > 0 and
+                self.fulfilled_quantity == self.amount)
 
     def __str__(self):
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
@@ -201,6 +201,14 @@ class OrderExecutor:
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor) -> OrderExecutionResult:
+        self._logger.info(
+            '[SENDING ORDER REQUEST] %s, price: %s, amount: %s\n%s',
+            rest_request_functor.__name__,
+            self._price,
+            self._amount,
+            singleton.order_book.market_depth(self._instrument_id)
+        )
+
         # TODO: add timeout_sec for rest api wait() as well.
         self._order_id, error_code = await rest_request_functor(
             self._instrument_id,
