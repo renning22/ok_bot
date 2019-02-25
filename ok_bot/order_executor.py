@@ -225,7 +225,7 @@ class OrderExecutor:
             transaction_id=self._transaction_id,
             comment='request_sent',
             status=None,
-            size=self._amount,
+            size=int(self._amount),
             filled_qty=None,
             price=str(self._price),
             price_avg=None,
