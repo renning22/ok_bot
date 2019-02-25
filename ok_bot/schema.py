@@ -16,13 +16,9 @@ class Schema:
         self._all_necessary_source_columns =\
             self._init_all_necessary_source_columns()
 
-        self._local_timestamp = time.time()
-        self._server_timestamp = server_time.get_server_timestamp()
-        self._time_diff_sec = self._server_timestamp - self._local_timestamp
-
-    @property
-    def time_diff_sec(self):
-        return self._time_diff_sec
+        local_timestamp_sec = time.time()
+        server_timestamp_sec = server_time.get_server_timestamp()
+        self.time_diff_sec = server_timestamp_sec - local_timestamp_sec
 
     @staticmethod
     def make_column_name(instrument_id, ask_or_bid, price_or_vol):
@@ -95,8 +91,6 @@ def _testing():
     logging.info('\n%s', pprint.pformat(schema.all_instrument_ids))
     logging.info('\n%s', pprint.pformat(schema.markets_cartesian_product))
     logging.info('\n%s', pprint.pformat(schema.all_necessary_source_columns))
-    logging.info('server_timestamp: %s', schema._server_timestamp)
-    logging.info('local_timestamp: %s', schema._local_timestamp)
     logging.info('delta: %s', schema.time_diff_sec)
 
 
