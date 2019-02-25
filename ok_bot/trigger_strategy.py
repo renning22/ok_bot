@@ -6,7 +6,7 @@ from typing import Callable, List
 import numpy as np
 
 from . import constants, logger, singleton
-from .constants import LONG, SHORT
+from .constants import LONG, MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, SHORT
 from .order_book import AvailableOrder
 from .stats import Stats
 
@@ -75,8 +75,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin +
-           usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin
+           + usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -279,8 +279,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
     """
 
     def __init__(self):
-        self.stats_time_window_sec = 60 * 30  # 30 min
-        self.stats = defaultdict(lambda: Stats(self.stats_time_window_sec))
+        self.stats = defaultdict(lambda: Stats(
+            MOVING_AVERAGE_TIME_WINDOW_IN_SECOND))
 
     def is_there_a_plan(self,
                         long_instrument,
@@ -303,8 +303,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
 
         # USD per transaction per USD.
         estimate_profit_per_tran_per_usd = (
-            estimate_total_price_diff_after_resiliance
-            / current_price_average)
+            estimate_total_price_diff_after_resiliance /
+            current_price_average)
 
         usd_per_contract = constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
 
@@ -317,8 +317,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
             4 * constants.FEE_RATE * usd_per_contract)
 
         # USD per transaction per contract.
-        estimate_net_profit = (estimate_profit_per_transaction
-                               - estimate_fee_per_transaction)
+        estimate_net_profit = (estimate_profit_per_transaction -
+                               estimate_fee_per_transaction)
 
         # If esiamte_net_profit > 0, current spread is the minimum profitable
         # gap.
@@ -328,18 +328,18 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
-        self.stats[long_instrument, short_instrument].add(deviation)
+        self.stats[long_instrument, short_instrument].add(estimate_net_profit)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long:%s , short:%s\n%s',
-            self.stats_time_window_sec,
+            60 * 30,  # 30 min
             long_instrument,
             short_instrument,
             self.stats[long_instrument, short_instrument].histogram()
         )
 
-        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD
-                and zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD and
+                zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
             long_instrument_speed = singleton.order_book.price_speed(
                 long_instrument, 'ask')
             short_instrument_speed = singleton.order_book.price_speed(
