@@ -45,9 +45,9 @@ class OrderRevoker:
             if final_status == constants.ORDER_STATUS_CODE__CANCELLED:
                 return 0
             elif final_status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
-                return int(order_info.get('filled_qty', None))
+                return int(order_info['filled_qty'])
             elif final_status == constants.ORDER_STATUS_CODE__FULFILLED:
-                return int(order_info.get('filled_qty', None))
+                return int(order_info['filled_qty'])
             elif final_status == constants.ORDER_STATUS_CODE__CANCEL_IN_PROCESS:
                 logging.info('[CANCEL IN PROCESS]: sleep 1 sec')
                 await asyncio.sleep(1)
