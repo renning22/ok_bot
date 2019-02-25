@@ -16,8 +16,8 @@ class Schema:
         self._all_necessary_source_columns =\
             self._init_all_necessary_source_columns()
 
-        self._server_timestamp = server_time.get_server_timestamp()
         self._local_timestamp = time.time()
+        self._server_timestamp = server_time.get_server_timestamp()
         self._time_diff_sec = self._server_timestamp - self._local_timestamp
 
     @property
