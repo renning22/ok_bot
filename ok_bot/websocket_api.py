@@ -196,7 +196,8 @@ class WebsocketApi:
                                 instrument_id,
                                 order_id,
                                 timestamp,
-                                status):
+                                status,
+                                **kwargs):
         """
             instrument_id	String	合约ID，如BTC-USDT-180213
             size	String	数量
@@ -211,6 +212,24 @@ class WebsocketApi:
             instrument_id_val	String	合约面值
             leverage	String	杠杆倍数 value:10/20 默认10
         """
+        # '**kwargs' is added to skip garbage extra fields like 'order_id'. It's
+        # bug from exchange. (already contacted offical support)
+        #
+        #         {'data': [{'contract_val': '10',
+        #           'fee': '0',
+        #           'filled_qty': '0',
+        #           'instrument_id': 'ETH-USD-190301',
+        #           'leverage': '20',
+        #           'order_id': '2382074129755136',
+        #           'order_type': '0',  ###### expected ######
+        #           'price': '130.0',
+        #           'price_avg': '0.0',
+        #           'size': '1',
+        #           'status': '-1',
+        #           'timestamp': '2019-02-25T08:32:46.000Z',
+        #           'type': '1'}],
+        #         'table': 'futures/order'}
+
         self.order_listener.received_futures_order(
             int(leverage),
             int(size),
