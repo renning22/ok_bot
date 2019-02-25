@@ -1,4 +1,5 @@
 import asyncio
+import time
 import unittest
 from unittest.mock import Mock
 
@@ -11,7 +12,8 @@ class TestOrderBook(unittest.TestCase):
     def setUp(self):
         init_global_logger(log_to_stderr=False)
         singleton.initialize_objects_with_dev_db('ETH')
-        singleton.rest_api = AsyncMock()
+        singleton.rest_api = Mock()
+        singleton.rest_api.get_server_timestamp.return_value = time.time()
         singleton.trader = Mock()
 
     def tearDown(self):

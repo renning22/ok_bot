@@ -213,8 +213,8 @@ class ArbitrageTransaction:
         self.logger.info(f'{datetime.datetime.now()}, '
                          f'max gap: {self.close_price_gap_threshold:.4f}')
         self.logger.info(
-            '\nslow leg: %s%s\n'
-            'fast leg: %s%s',
+            '\nslow leg: %s\n%s\n'
+            'fast leg: %s\n%s',
             self.slow_leg,
             singleton.order_book.market_depth(self.slow_leg.instrument_id),
             self.fast_leg,

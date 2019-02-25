@@ -1,8 +1,10 @@
 import datetime
 import logging
 import pprint
+import time
 from collections import namedtuple
 
+import dateutil.parser as dp
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -29,7 +31,9 @@ class AvailableOrder:
 
 class MarketDepth:
     # ask_prices and bid_prices are sorted in book_listener
-    def __init__(self, ask_prices, ask_vols, bid_prices, bid_vols):
+    def __init__(self, ask_prices, ask_vols, bid_prices, bid_vols, timestamp):
+        self.timestamp_local = time.time()
+        self.timestamp_server = dp.parse(timestamp).timestamp()
         self.bid_stack_ = []
         self.ask_stack_ = []
         self.update(ask_prices, ask_vols, bid_prices, bid_vols)
@@ -47,7 +51,12 @@ class MarketDepth:
         return self.bid_stack_
 
     def __str__(self):
-        ret = '\n------ market_depth ------\n'
+        self.now_local = time.time()
+        self.now_server = self.now_local + singleton.schema.time_diff_sec
+        ret = '------ market_depth ------\n'
+        ret += 'freshness local: {:.2f}, server: {:.2f}\n'.format(
+            self.now_local - self.timestamp_local,
+            self.now_server - self.timestamp_server)
         ret += pprint.pformat(list(reversed(self.ask_stack_)))
         ret += '\n'
         ret += pprint.pformat(self.bid_stack_)
@@ -134,7 +143,7 @@ class OrderBook:
                       bid_vols,
                       timestamp):
         self._market_depth[instrument_id] = MarketDepth(
-            ask_prices, ask_vols, bid_prices, bid_vols)
+            ask_prices, ask_vols, bid_prices, bid_vols, timestamp)
 
         self.update_book(instrument_id,
                          ask_prices,
@@ -177,8 +186,6 @@ class OrderBook:
             logging.info('have all the necessary prices in every market, '
                          'ramping up finished')
             self.update_book = self._update_book__regular
-            if not self.ready.done():
-                self.ready.set_result(True)
 
     def _update_book__regular(self,
                               instrument_id,
@@ -188,7 +195,7 @@ class OrderBook:
                               bid_vols):
         self.last_record['source'] = instrument_id
         self.last_record['timestamp'] = np.datetime64(
-            datetime.datetime.utcnow())
+            datetime.datetime.now())
 
         self._sink_piece_of_fresh_data_to_last_record(instrument_id,
                                                       ask_prices,
@@ -200,6 +207,11 @@ class OrderBook:
         # remove old rows
         self.table = self.table.loc[self.table.index >=
                                     self.table.index[-1] - _TIME_WINDOW]
+
+        # Until there are more than 1 data points. Otherwise
+        # "values[:-1].mean()" will have problem.
+        if not self.ready.done() and self.row_num > 1:
+            self.ready.set_result(True)
 
         # Callback
         self._trader.new_tick_received(

@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import pprint
 import time
@@ -100,16 +101,7 @@ class MockBookListerner_constantPriceGenerator:
                 ask_vols=[self._vol],
                 bid_prices=[self._price],
                 bid_vols=[self._vol],
-                timestamp=int(time.time())
-            )
-        )
-        subscriber.tick_received(
-            instrument_id=instrument_id,
-            ask_prices=[self._price],
-            ask_vols=[self._vol],
-            bid_prices=[self._price],
-            bid_vols=[self._vol],
-            timestamp=int(time.time())
+                timestamp=datetime.datetime.now().isoformat())
         )
 
     def unsubscribe(self, instrument_id, subscriber):
