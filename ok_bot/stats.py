@@ -55,7 +55,7 @@ class Stats:
             mark = (' <--' if mark_last and bin_left <=
                     last_sample < bin_right else '')
             star_count = int((count / max_dist) * 10)
-            result_lines.append('{:8.3f} [{:5d}]: {:10s}{}'.format(
+            result_lines.append('{:10.6f} [{:5d}]: {:10s}{}'.format(
                 (bin_left + bin_right) / 2, count, '∎' * star_count, mark))
         return '\n'.join(reversed(result_lines))
 
