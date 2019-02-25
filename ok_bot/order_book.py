@@ -51,13 +51,13 @@ class MarketDepth:
         return self.bid_stack_
 
     def __str__(self):
-        self.now_local = time.time()
-        self.now_server = self.now_local + singleton.schema.time_diff_sec
+        now_local = time.time()
+        now_server = self.now_local + singleton.schema.time_diff_sec
         ret = '------ market_depth ------\n'
         ret += 'local_delay: {:.2f} sec\n'.format(
-            self.now_local - self.timestamp_local)
+            now_local - self.timestamp_local)
         ret += 'server_delay: {:.2f} sec\n'.format(
-            self.now_server - self.timestamp_server)
+            now_server - self.timestamp_server)
         ret += pprint.pformat(list(reversed(self.ask_stack_)))
         ret += '\n'
         ret += pprint.pformat(self.bid_stack_)
