@@ -288,14 +288,16 @@ class ArbitrageTransaction:
                 # will always reverse when converged.
                 close_slow_speed = singleton.order_book.price_speed(
                     self.slow_leg.instrument_id,
-                    {LONG: 'bid', SHORT: 'ask'}[self.slow_leg.side]
+                    {LONG: 'bid', SHORT: 'ask'}[self.slow_leg.side],
+                    5
                 )
                 close_fast_speed = singleton.order_book.price_speed(
                     self.fast_leg.instrument_id,
-                    {LONG: 'bid', SHORT: 'ask'}[self.fast_leg.side]
+                    {LONG: 'bid', SHORT: 'ask'}[self.fast_leg.side],
+                    5
                 )
-                self.logger.info(f'Price speed reversed: '
-                                 f'{close_slow_speed > close_fast_speed}, '
+                avg_speed = (close_slow_speed + close_fast_speed) / 2
+                self.logger.info(f'avg_speed: {avg_speed}, '
                                  f'current slow speed: {close_slow_speed:.4f}, '
                                  f'current fast speed: {close_fast_speed:.4f}')
 
