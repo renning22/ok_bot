@@ -338,10 +338,10 @@ class SimpleTriggerStrategy(TriggerStrategy):
         self.stats[long_instrument, short_instrument].add(estimate_net_profit)
         logging.log_every_n_seconds(
             logging.CRITICAL,
-            'long:%s , short:%s\n'
+            'long: %s , short: %s\n'
             'long_speed: %.6f , short_speed: %.6f, avg_speed: %.6f\n'
             '%s',
-            60 * 10,  # 10 min
+            60 * 5,  # 5 min
             long_instrument,
             short_instrument,
             long_instrument_speed,
