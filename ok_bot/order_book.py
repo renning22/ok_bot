@@ -115,7 +115,8 @@ class OrderBook:
             assert window_sec > 0
             window = self.table.loc[
                 self.table.index >= self.table.index[-1] - np.timedelta64(window_sec)]
-            assert len(window) > 1
+            if len(window) <= 1:
+                return Quant(0)
             history = window[column].astype('float64').values[:-1].mean()
         current = self.table[column].astype('float64').values[-1]
         return Quant((current - history) / history)
@@ -218,9 +219,9 @@ class OrderBook:
         self.table = self.table.loc[self.table.index >=
                                     self.table.index[-1] - _TIME_WINDOW]
 
-        # Until there are more than 2 data points. Otherwise
+        # Until there are more than 1 data points. Otherwise
         # "values[:-1].mean()" will have problem.
-        if not self.ready.done() and self.row_num > 2:
+        if not self.ready.done() and self.row_num > 1:
             self.ready.set_result(True)
 
         # Callback
