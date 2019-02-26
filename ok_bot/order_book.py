@@ -114,7 +114,7 @@ class OrderBook:
         else:
             assert window_sec > 0
             window = self.table.loc[
-                self.table.index >= self.table.index[-1] - window_sec]
+                self.table.index >= self.table.index[-1] - np.timedelta64(window_sec)]
             assert len(window) > 0
             history = window[column].astype('float64').values[:-1].mean()
         current = self.table[column].astype('float64').values[-1]
