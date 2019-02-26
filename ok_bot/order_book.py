@@ -218,9 +218,9 @@ class OrderBook:
         self.table = self.table.loc[self.table.index >=
                                     self.table.index[-1] - _TIME_WINDOW]
 
-        # Until there are more than 1 data points. Otherwise
+        # Until there are more than 2 data points. Otherwise
         # "values[:-1].mean()" will have problem.
-        if not self.ready.done() and self.row_num > 1:
+        if not self.ready.done() and self.row_num > 2:
             self.ready.set_result(True)
 
         # Callback
