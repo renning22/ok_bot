@@ -370,7 +370,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             logging.critical(
                 '\nTRIGGERED'
                 '\nlong: %s , short: %s'
-                '\nlong_speed: %.6f , short_speed: %.6f, avg_speed: %.6f'
+                '\nlong_speed: %.8f , short_speed: %.8f, avg_speed: %.8f'
                 '\ncurrent_price_average: %.3f'
                 '\nestimate_total_price_diff_after_resiliance: %.3f'
                 '\nestimate_profit_per_transaction: %.3f'
