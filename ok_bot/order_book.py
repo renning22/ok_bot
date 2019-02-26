@@ -105,13 +105,20 @@ class OrderBook:
                 return (self.ask_price(long_instrument) + self.bid_price(short_instrument)) / 2
         raise RuntimeError(f'no such {cross_product}')
 
-    def price_speed(self, instrument_id, ask_or_bid):
+    def price_speed(self, instrument_id, ask_or_bid, window_sec=None):
         assert ask_or_bid in ['ask', 'bid']
         column = Schema.make_column_name(
             instrument_id, ask_or_bid, 'price')
-        history = self.table[column].astype('float64').values[:-1].mean()
+        if window_sec is None:
+            history = self.table[column].astype('float64').values[:-1].mean()
+        else:
+            assert window_sec > 0
+            window = self.table.loc[
+                self.table.index >= self.table.index[-1] - window_sec]
+            assert len(window) > 0
+            history = window[column].astype('float64').values[:-1].mean()
         current = self.table[column].astype('float64').values[-1]
-        return Quant(abs(current - history) / history)
+        return Quant((current - history) / history)
 
     def ask_price(self, instrument_id):
         return Quant(self.last_record[Schema.make_column_name(instrument_id, 'ask', 'price')])

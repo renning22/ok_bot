@@ -75,8 +75,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin +
-           usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin
+           + usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -303,8 +303,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
 
         # USD per transaction per USD.
         estimate_profit_per_tran_per_usd = (
-            estimate_total_price_diff_after_resiliance
-            / current_price_average)
+            estimate_total_price_diff_after_resiliance /
+            current_price_average)
 
         usd_per_contract = constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
 
@@ -339,18 +339,14 @@ class SimpleTriggerStrategy(TriggerStrategy):
             self.stats[long_instrument, short_instrument].histogram()
         )
 
-        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD
-                and zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD and
+                zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
             long_instrument_speed = singleton.order_book.price_speed(
-                long_instrument, 'ask')
+                long_instrument, 'ask', 5)
             short_instrument_speed = singleton.order_book.price_speed(
-                short_instrument, 'bid')
-            logging.info(
-                'long instrument speed: %.3f, short instrument speed: %.3f',
-                long_instrument_speed,
-                short_instrument_speed
-            )
-            if long_instrument_speed > short_instrument_speed:
+                short_instrument, 'bid', 5)
+            avg_speed = long_instrument_speed + short_instrument_speed
+            if avg_speed < 0:
                 slow_instrument_id = short_instrument
                 fast_instrument_id = long_instrument
                 slow_side = SHORT
@@ -364,9 +360,11 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 fast_side = SHORT
                 slow_price = singleton.order_book.ask_price(slow_instrument_id)
                 fast_price = singleton.order_book.bid_price(fast_instrument_id)
+
             logging.critical(
                 '\nTRIGGERED'
-                '\nlong:%s , short:%s'
+                '\nlong: %s , short: %s'
+                '\nlong_speed: %.4f , short_speed: %.4f, avg_speed: %.4f'
                 '\ncurrent_price_average: %.3f'
                 '\nestimate_total_price_diff_after_resiliance: %.3f'
                 '\nestimate_profit_per_transaction: %.3f'
@@ -377,6 +375,9 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\n%s',
                 long_instrument,
                 short_instrument,
+                long_instrument_speed,
+                short_instrument_speed,
+                avg_speed,
                 current_price_average,
                 estimate_total_price_diff_after_resiliance,
                 estimate_profit_per_transaction,

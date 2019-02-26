@@ -296,8 +296,8 @@ class ArbitrageTransaction:
                 )
                 self.logger.info(f'Price speed reversed: '
                                  f'{close_slow_speed > close_fast_speed}, '
-                                 f'current slow speed: {close_slow_speed:.3f}, '
-                                 f'current fast speed: {close_fast_speed:.3f}')
+                                 f'current slow speed: {close_slow_speed:.4f}, '
+                                 f'current fast speed: {close_fast_speed:.4f}')
 
         fast_close_order, slow_close_order = await asyncio.gather(
             self.close_position_guaranteed(self.fast_leg),
