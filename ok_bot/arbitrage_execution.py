@@ -284,22 +284,6 @@ class ArbitrageTransaction:
             else:
                 self.logger.info(f'[CONVERGED] margin: {converge}')
                 self._db_transaction_status_updater('ended_normally')
-                # Log current speed from each side. I suspect the slow/fast
-                # will always reverse when converged.
-                close_slow_speed = singleton.order_book.price_speed(
-                    self.slow_leg.instrument_id,
-                    {LONG: 'bid', SHORT: 'ask'}[self.slow_leg.side],
-                    5
-                )
-                close_fast_speed = singleton.order_book.price_speed(
-                    self.fast_leg.instrument_id,
-                    {LONG: 'bid', SHORT: 'ask'}[self.fast_leg.side],
-                    5
-                )
-                avg_speed = (close_slow_speed + close_fast_speed) / 2
-                self.logger.info(f'avg_speed: {avg_speed:.8f}, '
-                                 f'current slow speed: {close_slow_speed:.8f}, '
-                                 f'current fast speed: {close_fast_speed:.8f}')
 
         fast_close_order, slow_close_order = await asyncio.gather(
             self.close_position_guaranteed(self.fast_leg),
@@ -317,6 +301,7 @@ class ArbitrageTransaction:
 
 async def _test_coroutine():
     from .quant import Quant
+    await asyncio.sleep(5)
     await singleton.order_book.ready
     logging.info('OrderBook ramping up finished')
     week_instrument = singleton.schema.all_instrument_ids[0]
@@ -324,12 +309,12 @@ async def _test_coroutine():
     transaction = ArbitrageTransaction(
         slow_leg=ArbitrageLeg(instrument_id=quarter_instrument,
                               side=SHORT,
-                              volume=Quant(2),
-                              price=Quant(165.0)),
+                              volume=Quant(1),
+                              price=Quant(140.0)),
         fast_leg=ArbitrageLeg(instrument_id=week_instrument,
                               side=LONG,
-                              volume=Quant(2),
-                              price=Quant(160.0)),
+                              volume=Quant(1),
+                              price=Quant(130.0)),
         close_price_gap_threshold=1,
         estimate_net_profit=0,
         z_score=0,

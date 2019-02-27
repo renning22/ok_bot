@@ -75,8 +75,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin +
-           usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin
+           + usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -303,8 +303,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
 
         # USD per transaction per USD.
         estimate_profit_per_tran_per_usd = (
-            estimate_total_price_diff_after_resiliance
-            / current_price_average)
+            estimate_total_price_diff_after_resiliance /
+            current_price_average)
 
         usd_per_contract = constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
 
@@ -333,13 +333,19 @@ class SimpleTriggerStrategy(TriggerStrategy):
             long_instrument, 'ask', 5)
         short_instrument_speed = singleton.order_book.price_speed(
             short_instrument, 'bid', 5)
-        avg_speed = (long_instrument_speed + short_instrument_speed) / 2
+        avg_speed = long_instrument_speed + short_instrument_speed
+        long_instrument_slope = singleton.order_book.price_linear_fit(
+            long_instrument, 'ask', 5)
+        short_instrument_slope = singleton.order_book.price_linear_fit(
+            short_instrument, 'bid', 5)
+        avg_slope = long_instrument_slope + short_instrument_slope
 
         self.stats[long_instrument, short_instrument].add(estimate_net_profit)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long: %s , short: %s\n'
-            'long_speed: %.6f , short_speed: %.6f, avg_speed: %.6f\n'
+            'long_speed: %.6f, short_speed: %.6f, avg_speed: %.6f\n'
+            'long_slope: %.6f, short_slope: %.6f, avg_slope: %.6f\n'
             '%s',
             60 * 5,  # 5 min
             long_instrument,
@@ -347,12 +353,15 @@ class SimpleTriggerStrategy(TriggerStrategy):
             long_instrument_speed,
             short_instrument_speed,
             avg_speed,
+            long_instrument_slope,
+            short_instrument_slope,
+            avg_slope,
             self.stats[long_instrument, short_instrument].histogram()
         )
 
-        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD
-                and zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
-            if avg_speed < 0:
+        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD and
+                zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+            if avg_slope < 0:
                 slow_instrument_id = short_instrument
                 fast_instrument_id = long_instrument
                 slow_side = SHORT
@@ -370,7 +379,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
             logging.critical(
                 '\nTRIGGERED'
                 '\nlong: %s , short: %s'
-                '\nlong_speed: %.8f , short_speed: %.8f, avg_speed: %.8f'
+                '\nlong_speed: %.6f, short_speed: %.6f, avg_speed: %.6f'
+                '\nlong_slope: %.6f, short_slope: %.6f, avg_slope: %.6f'
                 '\ncurrent_price_average: %.3f'
                 '\nestimate_total_price_diff_after_resiliance: %.3f'
                 '\nestimate_profit_per_transaction: %.3f'
@@ -384,6 +394,9 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 long_instrument_speed,
                 short_instrument_speed,
                 avg_speed,
+                long_instrument_slope,
+                short_instrument_slope,
+                avg_slope,
                 current_price_average,
                 estimate_total_price_diff_after_resiliance,
                 estimate_profit_per_transaction,
