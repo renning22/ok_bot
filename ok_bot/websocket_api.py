@@ -181,6 +181,8 @@ class WebsocketApi:
              instrument_id	String	合约ID BTC-USD-170310
              [411.8,10,8,4][double ,int ,int ,int] 411.8为深度价格，10为此价格数量，8为此价格的爆仓单数量，4为此深度由几笔订单组成
         """
+        if instrument_id == singleton.schema.all_instrument_ids[0]:
+            logging.info(f'ws: {timestamp}')
         self.book_listener.received_futures_depth5(
             asks, bids, instrument_id, timestamp)
 
@@ -304,28 +306,19 @@ class WebsocketApi:
 def _testing_non_blocking():
     from . import singleton, logger
     from datetime import datetime
-    import requests
-
     logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
 
-    async def ping(url):
+    async def ping():
         await singleton.websocket.ready
+        logging.info('ready')
         while True:
-            start = datetime.now()
-            r = requests.get(url)
-            end = datetime.now()
-            elapse = end - start
-            logging.info(
-                f'{url} GET response: {r.status_code}, start: {start}, '
-                f'end: {end}'
-                f', elapse: {elapse.seconds} seconds, will sleep for 5 sec')
-            await asyncio.sleep(5)
+            r = await singleton.rest_api.get_depth(
+                singleton.schema.all_instrument_ids[0], 5)
+            logging.info('rest: %s', r.get('timestamp', None))
+            await asyncio.sleep(1)
 
     singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
-    singleton.loop.create_task(ping('http://www.google.com'))
-    singleton.loop.create_task(ping('http://www.baidu.com'))
-    singleton.loop.create_task(ping('http://www.okex.com'))
-
+    singleton.loop.create_task(ping())
     singleton.start_loop()
 
 
