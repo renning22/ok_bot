@@ -2,7 +2,7 @@ import datetime
 import logging
 import pprint
 import time
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 import dateutil.parser as dp
 import numpy as np
@@ -13,6 +13,7 @@ from . import constants, singleton
 from .quant import Quant
 from .schema import Schema
 
+constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 5
 _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
@@ -79,7 +80,7 @@ class OrderBook:
         self._trader = singleton.trader
 
         # order book data
-        self.table = pd.DataFrame()
+        self.table = defaultdict(pd.Series)
         self.last_record = {}
         self._market_depth = {}
 
@@ -88,16 +89,23 @@ class OrderBook:
             singleton.book_listener.subscribe(instrument_id, self)
         self.ready = singleton.loop.create_future()
 
+    def window(self, column, window_sec=None):
+        if window_sec is None:
+            return self.table[column]
+        else:
+            assert window_sec > 0
+            return self.table[column].loc[
+                self.table[column].index >= self.table[column].index[-1] - np.timedelta64(window_sec, 's')]
+
     def zscore(self, cross_product):
         zscores = stats.zscore(self.table[cross_product].astype('float64'))
         return Quant(zscores[-1])
 
     def historical_mean_spread(self, cross_product):
-        return Quant(
-            self.table[cross_product].astype('float64').values[:-1].mean())
+        return Quant(self.table[cross_product].values[:-1].mean())
 
     def current_spread(self, cross_product):
-        return Quant(self.table[cross_product].astype('float64').values[-1])
+        return Quant(self.table[cross_product].values[-1])
 
     def current_price_average(self, cross_product):
         for long_instrument, short_instrument, product in self._schema.markets_cartesian_product:
@@ -109,17 +117,26 @@ class OrderBook:
         assert ask_or_bid in ['ask', 'bid']
         column = Schema.make_column_name(
             instrument_id, ask_or_bid, 'price')
-        if window_sec is None:
-            history = self.table[column].astype('float64').values[:-1].mean()
-        else:
-            assert window_sec > 0
-            window = self.table.loc[
-                self.table.index >= self.table.index[-1] - np.timedelta64(window_sec, 's')]
-            if len(window) <= 1:
-                return Quant(0)
-            history = window[column].astype('float64').values[:-1].mean()
-        current = self.table[column].astype('float64').values[-1]
+        w = self.window(column, window_sec)
+        if len(w) <= 1:
+            return Quant(0)
+        history = w.values[:-1].mean()
+        current = w.values[-1]
         return Quant((current - history) / history)
+
+    def price_linear_fit(self, instrument_id, ask_or_bid, window_sec=None):
+        assert ask_or_bid in ['ask', 'bid']
+        column = Schema.make_column_name(
+            instrument_id, ask_or_bid, 'price')
+        w = self.window(column, window_sec)
+        if len(w) <= 1:
+            return Quant(0)
+
+        left = w.index[0].timestamp()
+        x = [i.timestamp() - left for i in w.index]
+        y = w.values.astype('float64')
+        p = np.polynomial.polynomial.Polynomial.fit(x=x, y=y, deg=1)
+        return p.coef[1]
 
     def ask_price(self, instrument_id):
         return Quant(self.last_record[Schema.make_column_name(instrument_id, 'ask', 'price')])
@@ -132,16 +149,6 @@ class OrderBook:
 
     def bid_volume(self, instrument_id):
         return Quant(self.last_record[Schema.make_column_name(instrument_id, 'bid', 'vol')])
-
-    @property
-    def row_num(self):
-        return len(self.table)
-
-    @property
-    def time_window(self):
-        if self.row_num <= 1:
-            return np.timedelta64(0, 's')
-        return self.table.index[-1] - self.table.index[0]
 
     def recent_tick_source(self):
         return self.last_record['source']
@@ -156,6 +163,9 @@ class OrderBook:
         self._market_depth[instrument_id] = MarketDepth(
             ask_prices, ask_vols, bid_prices, bid_vols, timestamp)
 
+        self.last_record['source'] = instrument_id
+        self.last_record['timestamp'] = np.datetime64(timestamp)
+
         self.update_book(instrument_id,
                          ask_prices,
                          ask_vols,
@@ -165,35 +175,21 @@ class OrderBook:
     def market_depth(self, instrument_id):
         return self._market_depth[instrument_id]
 
-    def _sink_piece_of_fresh_data_to_last_record(self,
-                                                 instrument_id,
-                                                 ask_prices,
-                                                 ask_vols,
-                                                 bid_prices,
-                                                 bid_vols):
-        self.last_record[Schema.make_column_name(
-            instrument_id, 'ask', 'price')] = ask_prices[0]
-        self.last_record[Schema.make_column_name(
-            instrument_id, 'ask', 'vol')] = ask_vols[0]
-        self.last_record[Schema.make_column_name(
-            instrument_id, 'bid', 'price')] = bid_prices[0]
-        self.last_record[Schema.make_column_name(
-            instrument_id, 'bid', 'vol')] = bid_vols[0]
-
     def _update_book__ramp_up_mode(self,
                                    instrument_id,
                                    ask_prices,
                                    ask_vols,
                                    bid_prices,
                                    bid_vols):
-        self._sink_piece_of_fresh_data_to_last_record(instrument_id,
-                                                      ask_prices,
-                                                      ask_vols,
-                                                      bid_prices,
-                                                      bid_vols)
+        self._update_raw_data(instrument_id,
+                              ask_prices,
+                              ask_vols,
+                              bid_prices,
+                              bid_vols)
 
-        if set(self._schema.all_necessary_source_columns) == \
-                set(self.last_record.keys()):
+        a = set(self._schema.all_necessary_source_columns)
+        b = set(self.last_record.keys())
+        if a.intersection(b) == a:
             logging.info('have all the necessary prices in every market, '
                          'ramping up finished')
             self.update_book = self._update_book__regular
@@ -204,43 +200,89 @@ class OrderBook:
                               ask_vols,
                               bid_prices,
                               bid_vols):
-        self.last_record['source'] = instrument_id
-        self.last_record['timestamp'] = np.datetime64(
-            datetime.datetime.now())
-
-        self._sink_piece_of_fresh_data_to_last_record(instrument_id,
-                                                      ask_prices,
-                                                      ask_vols,
-                                                      bid_prices,
-                                                      bid_vols)
-        self.table = self.table.append(
-            self._convert_last_record_to_table_row(), sort=True)
-        # remove old rows
-        self.table = self.table.loc[self.table.index >=
-                                    self.table.index[-1] - _TIME_WINDOW]
+        self._update_raw_data(instrument_id,
+                              ask_prices,
+                              ask_vols,
+                              bid_prices,
+                              bid_vols)
+        self._update_derived_data()
 
         # Until there are more than 1 data points. Otherwise
         # "values[:-1].mean()" will have problem.
-        if not self.ready.done() and self.row_num > 1:
+        if not self.ready.done() and min([len(i) for i in self.table]) > 1:
             self.ready.set_result(True)
 
         # Callback
         self._trader.new_tick_received(
             instrument_id, ask_prices, ask_vols, bid_prices, bid_vols)
 
-    def _convert_last_record_to_table_row(self):
-        # TODO(luanjunyi): consider removing the handicap data from table. Use table only
-        # for price spread history
+    def _update_raw_data(self,
+                         instrument_id,
+                         ask_prices,
+                         ask_vols,
+                         bid_prices,
+                         bid_vols):
+        self.last_record[Schema.make_column_name(
+            instrument_id, 'ask', 'price')] = ask_prices[0]
+        self._update_table(Schema.make_column_name(
+            instrument_id, 'ask', 'price'), ask_prices[0])
+        self.last_record[Schema.make_column_name(
+            instrument_id, 'ask', 'vol')] = ask_vols[0]
+        self._update_table(Schema.make_column_name(
+            instrument_id, 'ask', 'vol'), ask_vols[0])
+        self.last_record[Schema.make_column_name(
+            instrument_id, 'bid', 'price')] = bid_prices[0]
+        self._update_table(Schema.make_column_name(
+            instrument_id, 'bid', 'price'), bid_prices[0])
+        self.last_record[Schema.make_column_name(
+            instrument_id, 'bid', 'vol')] = bid_vols[0]
+        self._update_table(Schema.make_column_name(
+            instrument_id, 'bid', 'vol'), bid_vols[0])
 
-        # Move old source data.
-        data = self.last_record.copy()
-
-        # Calculate new derived data.
+    def _update_derived_data(self):
         for long_instrument, short_instrument, product in self._schema.markets_cartesian_product:
             ask_price_name = Schema.make_column_name(
                 long_instrument, 'ask', 'price')
             bid_price_name = Schema.make_column_name(
                 short_instrument, 'bid', 'price')
-            data[product] = self.last_record[bid_price_name] - \
+            new_point = self.last_record[bid_price_name] - \
                 self.last_record[ask_price_name]
-        return pd.DataFrame(data, index=[self.last_record['timestamp']])
+            self._update_table(product, new_point)
+
+    def _update_table(self, column, value):
+        new_point = pd.Series(value, index=[self.last_record['timestamp']])
+        this_table = self.table[column]
+        this_table = this_table.append(new_point)
+        self.table[column] = this_table.loc[
+            this_table.index >= this_table.index[-1] - _TIME_WINDOW]
+
+
+def _testing_non_blocking():
+    import asyncio
+    from . import singleton, logger
+    logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
+
+    async def ping():
+        await singleton.order_book.ready
+        logging.info('ready')
+        while True:
+            for long_instrument, short_instrument, product in singleton.schema.markets_cartesian_product:
+                t = singleton.order_book.table[Schema.make_column_name(
+                    long_instrument, 'ask', 'price')]
+                p = singleton.order_book.current_spread(product)
+                s = singleton.order_book.price_linear_fit(
+                    long_instrument, 'ask', 2)
+                logging.info('%s : %s', long_instrument, t)
+                logging.info('%s : %s', long_instrument, p)
+                logging.info('%s : %s', long_instrument, s)
+                break
+
+            await asyncio.sleep(1)
+
+    singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
+    singleton.loop.create_task(ping())
+    singleton.start_loop()
+
+
+if __name__ == '__main__':
+    _testing_non_blocking()
