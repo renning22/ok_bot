@@ -13,7 +13,6 @@ from . import constants, singleton
 from .quant import Quant
 from .schema import Schema
 
-constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 5
 _TIME_WINDOW = np.timedelta64(
     constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
