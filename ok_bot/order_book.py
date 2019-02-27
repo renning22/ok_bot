@@ -32,7 +32,8 @@ class AvailableOrder:
 
 class MarketDepth:
     # ask_prices and bid_prices are sorted in book_listener
-    def __init__(self, ask_prices, ask_vols, bid_prices, bid_vols, timestamp):
+    def __init__(self, instrument_id, ask_prices, ask_vols, bid_prices, bid_vols, timestamp):
+        self.instrument_id = instrument_id
         self.timestamp_local = time.time()
         self.timestamp_server = dp.parse(timestamp).timestamp()
         self.bid_stack_ = []
@@ -54,7 +55,13 @@ class MarketDepth:
     def __str__(self):
         now_local = time.time()
         now_server = now_local + singleton.schema.time_diff_sec
+        ask_slope = singleton.order_book.price_linear_fit(
+            self.instrument_id, 'ask', 5)
+        bid_slope = singleton.order_book.price_linear_fit(
+            self.instrument_id, 'bid', 5)
         ret = '------ market_depth ------\n'
+        ret += 'ask_slope: {:.6f}, bid_slope: {:.6f}\n'.format(
+            ask_slope, bid_slope)
         ret += 'local_delay: {:.2f} sec\n'.format(
             now_local - self.timestamp_local)
         ret += 'server_delay: {:.2f} sec\n'.format(
@@ -161,7 +168,7 @@ class OrderBook:
                       bid_vols,
                       timestamp):
         self._market_depth[instrument_id] = MarketDepth(
-            ask_prices, ask_vols, bid_prices, bid_vols, timestamp)
+            instrument_id, ask_prices, ask_vols, bid_prices, bid_vols, timestamp)
 
         self.last_record['source'] = instrument_id
         self.last_record['timestamp'] = np.datetime64(timestamp)

@@ -14,11 +14,11 @@ class OrderExecutionResult:
 
     @property
     def succeeded(self):
-        return (self.order_id is not None and
-                self.amount is not None and
-                self.fulfilled_quantity is not None and
-                self.amount > 0 and
-                self.fulfilled_quantity == self.amount)
+        return (self.order_id is not None
+                and self.amount is not None
+                and self.fulfilled_quantity is not None
+                and self.amount > 0
+                and self.fulfilled_quantity == self.amount)
 
     def __str__(self):
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
@@ -176,6 +176,7 @@ class OrderExecutor:
                  logger,
                  transaction_id=None):
         self._instrument_id = instrument_id
+        self._side = None
         self._amount = int(amount)
         self._price = price
         self._timeout_sec = timeout_sec
@@ -186,26 +187,31 @@ class OrderExecutor:
 
     def open_long_position(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
+        self._side = 'ask'
         return self._place_order(singleton.rest_api.open_long_order)
 
     def open_short_position(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
+        self._side = 'bid'
         return self._place_order(singleton.rest_api.open_short_order)
 
     def close_long_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
+        self._side = 'bid'
         return self._place_order(singleton.rest_api.close_long_order)
 
     def close_short_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
+        self._side = 'ask'
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor) -> OrderExecutionResult:
         self._logger.info(
-            '[SENDING ORDER REQUEST]\nprice: %s, amount: %s, %s\n%s',
+            '[SENDING ORDER REQUEST]\nprice: %s, amount: %s (%s, %s)\n%s',
             self._price,
             self._amount,
             rest_request_functor.__name__,
+            self._side,
             singleton.order_book.market_depth(self._instrument_id)
         )
 

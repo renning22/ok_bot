@@ -159,6 +159,7 @@ class FeatTestPercentageTriggerStrategy(TestCase):
 
     def test_calculate_amount_margin(self):
         market_depth = MarketDepth(
+            'instrument_id',
             ask_prices=[121.103, 121.123, 121.143, 121.145, 121.147],
             ask_vols=[16, 590, 10, 2, 19],
             bid_prices=[121.091, 121.079, 121.078, 121.077],
