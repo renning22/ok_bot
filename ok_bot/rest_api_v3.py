@@ -39,6 +39,25 @@ class RestApiV3:
                 ret.append(instrument['instrument_id'])
         return sorted(ret)
 
+    def _get_depth(self, instrument_id, size):
+        size = int(size)
+        try:
+            resp = self.future_sdk.get_depth(
+                instrument_id,
+                size)
+            return resp
+        except Exception as ex:
+            logging.error(f'Failed to get depth: {ex}')
+            return None
+
+    def get_depth(self, instrument_id, size):
+        return singleton.loop.run_in_executor(
+            self._executor,
+            self._get_depth,
+            instrument_id,
+            size
+        )
+
     def create_order(self, client_oid, instrument_id, order_type, amount, price,
                      is_market_order=False, leverage=20):
         """
