@@ -24,7 +24,7 @@ class MockTrader:
                           bid_prices,
                           bid_vols):
         logging.log_every_n_seconds(
-            logging.INFO,
+            logging.DEBUG,
             'mock trader got new tick: %s, best ask: %.3f@%d,'
             'best bid: %.3f@%d, on_going_arbitrage_count: %s',
             10,
