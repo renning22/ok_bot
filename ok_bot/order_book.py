@@ -156,6 +156,10 @@ class OrderBook:
     def bid_volume(self, instrument_id):
         return Quant(self.last_record[Schema.make_column_name(instrument_id, 'bid', 'vol')])
 
+    @property
+    def time_window(self):
+        return min([i.index[-1] - i.index[0] for _, i in self.table.items()])
+
     def recent_tick_source(self):
         return self.last_record['source']
 
@@ -281,6 +285,8 @@ def _testing_non_blocking():
                 logging.info('%s : %s', long_instrument, t)
                 logging.info('%s : %s', long_instrument, p)
                 logging.info('%s : %s', long_instrument, s)
+                logging.info('%s : %s', long_instrument,
+                             singleton.order_book.time_window)
                 break
 
             await asyncio.sleep(1)
