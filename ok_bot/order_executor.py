@@ -192,28 +192,32 @@ class OrderExecutor:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'ask'
         if self._safe_price is True:
-            self._price = self._original_price * 1.02
+            self._price = self._original_price * \
+                (1 + constants.ORDER_EXECUTOR_SAFE_PRICE_RATE)
         return self._place_order(singleton.rest_api.open_long_order)
 
     def open_short_position(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'bid'
         if self._safe_price is True:
-            self._price = self._original_price * 0.98
+            self._price = self._original_price * \
+                (1 - constants.ORDER_EXECUTOR_SAFE_PRICE_RATE)
         return self._place_order(singleton.rest_api.open_short_order)
 
     def close_long_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'bid'
         if self._safe_price is True:
-            self._price = self._original_price * 0.98
+            self._price = self._original_price * \
+                (1 - constants.ORDER_EXECUTOR_SAFE_PRICE_RATE)
         return self._place_order(singleton.rest_api.close_long_order)
 
     def close_short_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'ask'
         if self._safe_price is True:
-            self._price = self._original_price * 1.02
+            self._price = self._original_price * \
+                (1 + constants.ORDER_EXECUTOR_SAFE_PRICE_RATE)
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor) -> OrderExecutionResult:

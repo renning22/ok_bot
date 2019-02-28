@@ -345,8 +345,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long: %s , short: %s\n'
-            'long_speed: %.6f, short_speed: %.6f, avg_speed: %.6f\n'
-            'long_slope: %.6f, short_slope: %.6f, avg_slope: %.6f\n'
+            's0: %.6f, s1: %.6f, S: %.6f\n'
+            'r0: %.6f, r1: %.6f, R: %.6f\n'
             '%s',
             60 * 15,  # 15 min
             long_instrument,
