@@ -9,12 +9,14 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from . import constants, singleton
+from . import singleton
+from .constants import (MOVING_AVERAGE_TIME_WINDOW_IN_SECOND,
+                        PRICE_PREDICTION_WINDOW_SECOND)
 from .quant import Quant
 from .schema import Schema
 
 _TIME_WINDOW = np.timedelta64(
-    constants.MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
+    MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, 's')
 
 
 class AvailableOrder:
@@ -55,9 +57,9 @@ class MarketDepth:
         now_local = time.time()
         now_server = now_local + singleton.schema.time_diff_sec
         ask_slope = singleton.order_book.price_linear_fit(
-            self.instrument_id, 'ask', 5)
+            self.instrument_id, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
         bid_slope = singleton.order_book.price_linear_fit(
-            self.instrument_id, 'bid', 5)
+            self.instrument_id, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
         ret = '------ market_depth ------\n'
         ret += 'ask_slope: {:.6f}, bid_slope: {:.6f}\n'.format(
             ask_slope, bid_slope)

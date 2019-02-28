@@ -6,7 +6,8 @@ from typing import Callable, List
 import numpy as np
 
 from . import constants, logger, singleton
-from .constants import LONG, MOVING_AVERAGE_TIME_WINDOW_IN_SECOND, SHORT
+from .constants import (LONG, MOVING_AVERAGE_TIME_WINDOW_IN_SECOND,
+                        PRICE_PREDICTION_WINDOW_SECOND, SHORT)
 from .order_book import AvailableOrder
 from .stats import Stats
 
@@ -321,7 +322,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             (estimate_profit_per_transaction -
              estimate_fee_per_transaction) / current_price_average)
 
-        # If esiamte_net_profit > 0, current spread is the minimum profitable
+        # If estimate_net_profit > 0, current spread is the minimum profitable
         # gap.
         min_profitable_gap = current_spread
 
@@ -330,14 +331,14 @@ class SimpleTriggerStrategy(TriggerStrategy):
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
         long_instrument_speed = singleton.order_book.price_speed(
-            long_instrument, 'ask', 5)
+            long_instrument, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
         short_instrument_speed = singleton.order_book.price_speed(
-            short_instrument, 'bid', 5)
+            short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
         avg_speed = long_instrument_speed + short_instrument_speed
         long_instrument_slope = singleton.order_book.price_linear_fit(
-            long_instrument, 'ask', 5)
+            long_instrument, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
         short_instrument_slope = singleton.order_book.price_linear_fit(
-            short_instrument, 'bid', 5)
+            short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
         avg_slope = long_instrument_slope + short_instrument_slope
 
         self.stats[long_instrument, short_instrument].add(estimate_net_profit)
@@ -347,7 +348,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             'long_speed: %.6f, short_speed: %.6f, avg_speed: %.6f\n'
             'long_slope: %.6f, short_slope: %.6f, avg_slope: %.6f\n'
             '%s',
-            60 * 5,  # 5 min
+            60 * 15,  # 15 min
             long_instrument,
             short_instrument,
             long_instrument_speed,
@@ -379,15 +380,15 @@ class SimpleTriggerStrategy(TriggerStrategy):
             logging.critical(
                 '\nTRIGGERED'
                 '\nlong: %s , short: %s'
-                '\nlong_speed: %.6f, short_speed: %.6f, avg_speed: %.6f'
-                '\nlong_slope: %.6f, short_slope: %.6f, avg_slope: %.6f'
-                '\ncurrent_price_average: %.3f'
-                '\nestimate_total_price_diff_after_resiliance: %.3f'
-                '\nestimate_profit_per_transaction: %.3f'
-                '\nestimate_fee_per_transaction: %.3f'
-                '\nestimate_net_profit: %.8f'
+                '\ns0: %.6f, s1: %.6f, S: %.6f'
+                '\nr0: %.6f, r1: %.6f, R: %.6f'
+                '\nprice_avg: %.3f'
+                '\ndiff_after: %.3f'
+                '\nprofit_tran: %.3f'
+                '\nfee_tran: %.3f'
+                '\nest_profit: %.8f'
                 '\nzscore: %.3f'
-                '\nclose_price_gap: %.3f'
+                '\nclose_gap: %.3f'
                 '\n%s',
                 long_instrument,
                 short_instrument,
