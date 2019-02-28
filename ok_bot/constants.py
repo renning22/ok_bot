@@ -34,9 +34,9 @@ FEE_RATE = 0.0003
 # via websocket. We don't know until we try revoke the order. Then we found it's
 # actually fulfilled and then the opportunity is gone for the fast leg. We end
 # up losing the fee in open/close the slow side.
-SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 2
-FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 5
-CLOSE_POSITION_ORDER_TIMEOUT_SECOND = 5
+SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 5
+FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND = 10
+CLOSE_POSITION_ORDER_TIMEOUT_SECOND = 10
 
 CLOSE_THRESHOLDS = {
     ('this_week', 'next_week'): 0.1,
