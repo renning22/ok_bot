@@ -174,44 +174,59 @@ class OrderExecutor:
                  timeout_sec,
                  is_market_order,
                  logger,
-                 transaction_id=None):
+                 transaction_id=None,
+                 safe_price=False):
         self._instrument_id = instrument_id
         self._side = None
         self._amount = int(amount)
+        self._original_price = price
         self._price = price
         self._timeout_sec = timeout_sec
         self._is_market_order = is_market_order
         self._logger = logger
         self._transaction_id = transaction_id
         self._order_id = None
+        self._safe_price = safe_price
 
     def open_long_position(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'ask'
+        if self._safe_price is True:
+            self._price = self._original_price * 1.02
         return self._place_order(singleton.rest_api.open_long_order)
 
     def open_short_position(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'bid'
+        if self._safe_price is True:
+            self._price = self._original_price * 0.98
         return self._place_order(singleton.rest_api.open_short_order)
 
     def close_long_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'bid'
+        if self._safe_price is True:
+            self._price = self._original_price * 0.98
         return self._place_order(singleton.rest_api.close_long_order)
 
     def close_short_order(self) -> OrderExecutionResult:
         """Returns Future[OrderExecutionResult]"""
         self._side = 'ask'
+        if self._safe_price is True:
+            self._price = self._original_price * 1.02
         return self._place_order(singleton.rest_api.close_short_order)
 
     async def _place_order(self, rest_request_functor) -> OrderExecutionResult:
         self._logger.info(
-            '[SENDING ORDER REQUEST]\nprice: %s, amount: %s (%s, %s)\n%s',
-            self._price,
-            self._amount,
+            '[SENDING ORDER REQUEST] %s, %s, %s\n'
+            'price: %s (%s), amount: %s\n'
+            '%s',
             rest_request_functor.__name__,
             self._side,
+            self._instrument_id,
+            self._price,
+            self._original_price,
+            self._amount,
             singleton.order_book.market_depth(self._instrument_id)
         )
 
@@ -297,7 +312,8 @@ async def _testing_coroutine(instrument_id):
                              timeout_sec=0.1,
                              is_market_order=False,
                              logger=logging,
-                             transaction_id='fake_transaction_id')
+                             transaction_id='fake_transaction_id',
+                             safe_price=True)
 
     logging.info('open_long_position has been called')
     order_status = await executor.open_long_position()

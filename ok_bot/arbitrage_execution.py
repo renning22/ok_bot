@@ -146,7 +146,7 @@ class ArbitrageTransaction:
                     status=status)
         )
 
-    def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int) -> OrderExecutionResult:
+    def open_position(self, leg: ArbitrageLeg, timeout_in_sec: int, safe_price) -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
@@ -155,7 +155,8 @@ class ArbitrageTransaction:
             timeout_sec=timeout_in_sec,
             is_market_order=False,
             logger=self.logger,
-            transaction_id=self.id)
+            transaction_id=self.id,
+            safe_price=safe_price)
         if leg.side == LONG:
             return order_executor.open_long_position()
         else:
@@ -177,7 +178,8 @@ class ArbitrageTransaction:
             timeout_sec=timeout_in_sec,
             is_market_order=False,
             logger=self.logger,
-            transaction_id=self.id)
+            transaction_id=self.id,
+            safe_price=True)  # Always be conservertive during closing.
         if leg.side == LONG:
             self.logger.info('[CLOSE ATTEMPT] closing long position with %.3f',
                              price)
@@ -237,7 +239,9 @@ class ArbitrageTransaction:
         self._db_transaction_status_updater('opening_slow_leg')
         self.logger.info('[OPENING SLOW]')
         slow_open_order = await self.open_position(
-            self.slow_leg, SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
+            self.slow_leg,
+            SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
+            safe_price=False
         )
 
         if not slow_open_order.succeeded:
@@ -251,7 +255,9 @@ class ArbitrageTransaction:
         self._db_transaction_status_updater('opening_fast_leg')
         self.logger.info('[OPENING FAST]')
         fast_open_order = await self.open_position(
-            self.fast_leg, FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND
+            self.fast_leg,
+            FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
+            safe_price=True
         )
 
         if not fast_open_order.succeeded:
