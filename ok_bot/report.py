@@ -11,6 +11,14 @@ def get_order_gain(order):
     return val + order['fee']
 
 
+def get_price_slippage(order):
+    val = (order['price_avg'] - order['price']) / order['price']
+    if order['type'] in (constants.ORDER_TYPE_CODE__CLOSE_LONG,
+                         constants.ORDER_TYPE_CODE__OPEN_SHORT):
+        val *= -1.0
+    return val
+
+
 class Report:
     def __init__(self,
                  transaction_id,
@@ -26,13 +34,31 @@ class Report:
         self.fast_open_order_id = None
         self.fast_close_order_id = None
 
+        self.slow_open_prices = []
+        self.fast_open_prices = []
+        self.slow_close_prices = []
+        self.fast_close_prices = []
+
         # Result table
         self.table = pd.DataFrame()
 
     def __str__(self):
         if self.table.empty:
             return '[no orders]'
-        return self.table.to_string()
+        ret = ''
+        ret += f'slippage: {self.slippage * 100:.3f}%\n'
+        if self.slow_close_prices:
+            ret += f'slow_close_prices: {self.slow_close_prices}\n'
+        if self.fast_close_prices:
+            ret += f'fast_close_prices: {self.fast_close_prices}\n'
+        ret += self.table.to_string()
+        return ret
+
+    @property
+    def slippage(self):
+        if self.table.empty:
+            return 0
+        return self.table['slippage'].sum()
 
     async def report_profit(self):
         """Returns the net profit (in unit of coins)"""
@@ -73,10 +99,12 @@ class Report:
         self.table['fee'] = self.table['fee'].astype('float64')
         self.table['filled_qty'] = self.table['filled_qty'].astype('int64')
         self.table['leverage'] = self.table['leverage'].astype('int64')
+        self.table['price'] = self.table['price'].astype('float64')
         self.table['price_avg'] = self.table['price_avg'].astype('float64')
         self.table['status'] = self.table['status'].astype('int64')
         self.table['type'] = self.table['type'].astype('int64')
         self.table['gain'] = self.table.apply(get_order_gain, axis=1)
+        self.table['slippage'] = self.table.apply(get_price_slippage, axis=1)
 
         all_types = set(self.table['type'])
 

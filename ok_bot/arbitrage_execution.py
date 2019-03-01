@@ -91,8 +91,8 @@ class WaitingPriceConverge:
             'available_amount: %d',
             30,
             singleton.order_book.market_depth(
-                self._ask_stack_instrument).best_ask_price()
-            - singleton.order_book.market_depth(
+                self._ask_stack_instrument).best_ask_price() -
+            singleton.order_book.market_depth(
                 self._bid_stack_instrument).best_bid_price(),
             self._transaction.close_price_gap_threshold,
             cur_amount_margin
@@ -103,8 +103,8 @@ class WaitingPriceConverge:
                 '[WAITING PRICE SUCCEEDED] current_gap:%.3f,'
                 ' max_gap: %.3f, available_amount: %d',
                 singleton.order_book.market_depth(
-                    self._ask_stack_instrument).best_ask_price()
-                - singleton.order_book.market_depth(
+                    self._ask_stack_instrument).best_ask_price() -
+                singleton.order_book.market_depth(
                     self._bid_stack_instrument).best_bid_price(),
                 self._transaction.close_price_gap_threshold,
                 cur_amount_margin
@@ -162,7 +162,7 @@ class ArbitrageTransaction:
         else:
             return order_executor.open_short_position()
 
-    def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int) -> OrderExecutionResult:
+    def close_position(self, leg: ArbitrageLeg, timeout_in_sec: int, prices) -> OrderExecutionResult:
         assert leg.side in [LONG, SHORT]
         if leg.side == LONG:
             price = singleton.order_book.market_depth(
@@ -170,6 +170,8 @@ class ArbitrageTransaction:
         else:
             price = singleton.order_book.market_depth(
                 leg.instrument_id).best_ask_price()
+
+        prices.append(price)
 
         order_executor = OrderExecutor(
             instrument_id=leg.instrument_id,
@@ -189,10 +191,10 @@ class ArbitrageTransaction:
                              price)
             return order_executor.close_short_order()
 
-    async def close_position_guaranteed(self, leg):
+    async def close_position_guaranteed(self, leg, prices):
         while True:
             close_status = await self.close_position(
-                leg, CLOSE_POSITION_ORDER_TIMEOUT_SECOND)
+                leg, CLOSE_POSITION_ORDER_TIMEOUT_SECOND, prices=prices)
             if close_status.succeeded:
                 self.logger.info(
                     '[CLOSE POSITION GUARANTEED] succeeded: %s', leg)
@@ -251,6 +253,7 @@ class ArbitrageTransaction:
         else:
             self.logger.info(f'[SLOW FULFILLED] {slow_open_order.order_id}')
             self.report.slow_open_order_id = slow_open_order.order_id
+            self.report.slow_open_prices.append(self.slow_leg.price)
 
         self._db_transaction_status_updater('opening_fast_leg')
         self.logger.info('[OPENING FAST]')
@@ -264,7 +267,7 @@ class ArbitrageTransaction:
             self.logger.info(f'[FAST FAILED] {fast_open_order}')
             self._db_transaction_status_updater('ended_fast_leg_failed')
             slow_close_order = await self.close_position_guaranteed(
-                self.slow_leg)
+                self.slow_leg, prices=self.report.slow_close_prices)
             assert slow_close_order.succeeded
             self.logger.info(
                 f'[SLOW POSITION CLOSED] {slow_close_order.order_id}')
@@ -273,6 +276,7 @@ class ArbitrageTransaction:
         else:
             self.logger.info(f'[FAST FULFILLED] {fast_open_order.order_id}')
             self.report.fast_open_order_id = fast_open_order.order_id
+            self.report.fast_open_prices.append(self.fast_leg.price)
 
         self.logger.info(
             f'[BOTH FULFILLED] wait for '
@@ -292,8 +296,10 @@ class ArbitrageTransaction:
                 self._db_transaction_status_updater('ended_normally')
 
         fast_close_order, slow_close_order = await asyncio.gather(
-            self.close_position_guaranteed(self.fast_leg),
-            self.close_position_guaranteed(self.slow_leg)
+            self.close_position_guaranteed(
+                self.fast_leg, prices=self.report.fast_close_prices),
+            self.close_position_guaranteed(
+                self.slow_leg, prices=self.report.slow_close_prices)
         )
         assert fast_close_order.succeeded
         assert slow_close_order.succeeded

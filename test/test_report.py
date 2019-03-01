@@ -35,7 +35,7 @@ def expected_net_profit_way_1():
 
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = AsyncMock()
         singleton.rest_api.get_order_info.side_effect = [
@@ -45,7 +45,7 @@ class TestArbitrageExecution(unittest.TestCase):
              'instrument_id': 'ETH-USD-190201',
              'leverage': '10',
              'order_id': '10001',
-             'price': '101.111',
+             'price': '101.000',
              'price_avg': '101.111',
              'size': '1',
              'status': str(constants.ORDER_STATUS_CODE__FULFILLED),
@@ -57,7 +57,7 @@ class TestArbitrageExecution(unittest.TestCase):
              'instrument_id': 'ETH-USD-190201',
              'leverage': '10',
              'order_id': '10002',
-             'price': '102.222',
+             'price': '102.000',
              'price_avg': '102.222',
              'size': '1',
              'status': str(constants.ORDER_STATUS_CODE__FULFILLED),
@@ -69,7 +69,7 @@ class TestArbitrageExecution(unittest.TestCase):
              'instrument_id': 'ETH-USD-190329',
              'leverage': '10',
              'order_id': '10003',
-             'price': '103.333',
+             'price': '103.000',
              'price_avg': '103.333',
              'size': '1',
              'status': str(constants.ORDER_STATUS_CODE__FULFILLED),
@@ -81,7 +81,7 @@ class TestArbitrageExecution(unittest.TestCase):
              'instrument_id': 'ETH-USD-190329',
              'leverage': '10',
              'order_id': '10004',
-             'price': '104.444',
+             'price': '104.000',
              'price_avg': '104.444',
              'size': '1',
              'status': str(constants.ORDER_STATUS_CODE__FULFILLED),
@@ -103,6 +103,10 @@ class TestArbitrageExecution(unittest.TestCase):
             report.slow_close_order_id = 10002
             report.fast_open_order_id = 10003
             report.fast_close_order_id = 10004
+            report.slow_open_prices = [101.000]
+            report.slow_close_prices = [102.002, 102.001, 102.000]
+            report.fast_open_prices = [103.000]
+            report.fast_close_prices = [104.000]
             net_profit = await report.report_profit()
 
             # Cross-validation (there's floating point error)
@@ -123,6 +127,8 @@ class TestArbitrageExecution(unittest.TestCase):
                 call(10003, 'ETH-USD-190329'),
                 call(10004, 'ETH-USD-190329'),
             ])
+
+            logging.info('\n%s', report)
 
         singleton.loop.run_until_complete(_testing_coroutine())
 
