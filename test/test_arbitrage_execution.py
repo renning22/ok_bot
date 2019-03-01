@@ -20,7 +20,7 @@ _FAKE_MARKET_VOL = MIN_AVAILABLE_AMOUNT_FOR_CLOSING_ARBITRAGE
 @patch('ok_bot.arbitrage_execution.Report')
 class TestArbitrageExecution(unittest.TestCase):
     def setUp(self):
-        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=False)
+        logger.init_global_logger(log_level=logging.INFO, log_to_stderr=True)
         singleton.initialize_objects_with_mock_trader_and_dev_db('ETH')
         singleton.rest_api = None
         singleton.book_listener = MockBookListerner_constantPriceGenerator(
@@ -62,6 +62,10 @@ class TestArbitrageExecution(unittest.TestCase):
         mock_report = AsyncMock()
         mock_report.report_profit.return_value = 0.001  # net_profit
         mock_report.__str__ = MagicMock(return_value='mock_report')
+        mock_report.slow_open_prices = MagicMock()
+        mock_report.fast_open_prices = MagicMock()
+        mock_report.slow_close_prices = MagicMock()
+        mock_report.fast_close_prices = MagicMock()
         MockReport.return_value = mock_report
 
         async def _testing_coroutine():
@@ -90,6 +94,11 @@ class TestArbitrageExecution(unittest.TestCase):
             self.assertEqual(10001, mock_report.fast_open_order_id)
             self.assertEqual(10003, mock_report.fast_close_order_id)
 
+            mock_report.slow_open_prices.append.assert_called_once_with(100.0)
+            mock_report.fast_open_prices.append.assert_called_once_with(80.0)
+            mock_report.slow_close_prices.append.assert_called_once_with(100.0)
+            mock_report.fast_close_prices.append.assert_called_once_with(100.0)
+
             MockOrderExecutor.assert_has_calls([
                 call(instrument_id=self.quarter_instrument,
                      amount=1,
@@ -97,7 +106,8 @@ class TestArbitrageExecution(unittest.TestCase):
                      timeout_sec=SLOW_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
                      is_market_order=False,
                      logger=transaction.logger,
-                     transaction_id=transaction.id),
+                     transaction_id=transaction.id,
+                     safe_price=False),
                 call().open_short_position(),
                 call(instrument_id=self.week_instrument,
                      amount=1,
@@ -105,7 +115,8 @@ class TestArbitrageExecution(unittest.TestCase):
                      timeout_sec=FAST_LEG_ORDER_FULFILLMENT_TIMEOUT_SECOND,
                      is_market_order=False,
                      logger=transaction.logger,
-                     transaction_id=transaction.id),
+                     transaction_id=transaction.id,
+                     safe_price=True),
                 call().open_long_position(),
                 call(instrument_id=self.week_instrument,
                      amount=1,
@@ -113,7 +124,8 @@ class TestArbitrageExecution(unittest.TestCase):
                      timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                      is_market_order=False,
                      logger=transaction.logger,
-                     transaction_id=transaction.id),
+                     transaction_id=transaction.id,
+                     safe_price=True),
                 call().close_long_order(),
                 call(instrument_id=self.quarter_instrument,
                      amount=1,
@@ -121,7 +133,8 @@ class TestArbitrageExecution(unittest.TestCase):
                      timeout_sec=CLOSE_POSITION_ORDER_TIMEOUT_SECOND,
                      is_market_order=False,
                      logger=transaction.logger,
-                     transaction_id=transaction.id),
+                     transaction_id=transaction.id,
+                     safe_price=True),
                 call().close_short_order(),
             ])
 
