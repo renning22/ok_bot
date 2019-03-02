@@ -2,6 +2,13 @@ import pandas as pd
 
 from . import constants, singleton
 
+ORDER_TYPE_TO_STRING = {
+    constants.ORDER_TYPE_CODE__OPEN_LONG: 'long+',
+    constants.ORDER_TYPE_CODE__OPEN_SHORT: 'short+',
+    constants.ORDER_TYPE_CODE__CLOSE_LONG: 'long-',
+    constants.ORDER_TYPE_CODE__CLOSE_SHORT: 'short-',
+}
+
 
 def get_order_gain(order):
     val = order['filled_qty'] * order['contract_val'] / order['price_avg']
@@ -12,7 +19,8 @@ def get_order_gain(order):
 
 
 def get_price_slippage(order):
-    val = (order['price_avg'] - order['price']) / order['price']
+    val = ((order['price_avg'] - order['original_price']) /
+           order['original_price'])
     if order['type'] in (constants.ORDER_TYPE_CODE__CLOSE_LONG,
                          constants.ORDER_TYPE_CODE__OPEN_SHORT):
         val *= -1.0
@@ -47,10 +55,26 @@ class Report:
             return '[no orders]'
         ret = ''
         ret += f'slippage: {self.slippage * 100:.3f}%\n'
+        if self.slow_open_prices:
+            ret += 'slow+ {:6} {} -> {}\n'.format(
+                self.table.loc['slow_open']['direction'],
+                self.slow_open_prices,
+                self.table.loc['slow_open']['price_avg'])
         if self.slow_close_prices:
-            ret += f'slow_close_prices: {self.slow_close_prices}\n'
+            ret += 'slow- {:6} {} -> {}\n'.format(
+                self.table.loc['slow_close']['direction'],
+                self.slow_close_prices,
+                self.table.loc['slow_close']['price_avg'])
+        if self.fast_open_prices:
+            ret += 'fast+ {:6} {} -> {}\n'.format(
+                self.table.loc['fast_open']['direction'],
+                self.fast_open_prices,
+                self.table.loc['fast_open']['price_avg'])
         if self.fast_close_prices:
-            ret += f'fast_close_prices: {self.fast_close_prices}\n'
+            ret += 'fast- {:6} {} -> {}\n'.format(
+                self.table.loc['fast_close']['direction'],
+                self.fast_close_prices,
+                self.table.loc['fast_close']['price_avg'])
         ret += self.table.to_string()
         return ret
 
@@ -63,33 +87,33 @@ class Report:
     async def report_profit(self):
         """Returns the net profit (in unit of coins)"""
         if self.slow_open_order_id:
-            self.table = self.table.append(
-                await self._retrieve_order_info_and_log_to_db(
-                    'slow_open',
-                    self.slow_open_order_id,
-                    self.slow_instrument_id)
-            )
+            order_info = await self._retrieve_order_info_and_log_to_db(
+                'slow_open',
+                self.slow_open_order_id,
+                self.slow_instrument_id)
+            order_info['original_price'] = self.slow_open_prices[0]
+            self.table = self.table.append(order_info)
         if self.slow_close_order_id:
-            self.table = self.table.append(
-                await self._retrieve_order_info_and_log_to_db(
-                    'slow_close',
-                    self.slow_close_order_id,
-                    self.slow_instrument_id)
-            )
+            order_info = await self._retrieve_order_info_and_log_to_db(
+                'slow_close',
+                self.slow_close_order_id,
+                self.slow_instrument_id)
+            order_info['original_price'] = self.slow_close_prices[0]
+            self.table = self.table.append(order_info)
         if self.fast_open_order_id:
-            self.table = self.table.append(
-                await self._retrieve_order_info_and_log_to_db(
-                    'fast_open',
-                    self.fast_open_order_id,
-                    self.fast_instrument_id)
-            )
+            order_info = await self._retrieve_order_info_and_log_to_db(
+                'fast_open',
+                self.fast_open_order_id,
+                self.fast_instrument_id)
+            order_info['original_price'] = self.fast_open_prices[0]
+            self.table = self.table.append(order_info)
         if self.fast_close_order_id:
-            self.table = self.table.append(
-                await self._retrieve_order_info_and_log_to_db(
-                    'fast_close',
-                    self.fast_close_order_id,
-                    self.fast_instrument_id)
-            )
+            order_info = await self._retrieve_order_info_and_log_to_db(
+                'fast_close',
+                self.fast_close_order_id,
+                self.fast_instrument_id)
+            order_info['original_price'] = self.fast_close_prices[0]
+            self.table = self.table.append(order_info)
 
         if len(self.table) == 0:
             self.logger.info('[REPORT] empty transaction')
@@ -103,6 +127,8 @@ class Report:
         self.table['price_avg'] = self.table['price_avg'].astype('float64')
         self.table['status'] = self.table['status'].astype('int64')
         self.table['type'] = self.table['type'].astype('int64')
+        self.table['direction'] = self.table.apply(
+            lambda order: ORDER_TYPE_TO_STRING[order['type']], axis=1)
         self.table['gain'] = self.table.apply(get_order_gain, axis=1)
         self.table['slippage'] = self.table.apply(get_price_slippage, axis=1)
 
