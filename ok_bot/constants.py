@@ -16,7 +16,7 @@ ORDER_EXECUTOR_SAFE_PRICE_RATE = 0.0002
 PRICE_PREDICTION_WINDOW_SECOND = 5
 
 
-SIMPLE_STRATEGY_NET_PROFIT_RATE_THRESHOLD = 0
+SIMPLE_STRATEGY_RETURN_RATE_THRESHOLD = 0
 
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.
