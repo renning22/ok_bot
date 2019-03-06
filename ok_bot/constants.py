@@ -7,17 +7,16 @@ SINGLE_UNIT_IN_USD = {
 }
 
 # Strategy
-MIN_TIME_WINDOW_IN_SECOND = 60 * 1  # 1 minutes
+MIN_TIME_WINDOW_IN_SECOND = 3  # 1 minutes
 MIN_ESTIMATE_PROFIT = 1e-5
 INSUFFICIENT_MARGIN_COOL_DOWN_SECOND = 60 * 10  # 10 minutes
 AMOUNT_SHRINK = 0.33
 
-ORDER_EXECUTOR_SAFE_PRICE_RATE = 0.0005
+ORDER_EXECUTOR_SAFE_PRICE_RATE = 0.0002
 PRICE_PREDICTION_WINDOW_SECOND = 5
 
-# Unit: Coin per contract per transaction.
-# e.g. 0.1 means we expect to gain 0.1 ETH per transaction.
-SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD = 0.0002
+
+SIMPLE_STRATEGY_NET_PROFIT_RATE_THRESHOLD = 0
 
 # X >= 1 (standard deviation) is 84% percentiles in standard gaussian
 # distribution, 34% deviated from center.
