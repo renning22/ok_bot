@@ -311,7 +311,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
 
         # Total 3 splippage in USD per transaction.
         estimate_slippage_per_transaction = (
-            3 * constants.ORDER_EXECUTOR_SAFE_PRICE_RATE * current_price_average)
+            3 * constants.ORDER_EXECUTOR_SAFE_PRICE_RATE * usd_per_contract)
 
         # Total 4 order fees per transaction.
         estimate_fee_per_transaction = (
