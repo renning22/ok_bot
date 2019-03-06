@@ -120,8 +120,7 @@ class Trader:
                 'parallel_quota: %s, available_amount_quota: %s',
                 parallel_quota, available_amount_quota)
         else:
-            for _ in range(num_of_kick_offs):
-                self.kick_off_arbitrage(plan)
+            self.kick_off_arbitrage(plan)
 
     def kick_off_arbitrage(self, arbitrage_plan):
         transaction = ArbitrageTransaction(
