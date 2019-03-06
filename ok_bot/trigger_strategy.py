@@ -76,8 +76,8 @@ def spot_profit(long_begin, long_end, short_begin, short_end):
     """
     usd = constants.TRADING_VOLUME * \
         constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
-    fee = (usd / long_begin + usd / long_end + usd / short_begin
-           + usd / short_end) * constants.FEE_RATE
+    fee = (usd / long_begin + usd / long_end + usd / short_begin +
+           usd / short_end) * constants.FEE_RATE
     gain = usd / long_begin - usd / long_end + \
         usd / short_end - usd / short_begin
     return gain - fee
@@ -303,15 +303,15 @@ class SimpleTriggerStrategy(TriggerStrategy):
             deviation * constants.SIMPLE_STRATEGY_RESILIANCE)
 
         # USD per transaction per USD.
-        estimate_profit_per_tran_per_usd = (
-            estimate_total_price_diff_after_resiliance /
-            current_price_average)
+        estimate_profit_rate = (
+            estimate_total_price_diff_after_resiliance
+            / current_price_average)
 
         usd_per_contract = constants.SINGLE_UNIT_IN_USD[singleton.coin_currency]
 
         # USD per transaction per contract.
         estimate_profit_per_transaction = (
-            estimate_profit_per_tran_per_usd * usd_per_contract)
+            estimate_profit_rate * usd_per_contract)
 
         # USD per transaction per contract.
         estimate_fee_per_transaction = (
@@ -321,6 +321,10 @@ class SimpleTriggerStrategy(TriggerStrategy):
         estimate_net_profit = (
             (estimate_profit_per_transaction -
              estimate_fee_per_transaction) / current_price_average)
+
+        estimate_net_profit_rate = (
+            (estimate_profit_per_transaction - estimate_fee_per_transaction) / (
+                2 * usd_per_contract) - (3 * constants.ORDER_EXECUTOR_SAFE_PRICE_RATE))
 
         # If estimate_net_profit > 0, current spread is the minimum profitable
         # gap.
@@ -341,14 +345,16 @@ class SimpleTriggerStrategy(TriggerStrategy):
             short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
         avg_slope = long_instrument_slope + short_instrument_slope
 
-        self.stats[long_instrument, short_instrument].add(estimate_net_profit)
+        self.stats[long_instrument, short_instrument].add(
+            estimate_net_profit_rate)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long: %s , short: %s\n'
             's0: %.6f, s1: %.6f, S: %.6f\n'
             'r0: %.6f, r1: %.6f, R: %.6f\n'
+            'rate: %.6f%%\n'
             '%s',
-            60 * 15,  # 15 min
+            60 * 60,  # 60 min
             long_instrument,
             short_instrument,
             long_instrument_speed,
@@ -357,11 +363,12 @@ class SimpleTriggerStrategy(TriggerStrategy):
             long_instrument_slope,
             short_instrument_slope,
             avg_slope,
+            estimate_net_profit_rate * 100,
             self.stats[long_instrument, short_instrument].histogram()
         )
 
-        if (estimate_net_profit > constants.SIMPLE_STRATEGY_NET_PROFIT_THRESHOLD and
-                zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+        if (estimate_net_profit_rate > constants.SIMPLE_STRATEGY_NET_PROFIT_RATE_THRESHOLD
+                and zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
             if avg_slope < 0:
                 slow_instrument_id = short_instrument
                 fast_instrument_id = long_instrument
@@ -389,6 +396,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\nest_profit: %.8f'
                 '\nzscore: %.3f'
                 '\nclose_gap: %.3f'
+                '\nrate: %.6f%%'
                 '\n%s',
                 long_instrument,
                 short_instrument,
@@ -405,6 +413,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 estimate_net_profit,
                 zscore,
                 close_price_gap,
+                estimate_net_profit_rate * 100,
                 self.stats[long_instrument, short_instrument].histogram()
             )
             return ArbitragePlan(
