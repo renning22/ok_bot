@@ -258,8 +258,7 @@ class ArbitrageTransaction:
             self._db_transaction_status_updater('ended_slow_leg_failed')
             return False
 
-        self.logger.info(f'[SLOW FULFILLED] amount: {slow_fulfilled_amount}'
-                         f'order_id:{slow_open_order.order_id}')
+        self.logger.info(f'[SLOW FULFILLED] {slow_open_order}')
         self.report.slow_open_order_id = slow_open_order.order_id
         self.report.slow_open_prices.append(self.slow_leg.price)
 

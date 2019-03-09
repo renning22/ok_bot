@@ -7,7 +7,7 @@ from . import constants, singleton
 
 
 class OrderExecutionResult:
-    def __init__(self, order_id=None, amount=None, fulfilled_quantity=None):
+    def __init__(self, order_id, amount, fulfilled_quantity):
         self.order_id = order_id
         self.amount = amount
         self.fulfilled_quantity = fulfilled_quantity
@@ -247,7 +247,11 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return OrderExecutionResult()
+            return OrderExecutionResult(
+                order_id=None,
+                amount=self._amount,
+                fulfilled_quantity=0,
+            )
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
