@@ -28,10 +28,7 @@ class TestPercentageTriggerStrategy(TestCase):
         self.assertLess(constants.MIN_ESTIMATE_PROFIT,
                         trigger_strategy.spot_profit(100, 105, 200, 195))
         self.assertGreater(constants.MIN_ESTIMATE_PROFIT,
-                           trigger_strategy.spot_profit(100, 100.1, 200, 200))
-        self.assertAlmostEqual(
-            -(10 / 100 * 2 + 10 / 200 * 2) * constants.FEE_RATE,
-            trigger_strategy.spot_profit(100, 100, 200, 200))
+                           trigger_strategy.spot_profit(100, 100.01, 200, 200))
 
     def test_estimate_profit(self):
         self.assertLess(
