@@ -289,7 +289,8 @@ class SimpleTriggerStrategy(TriggerStrategy):
                         product) -> ArbitragePlan:
         # zscore is a normalized measure of how large the last sample is
         # deviated from center amongst population.
-        zscore = singleton.order_book.zscore(product)
+        # zscore = singleton.order_book.zscore(product)
+        zscore = 10
 
         history_gap = singleton.order_book.historical_mean_spread(product)
         current_spread = singleton.order_book.current_spread(product)
@@ -348,15 +349,14 @@ class SimpleTriggerStrategy(TriggerStrategy):
             short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
         avg_slope = long_instrument_slope + short_instrument_slope
 
-        self.stats[long_instrument, short_instrument].add(
-            estimate_return_rate * 100)
+        # self.stats[long_instrument, short_instrument].add(
+        #     estimate_return_rate * 100)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long: %s , short: %s\n'
             's0: %.6f, s1: %.6f, S: %.6f\n'
             'r0: %.6f, r1: %.6f, R: %.6f\n'
-            'rate: %.6f%%\n'
-            '%s',
+            'rate: %.6f%%\n',
             60 * 60,  # 60 min
             long_instrument,
             short_instrument,
@@ -366,8 +366,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
             long_instrument_slope,
             short_instrument_slope,
             avg_slope,
-            estimate_return_rate * 100,
-            self.stats[long_instrument, short_instrument].histogram()
+            estimate_return_rate * 100
         )
 
         if (estimate_return_rate > constants.SIMPLE_STRATEGY_RETURN_RATE_THRESHOLD and
@@ -399,8 +398,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\nest_profit: %.8f'
                 '\nzscore: %.3f'
                 '\nclose_gap: %.3f'
-                '\nrate: %.6f%%'
-                '\n%s',
+                '\nrate: %.6f%%',
                 long_instrument,
                 short_instrument,
                 long_instrument_speed,
@@ -416,8 +414,7 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 estimate_net_profit,
                 zscore,
                 close_price_gap,
-                estimate_return_rate * 100,
-                self.stats[long_instrument, short_instrument].histogram()
+                estimate_return_rate * 100
             )
             return ArbitragePlan(
                 volume=constants.TRADING_VOLUME,
