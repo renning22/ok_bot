@@ -41,6 +41,10 @@ class MarketDepth:
         self.ask_stack_ = []
         self.update(ask_prices, ask_vols, bid_prices, bid_vols)
 
+    def freshness(self):
+        """local time delta in seconds, the less the better."""
+        return time.time() - self.timestamp_local
+
     def best_ask_price(self):
         return self.ask_stack_[0].price
 

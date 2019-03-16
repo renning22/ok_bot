@@ -338,39 +338,26 @@ class SimpleTriggerStrategy(TriggerStrategy):
         close_price_gap = (
             min_profitable_gap - estimate_total_price_diff_after_resiliance)
 
-        long_instrument_speed = singleton.order_book.price_speed(
-            long_instrument, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
-        short_instrument_speed = singleton.order_book.price_speed(
-            short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
-        avg_speed = long_instrument_speed + short_instrument_speed
-        long_instrument_slope = singleton.order_book.price_linear_fit(
-            long_instrument, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
-        short_instrument_slope = singleton.order_book.price_linear_fit(
-            short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
-        avg_slope = long_instrument_slope + short_instrument_slope
-
         # self.stats[long_instrument, short_instrument].add(
         #     estimate_return_rate * 100)
         logging.log_every_n_seconds(
             logging.CRITICAL,
             'long: %s , short: %s\n'
-            's0: %.6f, s1: %.6f, S: %.6f\n'
-            'r0: %.6f, r1: %.6f, R: %.6f\n'
             'rate: %.6f%%\n',
             60 * 60,  # 60 min
             long_instrument,
             short_instrument,
-            long_instrument_speed,
-            short_instrument_speed,
-            avg_speed,
-            long_instrument_slope,
-            short_instrument_slope,
-            avg_slope,
             estimate_return_rate * 100
         )
 
         if (estimate_return_rate > constants.SIMPLE_STRATEGY_RETURN_RATE_THRESHOLD and
                 zscore >= constants.SIMPLE_STRATEGY_ZSCORE_THRESHOLD):
+            long_instrument_slope = singleton.order_book.price_linear_fit(
+                long_instrument, 'ask', PRICE_PREDICTION_WINDOW_SECOND)
+            short_instrument_slope = singleton.order_book.price_linear_fit(
+                short_instrument, 'bid', PRICE_PREDICTION_WINDOW_SECOND)
+            avg_slope = long_instrument_slope + short_instrument_slope
+
             if avg_slope < 0:
                 slow_instrument_id = short_instrument
                 fast_instrument_id = long_instrument
@@ -389,7 +376,6 @@ class SimpleTriggerStrategy(TriggerStrategy):
             logging.critical(
                 '\nTRIGGERED'
                 '\nlong: %s , short: %s'
-                '\ns0: %.6f, s1: %.6f, S: %.6f'
                 '\nr0: %.6f, r1: %.6f, R: %.6f'
                 '\nprice_avg: %.3f'
                 '\ndiff_after: %.3f'
@@ -401,9 +387,6 @@ class SimpleTriggerStrategy(TriggerStrategy):
                 '\nrate: %.6f%%',
                 long_instrument,
                 short_instrument,
-                long_instrument_speed,
-                short_instrument_speed,
-                avg_speed,
                 long_instrument_slope,
                 short_instrument_slope,
                 avg_slope,
