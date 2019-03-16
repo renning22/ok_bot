@@ -86,6 +86,25 @@ class Trader:
             )
             return
 
+        long_freshness = singleton.order_book.market_depth(
+            long_instrument).freshness()
+        short_freshness = singleton.order_book.market_depth(
+            short_instrument).freshness()
+        if long_freshness >= constants.TICK_FRESHNESS_THRESHOLD or\
+                short_freshness >= constants.TICK_FRESHNESS_THRESHOLD:
+            logging.log_every_n_seconds(
+                logging.CRITICAL,
+                '[FRESHNESS] Rejected: %s, %s\n'
+                'long_freshness: %.3f\n'
+                'short_freshness: %.3f',
+                30,
+                long_instrument,
+                short_instrument,
+                long_freshness,
+                short_freshness
+            )
+            return
+
         plan = self.trigger_strategy.is_there_a_plan(
             long_instrument=long_instrument,
             short_instrument=short_instrument,
