@@ -62,26 +62,27 @@ class OrderListener:
         order_id = int(order_id)
         if status == constants.ORDER_STATUS_CODE__CANCELLED:
             self._buffer[order_id].append(
-                lambda trader: trader.order_cancelled(order_id)
+                lambda responder: responder.order_cancelled(order_id)
             )
         elif status == constants.ORDER_STATUS_CODE__PENDING:
             self._buffer[order_id].append(
-                lambda trader: trader.order_pending(order_id),
+                lambda responder: responder.order_pending(order_id),
             )
         elif status == constants.ORDER_STATUS_CODE__PARTIALLY_FILLED:
             self._buffer[order_id].append(
-                lambda trader: trader.order_partially_filled(order_id,
-                                                             size,
-                                                             filled_qty)
+                lambda responder: responder.order_partially_filled(order_id,
+                                                                   size,
+                                                                   filled_qty,
+                                                                   price_avg)
             )
         elif status == constants.ORDER_STATUS_CODE__FULFILLED:
             self._buffer[order_id].append(
-                lambda trader: trader.order_fulfilled(order_id,
-                                                      size,
-                                                      filled_qty,
-                                                      fee,
-                                                      price,
-                                                      price_avg)
+                lambda responder: responder.order_fulfilled(order_id,
+                                                            size,
+                                                            filled_qty,
+                                                            fee,
+                                                            price,
+                                                            price_avg)
             )
         else:
             raise Exception(f'unknown order update message type: {status}')
