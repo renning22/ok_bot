@@ -7,7 +7,7 @@ from . import constants, singleton
 
 
 class OrderExecutionResult:
-    def __init__(self, order_id=None, amount=None, fulfilled_quantity=None):
+    def __init__(self, order_id, amount, fulfilled_quantity):
         self.order_id = order_id
         self.amount = amount
         self.fulfilled_quantity = fulfilled_quantity
@@ -17,8 +17,7 @@ class OrderExecutionResult:
         return (self.order_id is not None
                 and self.amount is not None
                 and self.fulfilled_quantity is not None
-                and self.amount > 0
-                and self.fulfilled_quantity == self.amount)
+                and 0 < self.amount == self.fulfilled_quantity)
 
     def __str__(self):
         return f'{self.fulfilled_quantity}/{self.amount} ({self.order_id})'
@@ -248,7 +247,11 @@ class OrderExecutor:
             if error_code == constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH:
                 # Margin not enough, cool down
                 singleton.trader.cool_down()
-            return OrderExecutionResult()
+            return OrderExecutionResult(
+                order_id=None,
+                amount=self._amount,
+                fulfilled_quantity=0,
+            )
 
         self._logger.info(
             f'{self._order_id} ({self._instrument_id}) order was created '
@@ -273,7 +276,9 @@ class OrderExecutor:
             timeout_sec=self._timeout_sec,
             transaction_id=self._transaction_id)
         async with order_awaiter as websocket_reported_fulfilled_quantity:
-            if websocket_reported_fulfilled_quantity is None:
+            if websocket_reported_fulfilled_quantity is not None:
+                fulfilled_quantity = websocket_reported_fulfilled_quantity
+            else:
                 self._logger.info(
                     f'[TIMEOUT] {self._order_id} ({self._instrument_id}) '
                     'cancelling the pending order')
@@ -297,8 +302,6 @@ class OrderExecutor:
                     self._logger.info(
                         f'[TIMEOUT -> PARTIALLY FULFILLED] {fulfilled_quantity}, '
                         f'{self._order_id} ({self._instrument_id}) ')
-            else:
-                fulfilled_quantity = websocket_reported_fulfilled_quantity
 
         return OrderExecutionResult(
             order_id=self._order_id,

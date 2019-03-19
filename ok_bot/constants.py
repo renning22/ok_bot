@@ -1,6 +1,6 @@
 MOVING_AVERAGE_TIME_WINDOW_IN_SECOND = 60 * 4  # 4 minutes
 
-TRADING_VOLUME = 1  # 1 "张"
+TRADING_VOLUME = 4  # 4 "张"
 SINGLE_UNIT_IN_USD = {
     'BTC': 100.0,
     'ETH': 10.0,
