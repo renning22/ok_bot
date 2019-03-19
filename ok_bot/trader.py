@@ -86,22 +86,22 @@ class Trader:
             )
             return
 
-        long_freshness = singleton.order_book.market_depth(
-            long_instrument).freshness()
-        short_freshness = singleton.order_book.market_depth(
-            short_instrument).freshness()
-        if long_freshness >= constants.TICK_FRESHNESS_THRESHOLD or\
-                short_freshness >= constants.TICK_FRESHNESS_THRESHOLD:
+        long_staleness = singleton.order_book.market_depth(
+            long_instrument).staleness()
+        short_staleness = singleton.order_book.market_depth(
+            short_instrument).staleness()
+        if long_staleness >= constants.TICK_STALENESS_THRESHOLD or\
+                short_staleness >= constants.TICK_STALENESS_THRESHOLD:
             logging.log_every_n_seconds(
                 logging.CRITICAL,
-                '[FRESHNESS] Rejected: %s, %s\n'
-                'long_freshness: %.3f\n'
-                'short_freshness: %.3f',
+                '[STALENESS] Rejected: %s, %s\n'
+                'long_staleness: %.3f\n'
+                'short_staleness: %.3f',
                 30,
                 long_instrument,
                 short_instrument,
-                long_freshness,
-                short_freshness
+                long_staleness,
+                short_staleness
             )
             return
 
