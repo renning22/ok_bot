@@ -244,6 +244,14 @@ class ArbitrageTransaction:
         return result
 
     async def _process(self):
+        async def await_close_extra_slow_position(close_order):
+            if close_order is None:
+                return
+            close_status = await close_order
+            assert close_status.succeeded
+            self.logger.info(
+                f'[EXTRA SLOW POSITION CLOSED] {close_order.order_id}')
+
         self._db_transaction_status_updater('opening_slow_leg')
         self.logger.info('[OPENING SLOW]')
         slow_open_order = await self.open_position(
@@ -278,27 +286,29 @@ class ArbitrageTransaction:
             f'slow_fulfilled{slow_fulfilled_amount}'
 
         self.logger.info(f'[FAST STATUS] {fast_open_order}')
+        extra_slow_close_order = None
         if fast_fulfilled_amount < slow_fulfilled_amount:
-            slow_close_order = await self.close_position_guaranteed(
-                self.slow_leg,
-                prices=self.report.slow_close_prices,
-                amount=slow_fulfilled_amount-fast_fulfilled_amount)
-            self.logger.info(
-                f'[EXTRA SLOW POSITION CLOSED] {slow_close_order.order_id}')
-
-            self.report.slow_close_order_id = slow_close_order.order_id
+            slow_close_order_status = singleton.loop.create_task(
+                self.close_position_guaranteed(
+                    self.slow_leg,
+                    prices=self.report.slow_close_prices,
+                    amount=slow_fulfilled_amount - fast_fulfilled_amount)
+            )
+            self.report.slow_close_order_id = extra_slow_close_order.order_id
 
         open_fulfilled_amount = fast_fulfilled_amount
         if open_fulfilled_amount == 0:
+            assert extra_slow_close_order is not None
             self.logger.info('[FAST FAILED]')
             self._db_transaction_status_updater('ended_fast_leg_failed')
+            await_close_extra_slow_position(extra_slow_close_order)
             return False
 
         self.report.fast_open_order_id = fast_open_order.order_id
         self.report.fast_open_prices.append(self.fast_leg.price)
 
         self.logger.info(
-            f'[OPEN FULFILLED]amount={open_fulfilled_amount} wait for '
+            f'[OPEN FULFILLED] amount={open_fulfilled_amount} wait for '
             f'{PRICE_CONVERGE_TIMEOUT_IN_SECOND} seconds')
         self._db_transaction_status_updater('waiting_converge')
 
@@ -314,7 +324,7 @@ class ArbitrageTransaction:
                 self.logger.info(f'[CONVERGED] margin: {converge}')
                 self._db_transaction_status_updater('ended_normally')
 
-        fast_close_order, slow_close_order = await asyncio.gather(
+        fast_close_order_status, slow_close_order_status = await asyncio.gather(
             self.close_position_guaranteed(
                 self.fast_leg, prices=self.report.fast_close_prices,
                 amount=open_fulfilled_amount),
@@ -322,13 +332,13 @@ class ArbitrageTransaction:
                 self.slow_leg, prices=self.report.slow_close_prices,
                 amount=open_fulfilled_amount)
         )
-        assert fast_close_order.succeeded
-        assert slow_close_order.succeeded
-
+        assert fast_close_order_status.succeeded
+        assert slow_close_order_status.succeeded
+        await_close_extra_slow_position(extra_slow_close_order)
         self.logger.info(f'[ALL POSITION CLOSED]')
 
-        self.report.fast_close_order_id = fast_close_order.order_id
-        self.report.slow_close_order_id = slow_close_order.order_id
+        self.report.fast_close_order_id = fast_close_order_status.order_id
+        self.report.slow_close_order_id = slow_close_order_status.order_id
         return True
 
     def adjust_fast_leg(self, slow_leg_volume):
