@@ -157,9 +157,7 @@ class OrderAwaiter:
             status=constants.ORDER_STATUS_CODE__PARTIALLY_FILLED,
             size=int(size),
             filled_qty=int(filled_qty),
-            price=str(price),
             price_avg=str(price_avg),
-            fee=str(fee),
             type=None,
             timestamp=None
         )
