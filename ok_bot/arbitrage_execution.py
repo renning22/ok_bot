@@ -288,15 +288,16 @@ class ArbitrageTransaction:
         self.logger.info(f'[FAST STATUS] {fast_open_order}')
         extra_slow_close_order = None
         if fast_fulfilled_amount < slow_fulfilled_amount:
-            slow_close_order_status = singleton.loop.create_task(
+            extra_slow_close_order = singleton.loop.create_task(
                 self.close_position_guaranteed(
                     self.slow_leg,
                     prices=self.report.slow_close_prices,
                     amount=slow_fulfilled_amount - fast_fulfilled_amount)
             )
-            self.report.slow_close_order_id = extra_slow_close_order.order_id
 
         open_fulfilled_amount = fast_fulfilled_amount
+        self.logger.info(f'Open fulfilled amount from both leg:'
+                         f' {open_fulfilled_amount}')
         if open_fulfilled_amount == 0:
             assert extra_slow_close_order is not None
             self.logger.info('[FAST FAILED]')
