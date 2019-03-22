@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 from ok_bot import constants, logger, singleton
 from ok_bot.mock import AsyncMock
+
 from ok_bot.order_book import AvailableOrder
 from ok_bot.order_executor import OrderExecutor
 from ok_bot.trigger_strategy import ArbitragePlan
@@ -51,8 +52,15 @@ class TestTrader(TestCase):
             await asyncio.sleep(8)  # wait for cool down to finish
             self.assertFalse(singleton.trader.is_in_cooldown)
 
+        singleton.rest_api = AsyncMock()
+        singleton.rest_api.open_long_order.__name__ = Mock(
+            return_value='open_long_order')
+        singleton.rest_api.open_long_order.return_value = \
+            (None, constants.REST_API_ERROR_CODE__MARGIN_NOT_ENOUGH)
+
         singleton.loop.run_until_complete(_testing_coroutine())
 
+    @unittest.skip("retiring concurrent trans, move to multi-contract")
     def test_concurrent_trans_on_single_tick(self):
         singleton.trader.kick_off_arbitrage = Mock()
         singleton.trader.max_parallel_transaction_num = 15
@@ -73,6 +81,7 @@ class TestTrader(TestCase):
             )
         )
         market_depth_mock = Mock()
+        market_depth_mock.staleness = Mock(return_value=0)
         singleton.order_book.market_depth = Mock(
             return_value=market_depth_mock)
         market_depth_mock.ask = Mock(
