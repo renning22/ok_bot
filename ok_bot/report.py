@@ -145,7 +145,7 @@ class Report:
         )
 
         if not two_opposite_orders and not four_different_orders:
-            self.logger.fatal('[REPORT] ORPHAN ORDERS!')
+            self.logger.critical('[REPORT] ORPHAN ORDERS!')
             raise RuntimeError('[REPORT] ORPHAN ORDERS!')
         else:
             return self.table['gain'].sum()

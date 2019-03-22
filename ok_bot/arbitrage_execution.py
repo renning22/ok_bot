@@ -302,7 +302,7 @@ class ArbitrageTransaction:
             assert extra_slow_close_order is not None
             self.logger.info('[FAST FAILED]')
             self._db_transaction_status_updater('ended_fast_leg_failed')
-            await_close_extra_slow_position(extra_slow_close_order)
+            await await_close_extra_slow_position(extra_slow_close_order)
             return False
 
         self.report.fast_open_order_id = fast_open_order.order_id
@@ -335,7 +335,7 @@ class ArbitrageTransaction:
         )
         assert fast_close_order_status.succeeded
         assert slow_close_order_status.succeeded
-        await_close_extra_slow_position(extra_slow_close_order)
+        await await_close_extra_slow_position(extra_slow_close_order)
         self.logger.info(f'[ALL POSITION CLOSED]')
 
         self.report.fast_close_order_id = fast_close_order_status.order_id
