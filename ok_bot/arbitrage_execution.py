@@ -250,7 +250,7 @@ class ArbitrageTransaction:
             close_status = await close_order
             assert close_status.succeeded
             self.logger.info(
-                f'[EXTRA SLOW POSITION CLOSED] {close_order.order_id}')
+                f'[EXTRA SLOW POSITION CLOSED] {close_status.order_id}')
 
         self._db_transaction_status_updater('opening_slow_leg')
         self.logger.info('[OPENING SLOW]')
